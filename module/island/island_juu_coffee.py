@@ -167,6 +167,7 @@ class IslandJuuCoffee(IslandShopBase):
                 if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
                     break
                 if self.appear_then_click(ISLAND_POST_SELECT, offset=1):
+                    self.device.sleep(0.5)
                     continue
             if not self._is_friedrich_available():
                 logger.warning(f"醒神套餐({product})需要大帝(Friedrich)但不可用，跳过生产")

@@ -319,6 +319,7 @@ class Island(SelectCharacter):
                 self.device.sleep(0.5)
                 continue
             if self.appear_then_click(ISLAND_POST_SELECT,offset=1):
+                self.device.sleep(0.5)
                 continue
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK,offset=1):
                 if self.select_character():
