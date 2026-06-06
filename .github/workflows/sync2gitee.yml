@@ -1,0 +1,66 @@
+name: sync2gitee
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: '要同步的分支'
+        required: false
+        default: 'master'
+
+jobs:
+  repo-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Mask sensitive values
+        env:
+          MASK_OWNER: ${{ github.repository_owner }}
+          MASK_REPO: ${{ github.event.repository.name }}
+          MASK_GITEE_USER: ${{ secrets.GITEE_USER }}
+          MASK_GITEE_REPO: ${{ secrets.GITEE_REPO_NAME }}
+        run: |
+          echo "::add-mask::${MASK_OWNER}"
+          echo "::add-mask::${MASK_REPO}"
+          echo "::add-mask::${MASK_GITEE_USER}"
+          echo "::add-mask::${MASK_GITEE_REPO}"
+
+      - name: Sync to Gitee
+        env:
+          # 通过 Personal Access Token 认证（需要 Gitee 个人令牌）
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_USER: ${{ secrets.GITEE_USER }}
+          GITEE_REPO: ${{ secrets.GITEE_REPO_NAME }}
+        run: |
+          if [ -z "$GITEE_TOKEN" ] || [ -z "$GITEE_USER" ] || [ -z "$GITEE_REPO" ]; then
+            echo "::warning::请设置 GITEE_TOKEN、GITEE_USER、GITEE_REPO_NAME 三个 Secrets"
+            exit 0
+          fi
+
+          # 确定要推送的分支名
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TARGET_BRANCH="${{ github.event.inputs.branch }}"
+          else
+            TARGET_BRANCH="${GITHUB_REF_NAME}"
+          fi
+
+          # 获取仓库名用于 URL
+          REPO_FULL="${GITEE_USER}/${GITEE_REPO}"
+
+          echo "同步 ${TARGET_BRANCH} → Gitee（${REPO_FULL}）"
+
+          git remote remove gitee-mirror 2>/dev/null || true
+          git remote add gitee-mirror "https://${GITEE_USER}:${GITEE_TOKEN}@gitee.com/${REPO_FULL}.git"
+          git push --force --progress gitee-mirror "HEAD:${TARGET_BRANCH}"
+
+          # 删除 remote 中的 token 凭据
+          git remote remove gitee-mirror
