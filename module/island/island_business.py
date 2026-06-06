@@ -641,16 +641,19 @@ class IslandBusiness(Island):
     def _find_best_character(self):
         """
         在全区域 (55, 139, 878, 563) 内进行模板匹配查找角色。
+        只匹配 character_priority 中指定的角色，不做全量扫描。
         返回 (角色名, Button) 或 None。
         """
         s = self.device.image
         area_img = crop(s, self.BUSINESS_CHARACTER_AREA)
         best = (None, None, 0.0)  # (name, button, similarity)
-        
-        for n, t in self.character_templates.items():
-            if n not in self.character_priority:
+
+        # 只遍历优先级列表中的角色模板，跳过不在优先级中的角色
+        for name in self.character_priority:
+            template = self.character_templates.get(name)
+            if template is None:
                 continue
-            sim, btn = t.match_result(area_img)
+            sim, btn = template.match_result(area_img)
             if sim >= 0.8 and sim > best[2]:
                 # 创建新 Button，坐标从裁剪区域偏移回全屏坐标
                 old_area = btn.area
@@ -659,8 +662,8 @@ class IslandBusiness(Island):
                             old_area[2] + self.BUSINESS_CHARACTER_AREA[0],
                             old_area[3] + self.BUSINESS_CHARACTER_AREA[1])
                 offset_btn = Button(area=new_area, color=btn.color, button=new_area, file=btn.file)
-                best = (n, offset_btn, sim)
-        
+                best = (name, offset_btn, sim)
+
         if best[0] is not None:
             return (best[0], best[1])
         return None
