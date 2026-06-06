@@ -434,6 +434,7 @@ class IslandBusiness(Island):
         
         # 第2步：等待"经营结算"按钮出现并点击（未出现时点安全区域）
         timeout = 0
+        self.device.sleep(1)
         while not self.appear(BUSINESS_SETTLEMENT, offset=30):
             timeout += 1
             if timeout > 10:
