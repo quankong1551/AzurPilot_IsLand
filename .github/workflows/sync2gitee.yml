@@ -5,12 +5,13 @@ on:
     branches:
       - master
       - dev
+      - pri_dev
   workflow_dispatch:
     inputs:
       branch:
         description: '要同步的分支'
         required: false
-        default: 'master'
+        default: 'pri_dev'
 
 jobs:
   repo-sync:
