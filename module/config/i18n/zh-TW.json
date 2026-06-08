@@ -3806,7 +3806,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber1": {
       "name": "IslandTeahouse.MealNumber1.name",
@@ -3825,7 +3825,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber2": {
       "name": "IslandTeahouse.MealNumber2.name",
@@ -3844,7 +3844,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber3": {
       "name": "IslandTeahouse.MealNumber3.name",
@@ -3863,7 +3863,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber4": {
       "name": "IslandTeahouse.MealNumber4.name",
@@ -3882,7 +3882,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber5": {
       "name": "IslandTeahouse.MealNumber5.name",
@@ -3901,7 +3901,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber6": {
       "name": "IslandTeahouse.MealNumber6.name",
@@ -3920,7 +3920,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber7": {
       "name": "IslandTeahouse.MealNumber7.name",
@@ -3939,7 +3939,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     },
     "MealNumber8": {
       "name": "IslandTeahouse.MealNumber8.name",
@@ -3964,7 +3964,7 @@
       "fruit_paradise": "fruit_paradise",
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
-      "winter_jasmine_tea": "winter_jasmine_tea"
+      "spring_flower_tea": "spring_flower_tea"
     }
   },
   "IslandGrill": {
@@ -5147,11 +5147,7 @@
       "name": "餐品1",
       "help": "",
       "None": "無",
-      "iced_coffee": "冰咖啡",
-      "omelette": "蛋餅",
       "cheese": "芝士",
-      "latte": "拿鐵",
-      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶昔",
       "morning_light": "晨光咖啡",
       "wake_up_call": "叫醒咖啡",
@@ -5161,11 +5157,7 @@
       "name": "餐品2",
       "help": "",
       "None": "無",
-      "iced_coffee": "冰咖啡",
-      "omelette": "蛋餅",
       "cheese": "芝士",
-      "latte": "拿鐵",
-      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶昔",
       "morning_light": "晨光咖啡",
       "wake_up_call": "叫醒咖啡",
@@ -5175,11 +5167,7 @@
       "name": "餐品3",
       "help": "",
       "None": "無",
-      "iced_coffee": "冰咖啡",
-      "omelette": "蛋餅",
       "cheese": "芝士",
-      "latte": "拿鐵",
-      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶昔",
       "morning_light": "晨光咖啡",
       "wake_up_call": "叫醒咖啡",
@@ -5189,11 +5177,7 @@
       "name": "餐品4",
       "help": "",
       "None": "無",
-      "iced_coffee": "冰咖啡",
-      "omelette": "蛋餅",
       "cheese": "芝士",
-      "latte": "拿鐵",
-      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶昔",
       "morning_light": "晨光咖啡",
       "wake_up_call": "叫醒咖啡",
@@ -5203,11 +5187,7 @@
       "name": "餐品5",
       "help": "",
       "None": "無",
-      "iced_coffee": "冰咖啡",
-      "omelette": "蛋餅",
       "cheese": "芝士",
-      "latte": "拿鐵",
-      "citrus_coffee": "柑橘咖啡",
       "strawberry_milkshake": "草莓奶昔",
       "morning_light": "晨光咖啡",
       "wake_up_call": "叫醒咖啡",
