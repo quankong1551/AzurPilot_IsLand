@@ -1,4 +1,4 @@
-﻿{
+{
   "Menu": {
     "Alas": {
       "name": "スマートポートエリア+",
@@ -337,6 +337,10 @@
     "IslandAirDrop": {
       "name": "Task.IslandAirDrop.name",
       "help": "Task.IslandAirDrop.help"
+    },
+    "IslandDailyOrder": {
+      "name": "Task.IslandDailyOrder.name",
+      "help": "Task.IslandDailyOrder.help"
     },
     "Daemon": {
       "name": "半自動クリック",
@@ -4562,6 +4566,24 @@
     "LastSteal": {
       "name": "IslandAirDrop.LastSteal.name",
       "help": "IslandAirDrop.LastSteal.help"
+    }
+  },
+  "IslandDailyOrder": {
+    "_info": {
+      "name": "IslandDailyOrder._info.name",
+      "help": "IslandDailyOrder._info.help"
+    },
+    "RejectCount": {
+      "name": "IslandDailyOrder.RejectCount.name",
+      "help": "IslandDailyOrder.RejectCount.help"
+    },
+    "RejectFilter": {
+      "name": "IslandDailyOrder.RejectFilter.name",
+      "help": "IslandDailyOrder.RejectFilter.help"
+    },
+    "UrgentDetectRefreshTime": {
+      "name": "IslandDailyOrder.UrgentDetectRefreshTime.name",
+      "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
     }
   },
   "IslandBusinessShop1": {

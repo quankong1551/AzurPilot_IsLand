@@ -417,6 +417,9 @@ Island:
     IslandAirDrop:
       - Scheduler
       - IslandAirDrop
+    IslandDailyOrder:
+      - Scheduler
+      - IslandDailyOrder
 
 # ==================== Tool ====================
 

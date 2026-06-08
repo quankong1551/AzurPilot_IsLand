@@ -27,8 +27,10 @@ from PIL import Image
 # 格式: ("图片路径（相对项目根目录）", (x1, y1, x2, y2))
 # ============================================================
 TASKS = [
-    ("./assets/cn/ui/ISLAND_SEED_SHOP_RETURN_CHECK.png", (125, 21, 216, 46)),
-
+    # ("./assets/cn/island_daily_order/TEMPLATE_CHEESE.png", (905,335,950,380)),
+    # ("./assets/cn/island_daily_order/TEMPLATE_TOFU.png", (905,255,950,300)),
+    ("./assets/cn/island_daily_order/LLL.BUTTON.png", (800, 81, 830, 108)),
+    ("./assets/cn/island_daily_order/TTT.BUTTON.png", (800, 81, 830, 108)),
 ]
 
 

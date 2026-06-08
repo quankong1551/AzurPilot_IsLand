@@ -1,4 +1,4 @@
-﻿﻿import os
+﻿import os
 from module.island.island import Island
 from module.island.assets import *
 from module.island_business.assets import *
@@ -457,8 +457,6 @@ class IslandBusiness(Island):
 
             # 检测到"经营结算"按钮 → 优先处理结算（必须在 ISLAND_BACK 之前检测，
             # 防止结算界面出现时返回按钮也被检测到而导致提前退出）
-            elif self.appear(BUSINESS_SETTLEMENT, offset=30):
-            # 同时检测偏移150px位置（美食评审模式）
             settlement = self._appear_at_positions(BUSINESS_SETTLEMENT)
             if settlement:
                 logger.info("检测到经营结算按钮")
