@@ -202,7 +202,7 @@ class IslandDailyOrder(Island):
 
     # ==================== 模板匹配辅助 ====================
 
-    def _template_appears(self, template, similarity=0.85):
+    def _template_appears(self, template, similarity=0.80):
         region = self.image_crop(self.LEFT_PANEL_AREA, copy=False)
         return template.match(region, similarity=similarity)
 
@@ -553,7 +553,7 @@ class IslandDailyOrder(Island):
 
     # ==================== 辅助方法 ====================
 
-    def _template_match_urgent(self, template, similarity=0.85):
+    def _template_match_urgent(self, template, similarity=0.80):
         """
         获取紧急模板在左侧面板中的匹配位置及尺寸。
 
@@ -572,7 +572,7 @@ class IslandDailyOrder(Island):
         x1, y1, x2, y2 = button.area
         return (x1, y1, x2 - x1, y2 - y1)
 
-    def _template_click_first(self, template, similarity=0.85):
+    def _template_click_first(self, template, similarity=0.80):
         """点击左侧面板中第一个匹配到的模板位置，返回匹配位置信息。"""
         match = self._template_match_urgent(template, similarity=similarity)
         if match:
