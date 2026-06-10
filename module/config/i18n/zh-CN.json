@@ -336,7 +336,11 @@
     },
     "IslandAirDrop": {
       "name": "每日补给",
-      "help": ""
+      "help": "仅支持minitouch"
+    },
+    "IslandDailyOrder": {
+      "name": "每日订单",
+      "help": "从岛屿手机页面进入每日订单界面，自动检测订单类型（紧急/挑战/轻松），根据物品条件交付或驳回。不支持\"标准\"类型订单。"
     },
     "IslandDailyOrder": {
       "name": "每日订单",
@@ -3324,7 +3328,7 @@
   "IslandFarm": {
     "_info": {
       "name": "农田",
-      "help": "仅支持minitouch"
+      "help": ""
     },
     "Positions": {
       "name": "农田岗位",

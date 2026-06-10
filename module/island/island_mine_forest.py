@@ -347,6 +347,9 @@ class IslandMineForest(Island,LoginHandler):
             if pinfo['button'] == post_button:
                 pinfo['crop'] = product
                 break
+
+        # 关闭详情弹窗，防止后续滑动/操作被弹窗遮挡
+        self.post_close()
         return True
 
     # ==================== 主运行流程 ====================

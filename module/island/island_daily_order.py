@@ -1,6 +1,7 @@
 from module.island.island import Island
 from module.island_daily_order.assets import *
 from module.island.assets import ISLAND_BACK, ISLAND_GET, ISLAND_CLICK_SAFE_AREA
+from module.base.button import Button
 from module.ui.page import page_island_phone
 from module.logger import logger
 from module.ocr.ocr import Duration, Ocr
@@ -28,8 +29,18 @@ class IslandDailyOrder(Island):
     ITEM_SLOT_AREAS = [SLOT_AREA_1, SLOT_AREA_2, SLOT_AREA_3]
 
     # OCR 区域
-    OCR_URGENT_REMAINING_AREA = (1150, 272, 1197, 292)
-    OCR_COOLDOWN_AREA = (993, 429, 1089, 452)
+    OCR_URGENT_REMAINING = Button(
+        area=(1150, 272, 1197, 292),
+        color=(),
+        button=(1150, 272, 1197, 292),
+        name='OCR_URGENT_REMAINING'
+    )
+    OCR_COOLDOWN = Button(
+        area=(993, 429, 1089, 452),
+        color=(),
+        button=(993, 429, 1089, 452),
+        name='OCR_DAILY_ORDER_COOLDOWN'
+    )
 
     # 左侧页面图标检测区域
     LEFT_PANEL_AREA = (60, 60, 832, 560)
@@ -72,9 +83,14 @@ class IslandDailyOrder(Island):
 
     # ==================== OCR 辅助 ====================
 
+    @staticmethod
+    def _area_button(area, name):
+        """将临时坐标区域包装为 Button。"""
+        return Button(area=area, color=(), button=area, name=name)
+
     def _ocr_urgent_remaining(self):
         ocr = Ocr(
-            self.OCR_URGENT_REMAINING_AREA,
+            self.OCR_URGENT_REMAINING,
             letter=(255, 255, 255),
             threshold=200,
             alphabet='0123456789IDSB',
@@ -102,14 +118,22 @@ class IslandDailyOrder(Island):
         OCR 冷却时间（HH:MM:SS），失败返回 None。
 
         Args:
-            area: OCR 区域，None 则使用默认 OCR_COOLDOWN_AREA
+            area: OCR 区域，None 则使用默认 OCR_COOLDOWN
 
         Returns:
             int | None: 剩余秒数，失败返回 None
         """
         if area is None:
-            area = self.OCR_COOLDOWN_AREA
-        ocr = Duration(area, letter=(200, 200, 200), threshold=200)
+            button = self.OCR_COOLDOWN
+        elif isinstance(area, Button):
+            button = area
+        else:
+            button = self._area_button(area, name='OCR_DAILY_ORDER_COOLDOWN')
+        ocr = Duration(
+            button,
+            letter=(200, 200, 200),
+            threshold=200
+        )
         try:
             td = ocr.ocr(self.device.image)
             if td:
@@ -199,9 +223,7 @@ class IslandDailyOrder(Island):
     def _click_position(self, x, y):
         """点击全屏坐标 (x, y)。"""
         click_area = (x, y, x, y)
-        from module.base.button import Button
-        btn = Button(area=click_area, color=(), button=click_area,
-                     file={'cn': '', 'en': '', 'jp': '', 'tw': ''})
+        btn = self._area_button(click_area, name='DAILY_ORDER_TEMP_CLICK')
         self.device.click(btn)
         self.device.sleep(0.5)
 
@@ -539,15 +561,16 @@ class IslandDailyOrder(Island):
             tuple | None: (match_x, match_y, tw, th) 全屏左上角坐标+宽高，失败返回 None
         """
         region = self.image_crop(self.LEFT_PANEL_AREA, copy=False)
-        import cv2
-        res = cv2.matchTemplate(region, template.image, cv2.TM_CCOEFF_NORMED)
-        _, sim, _, point = cv2.minMaxLoc(res)
-        if sim > similarity:
-            th, tw = template.image.shape[:2]
-            match_x = point[0] + self.LEFT_PANEL_AREA[0]
-            match_y = point[1] + self.LEFT_PANEL_AREA[1]
-            return (match_x, match_y, tw, th)
-        return None
+        matches = template.match_multi(
+            region, similarity=similarity, threshold=5,
+            name='daily_order_urgent_match'
+        )
+        if not matches:
+            return None
+
+        button = matches[0].move(self.LEFT_PANEL_AREA[:2])
+        x1, y1, x2, y2 = button.area
+        return (x1, y1, x2 - x1, y2 - y1)
 
     def _template_click_first(self, template, similarity=0.85):
         """点击左侧面板中第一个匹配到的模板位置，返回匹配位置信息。"""
