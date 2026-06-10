@@ -71,3 +71,9 @@ index = [
 ]
 index-url = "https://pypi.org/simple/"
 package = false
+
+[tool.ruff.lint]
+ignore = [
+    "F403",
+    "F405",
+]
