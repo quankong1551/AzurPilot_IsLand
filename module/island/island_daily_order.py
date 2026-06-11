@@ -1,10 +1,11 @@
 from module.island.island import Island
+import module.island_daily_order.assets as daily_order_assets
 from module.island_daily_order.assets import *
 from module.island.assets import ISLAND_BACK, ISLAND_GET, ISLAND_CLICK_SAFE_AREA
 from module.base.button import Button
 from module.ui.page import page_island_phone
 from module.logger import logger
-from module.ocr.ocr import Duration, Ocr
+from module.ocr.ocr import DigitCounter, Duration
 from datetime import datetime, timedelta
 
 class IslandDailyOrder(Island):
@@ -43,14 +44,16 @@ class IslandDailyOrder(Island):
     )
 
     # 左侧页面图标检测区域
-    LEFT_PANEL_AREA = (60, 60, 832, 560)
+    LEFT_PANEL_AREA = (60, 60, 832, 580)
 
     # 冷却时间 OCR 区域相对于紧急模板匹配左上角的偏移 (x1, y1, x2, y2)
     URGENT_COOLDOWN_OFFSET = (-54, 120, 0, 113)
     DEFAULT_URGENT_REFRESH_TIME = datetime(2020, 1, 1, 0, 0)
+    URGENT_TOTAL_COUNT = 15
     FAST_POPUP_CHECK_INTERVAL = 0.5
     REWARD_POPUP_CHECK_INTERVAL = 2
     REWARD_POPUP_CHECK_LIMIT = 5
+    URGENT_TEMPLATE_PREFIX = 'TEMPLATE_DAILY_ORDER_URGENT'
 
     def run(self):
         logger.hr('Island Daily Order Run', level=1)
@@ -63,8 +66,6 @@ class IslandDailyOrder(Island):
         urgent_remaining = self._ocr_urgent_remaining()
         if urgent_remaining is None:
             logger.warning('本周剩余紧急委托次数 OCR 失败，继续保留紧急委托检测')
-        else:
-            logger.info(f'本周剩余紧急委托次数: {urgent_remaining}')
         if urgent_remaining == 0:
             next_monday = self._next_weekday(0)
             self.config.IslandDailyOrder_UrgentDetectRefreshTime = next_monday
@@ -89,29 +90,24 @@ class IslandDailyOrder(Island):
         return Button(area=area, color=(), button=area, name=name)
 
     def _ocr_urgent_remaining(self):
-        ocr = Ocr(
+        ocr = DigitCounter(
             self.OCR_URGENT_REMAINING,
             letter=(255, 255, 255),
             threshold=200,
-            alphabet='0123456789IDSB',
             name='urgent_remaining'
         )
         try:
-            result = ocr.ocr(self.device.image)
+            current, _, total = ocr.ocr(self.device.image)
         except (ValueError, TypeError):
             logger.warning('本周剩余紧急委托次数 OCR 异常')
             return None
 
-        result = str(result).strip().replace('I', '1').replace('D', '0')
-        result = result.replace('S', '5').replace('B', '8')
-        if not result:
-            logger.warning('本周剩余紧急委托次数 OCR 为空')
+        if total != self.URGENT_TOTAL_COUNT:
+            logger.warning(f'本周剩余紧急委托次数 OCR 总次数无效: {current}/{total}')
             return None
-        try:
-            return int(result)
-        except ValueError:
-            logger.warning(f'本周剩余紧急委托次数 OCR 结果无效: {result}')
-            return None
+
+        logger.info(f'本周剩余紧急委托次数: {current}/{total}')
+        return current
 
     def _ocr_cooldown_seconds(self, area=None):
         """
@@ -349,11 +345,9 @@ class IslandDailyOrder(Island):
             return 'next'
 
         # 检测紧急图标，模板漏检时使用固定位置按钮兜底。
-        urgent_match = None
-        if self._template_appears(TEMPLATE_DAILY_ORDER_URGENT):
+        urgent_match = self._template_click_urgent()
+        if urgent_match:
             logger.info('检测到紧急委托')
-            # 先获取匹配位置再点击，用于后续 OCR 偏移计算
-            urgent_match = self._template_click_first(TEMPLATE_DAILY_ORDER_URGENT)
         elif self.appear_then_click(DAILY_ORDER_URGENT_SPECIAL_CHECK, interval=2):
             logger.info('通过固定位置检测到紧急委托')
         else:
@@ -553,6 +547,29 @@ class IslandDailyOrder(Island):
 
     # ==================== 辅助方法 ====================
 
+    @classmethod
+    def _urgent_template_sort_key(cls, item):
+        name, _ = item
+        if name == cls.URGENT_TEMPLATE_PREFIX:
+            return 0
+        suffix = name.removeprefix(cls.URGENT_TEMPLATE_PREFIX + '_')
+        return int(suffix) if suffix.isdigit() else 999
+
+    @classmethod
+    def _urgent_templates(cls):
+        """获取所有紧急委托模板，支持 TEMPLATE_DAILY_ORDER_URGENT_2 等编号扩展。"""
+        templates = []
+        for name, template in vars(daily_order_assets).items():
+            if name == cls.URGENT_TEMPLATE_PREFIX:
+                templates.append((name, template))
+                continue
+            if not name.startswith(cls.URGENT_TEMPLATE_PREFIX + '_'):
+                continue
+            suffix = name.removeprefix(cls.URGENT_TEMPLATE_PREFIX + '_')
+            if suffix.isdigit():
+                templates.append((name, template))
+        return sorted(templates, key=cls._urgent_template_sort_key)
+
     def _template_match_urgent(self, template, similarity=0.80):
         """
         获取紧急模板在左侧面板中的匹配位置及尺寸。
@@ -572,10 +589,13 @@ class IslandDailyOrder(Island):
         x1, y1, x2, y2 = button.area
         return (x1, y1, x2 - x1, y2 - y1)
 
-    def _template_click_first(self, template, similarity=0.80):
-        """点击左侧面板中第一个匹配到的模板位置，返回匹配位置信息。"""
-        match = self._template_match_urgent(template, similarity=similarity)
-        if match:
+    def _template_click_urgent(self, similarity=0.80):
+        """点击左侧面板中第一个匹配到的紧急模板，返回匹配位置信息。"""
+        for name, template in self._urgent_templates():
+            match = self._template_match_urgent(template, similarity=similarity)
+            if not match:
+                continue
+            logger.info(f'紧急委托模板匹配: {name}')
             mx, my, tw, th = match
             self._click_position(mx + tw // 2, my + th // 2)
             return match
@@ -677,11 +697,11 @@ class IslandDailyOrder(Island):
         for slot_index, slot_area in enumerate(self.ITEM_SLOT_AREAS):
             slot_image = self.image_crop(slot_area, copy=False)
             if reject_cheese and \
-                    TEMPLATE_CHEESE.match(slot_image, similarity=0.85):
+                    TEMPLATE_CHEESE.match(slot_image, similarity=0.80):
                 logger.info(f'格子 {slot_index + 1} 检测到芝士')
                 return True
             if reject_tofu and \
-                    TEMPLATE_TOFU.match(slot_image, similarity=0.85):
+                    TEMPLATE_TOFU.match(slot_image, similarity=0.80):
                 logger.info(f'格子 {slot_index + 1} 检测到豆腐')
                 return True
         return False
