@@ -29,8 +29,7 @@ from PIL import Image
 TASKS = [
     # ("./assets/cn/island_daily_order/TEMPLATE_CHEESE.png", (905,335,950,380)),
     # ("./assets/cn/island_daily_order/TEMPLATE_TOFU.png", (905,255,950,300)),
-    ("./assets/cn/island_daily_order/LLL.BUTTON.png", (800, 81, 830, 108)),
-    ("./assets/cn/island_daily_order/TTT.BUTTON.png", (800, 81, 830, 108)),
+    ("./assets/cn/island_cargo_preparation/CARGO_PREPARATION_EMPTY_REPLACE.png", (704, 212, 864, 232)),
 ]
 
 

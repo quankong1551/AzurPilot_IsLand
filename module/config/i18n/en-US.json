@@ -338,6 +338,10 @@
       "name": "Task.IslandAirDrop.name",
       "help": "Task.IslandAirDrop.help"
     },
+    "IslandCargoPreparation": {
+      "name": "Task.IslandCargoPreparation.name",
+      "help": "Task.IslandCargoPreparation.help"
+    },
     "IslandDailyOrder": {
       "name": "Daily Order",
       "help": "Enter the daily order interface from the island phone page, automatically detect order types (Urgent/Challenge/Easy), deliver or reject based on item conditions. \"Standard\" type orders are not supported."
@@ -4584,6 +4588,16 @@
     "UrgentDetectRefreshTime": {
       "name": "Urgent Detect Refresh Time",
       "help": "Cooldown time for urgent order detection. Skip urgent order detection before this time. Format: YYYY-MM-DD HH:mm:ss"
+    }
+  },
+  "IslandCargoPreparation": {
+    "_info": {
+      "name": "IslandCargoPreparation._info.name",
+      "help": "IslandCargoPreparation._info.help"
+    },
+    "Blacklist": {
+      "name": "IslandCargoPreparation.Blacklist.name",
+      "help": "IslandCargoPreparation.Blacklist.help"
     }
   },
   "IslandBusinessShop1": {

@@ -120,6 +120,7 @@
       "IslandManufacture",
       "IslandDailyGather",
       "IslandAirDrop",
+      "IslandCargoPreparation",
       "IslandDailyOrder"
     ]
   },

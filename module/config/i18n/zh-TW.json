@@ -338,6 +338,10 @@
       "name": "Task.IslandAirDrop.name",
       "help": "Task.IslandAirDrop.help"
     },
+    "IslandCargoPreparation": {
+      "name": "Task.IslandCargoPreparation.name",
+      "help": "Task.IslandCargoPreparation.help"
+    },
     "IslandDailyOrder": {
       "name": "Task.IslandDailyOrder.name",
       "help": "Task.IslandDailyOrder.help"
@@ -4584,6 +4588,16 @@
     "UrgentDetectRefreshTime": {
       "name": "IslandDailyOrder.UrgentDetectRefreshTime.name",
       "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
+    }
+  },
+  "IslandCargoPreparation": {
+    "_info": {
+      "name": "IslandCargoPreparation._info.name",
+      "help": "IslandCargoPreparation._info.help"
+    },
+    "Blacklist": {
+      "name": "IslandCargoPreparation.Blacklist.name",
+      "help": "IslandCargoPreparation.Blacklist.help"
     }
   },
   "IslandBusinessShop1": {
