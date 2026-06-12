@@ -346,6 +346,10 @@
       "name": "Daily Order",
       "help": "Enter the daily order interface from the island phone page, automatically detect order types (Urgent/Challenge/Easy), deliver or reject based on item conditions. \"Standard\" type orders are not supported."
     },
+    "IslandPearlSell": {
+      "name": "Task.IslandPearlSell.name",
+      "help": "Task.IslandPearlSell.help"
+    },
     "Daemon": {
       "name": "Semi-Auto Click",
       "help": ""
@@ -4588,6 +4592,20 @@
     "UrgentDetectRefreshTime": {
       "name": "Urgent Detect Refresh Time",
       "help": "Cooldown time for urgent order detection. Skip urgent order detection before this time. Format: YYYY-MM-DD HH:mm:ss"
+    }
+  },
+  "IslandPearlSell": {
+    "_info": {
+      "name": "IslandPearlSell._info.name",
+      "help": "IslandPearlSell._info.help"
+    },
+    "BuyPrice": {
+      "name": "IslandPearlSell.BuyPrice.name",
+      "help": "IslandPearlSell.BuyPrice.help"
+    },
+    "SellPrice": {
+      "name": "IslandPearlSell.SellPrice.name",
+      "help": "IslandPearlSell.SellPrice.help"
     }
   },
   "IslandCargoPreparation": {

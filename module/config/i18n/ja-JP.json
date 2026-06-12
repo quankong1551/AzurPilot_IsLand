@@ -346,6 +346,10 @@
       "name": "Task.IslandDailyOrder.name",
       "help": "Task.IslandDailyOrder.help"
     },
+    "IslandPearlSell": {
+      "name": "Task.IslandPearlSell.name",
+      "help": "Task.IslandPearlSell.help"
+    },
     "Daemon": {
       "name": "半自動クリック",
       "help": ""
@@ -4588,6 +4592,20 @@
     "UrgentDetectRefreshTime": {
       "name": "IslandDailyOrder.UrgentDetectRefreshTime.name",
       "help": "IslandDailyOrder.UrgentDetectRefreshTime.help"
+    }
+  },
+  "IslandPearlSell": {
+    "_info": {
+      "name": "IslandPearlSell._info.name",
+      "help": "IslandPearlSell._info.help"
+    },
+    "BuyPrice": {
+      "name": "IslandPearlSell.BuyPrice.name",
+      "help": "IslandPearlSell.BuyPrice.help"
+    },
+    "SellPrice": {
+      "name": "IslandPearlSell.SellPrice.name",
+      "help": "IslandPearlSell.SellPrice.help"
     }
   },
   "IslandCargoPreparation": {
