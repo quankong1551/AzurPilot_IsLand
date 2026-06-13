@@ -233,6 +233,7 @@ class IslandPearlSell(Island):
 
         sell_price = self.ocr_pearl_price(kind="sell")
         if sell_price is None:
+            self.back_to_pearl_shop_or_map()
             self._delay_to_next_day_1am("珍珠售卖价格 OCR 失败")
             return self.PHASE_DELAYED
 
@@ -267,6 +268,8 @@ class IslandPearlSell(Island):
             if in_friend_island:
                 self.back_to_pearl_shop_or_map()
                 self.exit_friend_island()
+            else:
+                self.back_to_pearl_shop_or_map()
             self._delay_to_next_day_1am("珍珠售卖未完成")
             return self.PHASE_DELAYED
         self.back_to_pearl_shop_or_map()
@@ -666,10 +669,6 @@ class IslandPearlSell(Island):
             return True
         return False
 
-    @staticmethod
-    def _is_default_datetime(value):
-        return value == datetime(2020, 1, 1, 0, 0)
-
     def _refresh_due(self, now=None):
         """检查是否到了每日价格刷新时间。"""
         if not self.config.IslandPearlSell_DailyPriceRefresh:
@@ -688,16 +687,14 @@ class IslandPearlSell(Island):
         return now < next_trade
 
     def _get_next_pearl_trade_time(self, now=None):
-        """获取配置的下次采购售卖执行时间，清空则本次立即执行。"""
-        now = now or datetime.now().replace(microsecond=0)
         value = self.config.IslandPearlSell_NextPearlTradeTime
         if value in [None, ""]:
-            return now
+            return now or datetime.now().replace(microsecond=0)
         return value
 
     def _get_buy_next_run(self):
         value = self.config.IslandPearlSell_BuyNextRun
-        if value in [None, ""] or self._is_default_datetime(value):
+        if value in [None, ""]:
             return None
         return value
 
