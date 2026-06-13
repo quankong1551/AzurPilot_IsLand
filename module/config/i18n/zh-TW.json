@@ -4574,6 +4574,10 @@
     "LastSteal": {
       "name": "IslandAirDrop.LastSteal.name",
       "help": "IslandAirDrop.LastSteal.help"
+    },
+    "VisitOtherIsland": {
+      "name": "IslandAirDrop.VisitOtherIsland.name",
+      "help": "IslandAirDrop.VisitOtherIsland.help"
     }
   },
   "IslandDailyOrder": {
