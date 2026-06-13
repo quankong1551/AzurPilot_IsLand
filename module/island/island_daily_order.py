@@ -54,6 +54,7 @@ class IslandDailyOrder(Island):
     REWARD_POPUP_CHECK_INTERVAL = 2
     REWARD_POPUP_CHECK_LIMIT = 5
     URGENT_TEMPLATE_PREFIX = 'TEMPLATE_DAILY_ORDER_URGENT'
+    _urgent_template_cache = None
 
     def run(self):
         logger.hr('Island Daily Order Run', level=1)
@@ -66,7 +67,7 @@ class IslandDailyOrder(Island):
         urgent_remaining = self._ocr_urgent_remaining()
         if urgent_remaining is None:
             logger.warning('本周剩余紧急委托次数 OCR 失败，继续保留紧急委托检测')
-        if urgent_remaining == 0:
+        elif urgent_remaining == 0:
             next_monday = self._next_weekday(0)
             self.config.IslandDailyOrder_UrgentDetectRefreshTime = next_monday
             logger.info(f'紧急委托次数已用尽，下次检测: {next_monday}')
@@ -558,6 +559,9 @@ class IslandDailyOrder(Island):
     @classmethod
     def _urgent_templates(cls):
         """获取所有紧急委托模板，支持 TEMPLATE_DAILY_ORDER_URGENT_2 等编号扩展。"""
+        if cls._urgent_template_cache is not None:
+            return cls._urgent_template_cache
+
         templates = []
         for name, template in vars(daily_order_assets).items():
             if name == cls.URGENT_TEMPLATE_PREFIX:
@@ -568,7 +572,8 @@ class IslandDailyOrder(Island):
             suffix = name.removeprefix(cls.URGENT_TEMPLATE_PREFIX + '_')
             if suffix.isdigit():
                 templates.append((name, template))
-        return sorted(templates, key=cls._urgent_template_sort_key)
+        cls._urgent_template_cache = tuple(sorted(templates, key=cls._urgent_template_sort_key))
+        return cls._urgent_template_cache
 
     def _template_match_urgent(self, template, similarity=0.80):
         """

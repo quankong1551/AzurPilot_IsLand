@@ -144,8 +144,8 @@ class IslandPearlSell(Island):
             return self.PHASE_SKIPPED, None
 
         in_friend_island = False
-        if home_price != buy_price_limit:
-            logger.info(f'本岛价格 {home_price} 不等于采购价 {buy_price_limit}，查找好友低价')
+        if home_price > buy_price_limit:
+            logger.info(f'本岛价格 {home_price} 高于采购价 {buy_price_limit}，查找好友低价')
             self._rank_visit_target_selected = False
             if not self.visit_friend_by_rank(mode='buy', threshold=buy_price_limit):
                 self.back_to_pearl_shop_or_map()
@@ -179,6 +179,13 @@ class IslandPearlSell(Island):
             return self.PHASE_SKIPPED, None
 
         purchasable = self.ocr_weekly_purchase_count()
+        if purchasable is None:
+            logger.warning('本周可采购数量 OCR 失败，仅推迟到下一天')
+            self.back_to_pearl_shop_or_map()
+            if in_friend_island:
+                self.exit_friend_island()
+            self._delay_buy_to_next_day_1am('本周可采购数量 OCR 失败')
+            return self.PHASE_SKIPPED, None
         if purchasable <= 0:
             logger.info(f'本周可采购数量为 {purchasable}，跳过采购')
             self._purchase_quota_exhausted = True
@@ -190,6 +197,7 @@ class IslandPearlSell(Island):
 
         if not self.trade_pearl(action='buy', count=purchasable):
             if in_friend_island:
+                self.back_to_pearl_shop_or_map()
                 self.exit_friend_island()
             else:
                 self.back_to_pearl_shop_or_map()
@@ -229,15 +237,18 @@ class IslandPearlSell(Island):
         if sell_price < sell_price_limit:
             logger.info(f'本岛价格 {sell_price} 低于售卖价 {sell_price_limit}，查找好友高价')
             if not self.visit_friend_by_rank(mode='sell', threshold=sell_price_limit):
+                self.back_to_pearl_shop_or_map()
                 self._delay_to_next_day_1am('好友排名未找到高于售卖价的目标')
                 return self.PHASE_DELAYED
             in_friend_island = True
             if not self._goto_pearl_shop_at('assembly', use_map=False):
+                self.exit_friend_island()
                 self._delay_to_next_day_1am('进入好友岛珍珠商店失败')
                 return self.PHASE_DELAYED
             current_pearl = self.ocr_current_pearl_count()
             if current_pearl <= 0:
                 logger.info(f'好友岛当前珍珠数量为 {current_pearl}，跳过售卖')
+                self.back_to_pearl_shop_or_map()
                 self.exit_friend_island()
                 if self._purchase_quota_exhausted:
                     logger.info('本周采购配额已用尽且无珍珠可售，直接等待下周')
@@ -249,6 +260,7 @@ class IslandPearlSell(Island):
 
         if not self.trade_pearl(action='sell', count=current_pearl):
             if in_friend_island:
+                self.back_to_pearl_shop_or_map()
                 self.exit_friend_island()
             self._delay_to_next_day_1am('珍珠售卖未完成')
             return self.PHASE_DELAYED
@@ -413,9 +425,9 @@ class IslandPearlSell(Island):
         valid = []
         for item in candidates:
             price = item['price']
-            if mode == 'buy' and price < threshold:
+            if mode == 'buy' and price <= threshold:
                 valid.append(item)
-            elif mode == 'sell' and price > threshold:
+            elif mode == 'sell' and price >= threshold:
                 valid.append(item)
 
         if not valid:
@@ -510,13 +522,13 @@ class IslandPearlSell(Island):
             OCR_ISLAND_PEARL_WEEKLY_PURCHASE,
             name='pearl_weekly_purchase'
         )
-        result = re.search(r'(\d+)\s*/\s*200', text)
+        result = re.search(r'(\d+)\s*/\s*\d+', text)
         if result:
             count = int(result.group(1))
             logger.info(f'本周可采购数量: {count}/200')
             return count
         logger.warning(f'本周可采购数量 OCR 无效: {text}')
-        return 0
+        return None
 
     def ocr_current_pearl_count(self):
         """OCR 当前持有珍珠数量。"""
@@ -562,7 +574,8 @@ class IslandPearlSell(Island):
             return False
 
         self.add_ten_until_trade_count(count)
-        self.confirm_trade()
+        if not self.confirm_trade():
+            return False
         return True
 
     def add_ten_until_trade_count(self, target):
