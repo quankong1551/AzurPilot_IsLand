@@ -50,14 +50,6 @@ BUSINESS_BOOSTED_PRODUCT_AREA = Button(
     file={'cn': '', 'en': '', 'jp': '', 'tw': ''}
 )
 
-# 加成图标特征模板。需要后续通过按钮工具生成对应资源文件。
-TEMPLATE_BUSINESS_BOOST_ICON = Template(file={
-    'cn': './assets/cn/island_business/TEMPLATE_BUSINESS_BOOST_ICON.png',
-    'en': './assets/cn/island_business/TEMPLATE_BUSINESS_BOOST_ICON.png',
-    'jp': './assets/cn/island_business/TEMPLATE_BUSINESS_BOOST_ICON.png',
-    'tw': './assets/cn/island_business/TEMPLATE_BUSINESS_BOOST_ICON.png',
-})
-
 # ==================== 商店索引到名称的映射 ====================
 SHOP_INDEX_MAP = {
     1: '有鱼餐馆',
@@ -304,24 +296,19 @@ class IslandBusiness(Island):
     def _get_seasonal_warehouse_template(self, product_name):
         """
         获取季节餐品在仓库中的识别模板。
-        使用有鱼餐馆产品的 TEMPLATE 进行仓库匹配。
-
-        注意：当前使用餐品图标作为仓库识别模板，实际部署时需要替换为
-        仓库中对应物品的专用模板截图。
+        直接复用已有餐品模板（在有鱼餐馆/餐厅模块中已定义）。
         """
-        # 从 shop_products 找到对应餐品的 button，构建仓库模板路径
-        for shop_name, products in self.shop_products.items():
-            for p in products:
-                if p['name'] == product_name:
-                    btn = p.get('button')
-                    if btn and btn.file:
-                        fp = btn.file
-                        dir_name = os.path.dirname(fp)
-                        base_name = os.path.basename(fp)
-                        template_path = os.path.join(dir_name, f'TEMPLATE_{base_name}')
-                        return Template(file={'cn': template_path, 'en': template_path,
-                                              'jp': template_path, 'tw': template_path})
-        return None
+        # 仓库专用模板映射，直接使用已有模板文件路径
+        # 使用 Template 直接引用文件，避免循环导入
+        warehouse_files = {
+            'amaranth_rice_ball': Template(file={
+                'cn': './assets/cn/island_restaurant/TEMPLATE_AMARANTH_RICE_BALL.png',
+                'en': './assets/cn/island_restaurant/TEMPLATE_AMARANTH_RICE_BALL.png',
+                'jp': './assets/cn/island_restaurant/TEMPLATE_AMARANTH_RICE_BALL.png',
+                'tw': './assets/cn/island_restaurant/TEMPLATE_AMARANTH_RICE_BALL.png',
+            }),
+        }
+        return warehouse_files.get(product_name)
 
     def _find_product_by_name(self, shop_name, product_name):
         """在指定商店的餐品列表中按名称查找产品"""
@@ -332,15 +319,16 @@ class IslandBusiness(Island):
 
     def goto_warehouse_within_postmanage(self):
         """
-        从经营页签导航到仓库页面。
-        使用已有的 warehouse_filter 能力进入仓库。
+        从经营页签导航到仓库页面，并筛选有鱼餐馆的餐品。
+        使用已有的 warehouse_filter 能力进入仓库并设置分类筛选。
         """
         self.ui_goto(page_island_postmanage, get_ship=False)
         self.device.sleep(1)
         self.device.screenshot()
 
-        # 进入仓库筛选页面（通过已有的 warehouse 方法）
-        self.goto_warehouse()
+        # 使用 warehouse_filter 进入仓库并筛选有鱼餐馆产品
+        # product = 餐品分类, restaurant = 有鱼餐馆来源
+        self.warehouse_filter('product', 'restaurant')
         self.device.sleep(1)
 
     def goto_warehouse(self):
@@ -973,7 +961,7 @@ class IslandBusiness(Island):
             dict: {'label_rect': (x1,y1,x2,y2), 'button_rect': (x1,y1,x2,y2), 'similarity': float}
                   或 None（未找到）
         """
-        template = self.SHOP_TEMPLATE_MAP.get(shop_name)
+        template = self.SHOP_LIST_TEMPLATE_MAP.get(shop_name)
         if not template:
             return None
 
@@ -1072,7 +1060,7 @@ class IslandBusiness(Island):
         logger.info("向下滑动商店列表")
         self.device.swipe_vector(
             vector=(0, -450),
-            box=(688, 69, 725, 656),
+            box=(688, 120, 725, 656),
             name="BusinessListSwipe"
         )
         self.device.sleep(1.0)
@@ -1082,7 +1070,7 @@ class IslandBusiness(Island):
         logger.info("向上滑动回顶部")
         self.device.swipe_vector(
             vector=(0, 900),
-            box=(688, 69, 725, 656),
+            box=(688, 120, 725, 656),
             name="BusinessListSwipeTop"
         )
         self.device.sleep(1.0)
@@ -1144,6 +1132,7 @@ class IslandBusiness(Island):
         self._has_seen_blue = False
         total_darkblue_count = 0  # 本批次内深蓝商店计数
         processed_shop_names = set()  # 已处理过的商店（进入或领取过）
+        seen_shop_names = set()  # 跨滚动位置累积看到过的商店（用于判断是否已遍历全部）
         max_scrolls = 8  # 最大滑动次数
 
         # 先回到列表顶部
@@ -1160,6 +1149,10 @@ class IslandBusiness(Island):
                     continue
                 else:
                     break
+
+            # 累积当前可见商店到 seen_shop_names
+            for r in visible_shops:
+                seen_shop_names.add(r['shop']['name'])
 
             logger.info(f"视野中可见的批次商店: {[r['shop']['name'] + '(' + r['status'] + ')' for r in visible_shops]}")
 
@@ -1234,9 +1227,9 @@ class IslandBusiness(Island):
 
             else:
                 # 没有 break（所有可见商店都遍历完了，没有需要处理的）
-                if len(visible_shops) >= 3:
-                    # 视野中还有商店但都是 darkblue/gray，可能下面还有
-                    logger.info("当前视野中无待处理商店，尝试向下滑动")
+                if len(seen_shop_names) < len(batch_shops):
+                    # 累积看到的商店数少于批次总数，说明还有商店未找到，继续滚动
+                    logger.info(f"累积看到 {len(seen_shop_names)}/{len(batch_shops)} 家商店，还有未找到的商店，尝试向下滑动")
                     if scroll_attempt < max_scrolls - 1:
                         self._scroll_business_down()
                         self.device.sleep(0.5)
@@ -1244,8 +1237,8 @@ class IslandBusiness(Island):
                     else:
                         break
                 else:
-                    # 视野中商店少，说明已到底部
-                    logger.info("已到达列表底部")
+                    # 所有批次商店都已被看到过
+                    logger.info(f"已遍历全部 {len(batch_shops)} 家商店，无待处理商店")
                     break
 
         # ========== 退出判断 ==========
@@ -1268,9 +1261,12 @@ class IslandBusiness(Island):
             return
 
         # 所有商店都是灰色不可经营
-        logger.info("批次内所有商店不可经营，延后至明天0点")
-        tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        self.config.task_delay(target=tomorrow)
+        # 只有当前是第二批，或没有第二批时，才设置延后到明天0点
+        # 第一批全 gray 时让 _run_batch_mode 继续处理第二批
+        if batch_shops == self._get_batch2_shops() or not self._get_batch2_shops():
+            logger.info("批次内所有商店不可经营，延后至明天0点")
+            tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            self.config.task_delay(target=tomorrow)
 
     def _batch_is_still_running(self, batch_shops):
         """
@@ -1330,12 +1326,23 @@ class IslandBusiness(Island):
             self.config.task_delay(target=next_time)
 
     # 商店标签到对应 Template 的映射
+    # TEMPLATE_BUSINESS_SHOP_* 是进入商店后显示的商店名称标签（店内用，120x35）
+    # TEMPLATE_BUSINESS_LIST_SHOP_* 是经营列表页的商店标签（列表页用，107x26）
     SHOP_TEMPLATE_MAP = {
         '有鱼餐馆': TEMPLATE_BUSINESS_SHOP_FISH_RESTAURANT,
         '白熊饮品': TEMPLATE_BUSINESS_SHOP_TEAHOUSE,
         '啾啾简餐': TEMPLATE_BUSINESS_SHOP_JUU_EATERY,
         '乌鱼烤肉': TEMPLATE_BUSINESS_SHOP_GRILL,
         '啾咖啡': TEMPLATE_BUSINESS_SHOP_JUU_COFFEE,
+    }
+
+    # 经营列表页商店标签模板映射（用于 _find_shop_on_screen 列表页匹配）
+    SHOP_LIST_TEMPLATE_MAP = {
+        '有鱼餐馆': TEMPLATE_BUSINESS_LIST_SHOP_FISH_RESTAURANT,
+        '白熊饮品': TEMPLATE_BUSINESS_LIST_SHOP_TEAHOUSE,
+        '啾啾简餐': TEMPLATE_BUSINESS_LIST_SHOP_JUU_EATERY,
+        '乌鱼烤肉': TEMPLATE_BUSINESS_LIST_SHOP_GRILL,
+        '啾咖啡': TEMPLATE_BUSINESS_LIST_SHOP_JUU_COFFEE,
     }
 
     def _detect_current_shop(self):

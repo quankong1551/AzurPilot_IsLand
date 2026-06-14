@@ -3358,8 +3358,8 @@
   },
   "IslandOrchard": {
     "_info": {
-      "name": "IslandOrchard._info.name",
-      "help": "IslandOrchard._info.help"
+      "name": "Orchard",
+      "help": "The warehouse only recognizes two rows. Please clean up regularly."
     },
     "Positions": {
       "name": "IslandOrchard.Positions.name",
@@ -4674,29 +4674,69 @@
       "help": "Replace seasonal dish when stock is below this number"
     }
   },
+  "IslandBusiness": {
+    "_info": {
+      "name": "Business",
+      "help": "Manage island shop business operations"
+    },
+    "BatchEnabled": {
+      "name": "Enable Batch",
+      "help": "Split 5 shops into 2 batches to avoid staff conflicts",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "Batch1Shops": {
+      "name": "Batch 1 Shops",
+      "help": "Select shops for the first batch",
+      "1": "Fish Restaurant",
+      "2": "Teahouse",
+      "3": "Juu Eatery",
+      "4": "Grill",
+      "5": "Juu Coffee"
+    },
+    "Batch2Shops": {
+      "name": "Batch 2 Shops",
+      "help": "Select shops for the second batch",
+      "1": "Fish Restaurant",
+      "2": "Teahouse",
+      "3": "Juu Eatery",
+      "4": "Grill",
+      "5": "Juu Coffee"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "Seasonal Replace",
+      "help": "Auto-replace seasonal dishes when stock is low",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "SeasonalThreshold": {
+      "name": "Seasonal Threshold",
+      "help": "Replace seasonal dish when stock is below this number"
+    }
+  },
   "IslandBusinessShop1": {
     "_info": {
-      "name": "IslandBusinessShop1._info.name",
-      "help": "IslandBusinessShop1._info.help"
+      "name": "Fish Restaurant",
+      "help": ""
     },
     "Char1": {
-      "name": "IslandBusinessShop1.Char1.name",
-      "help": "IslandBusinessShop1.Char1.help",
+      "name": "Character 1",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -4708,28 +4748,28 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Char2": {
-      "name": "IslandBusinessShop1.Char2.name",
-      "help": "IslandBusinessShop1.Char2.help",
+      "name": "Character 2",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -4741,13 +4781,13 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Product1": {
-      "name": "IslandBusinessShop1.Product1.name",
-      "help": "IslandBusinessShop1.Product1.help",
+      "name": "Product 1",
+      "help": "",
       "None": "None",
       "double_bamboo_shoots": "double_bamboo_shoots",
       "tofu_meat": "tofu_meat",
@@ -4757,8 +4797,8 @@
       "amaranth_rice_ball": "amaranth_rice_ball"
     },
     "Product2": {
-      "name": "IslandBusinessShop1.Product2.name",
-      "help": "IslandBusinessShop1.Product2.help",
+      "name": "Product 2",
+      "help": "",
       "None": "None",
       "double_bamboo_shoots": "double_bamboo_shoots",
       "tofu_meat": "tofu_meat",
@@ -4768,8 +4808,8 @@
       "amaranth_rice_ball": "amaranth_rice_ball"
     },
     "Product3": {
-      "name": "IslandBusinessShop1.Product3.name",
-      "help": "IslandBusinessShop1.Product3.help",
+      "name": "Product 3",
+      "help": "",
       "None": "None",
       "double_bamboo_shoots": "double_bamboo_shoots",
       "tofu_meat": "tofu_meat",
@@ -4779,8 +4819,8 @@
       "amaranth_rice_ball": "amaranth_rice_ball"
     },
     "Product4": {
-      "name": "IslandBusinessShop1.Product4.name",
-      "help": "IslandBusinessShop1.Product4.help",
+      "name": "Product 4",
+      "help": "",
       "None": "None",
       "double_bamboo_shoots": "double_bamboo_shoots",
       "tofu_meat": "tofu_meat",
@@ -4790,8 +4830,8 @@
       "amaranth_rice_ball": "amaranth_rice_ball"
     },
     "Product5": {
-      "name": "IslandBusinessShop1.Product5.name",
-      "help": "IslandBusinessShop1.Product5.help",
+      "name": "Product 5",
+      "help": "",
       "None": "None",
       "double_bamboo_shoots": "double_bamboo_shoots",
       "tofu_meat": "tofu_meat",
@@ -4811,34 +4851,45 @@
       "fo_tiao": "Fo Tiao",
       "amaranth_rice_ball": "Amaranth Rice Ball"
     },
+    "SeasonalFallback": {
+      "name": "Seasonal Fallback",
+      "help": "Fallback dish when seasonal dish stock is low",
+      "None": "None",
+      "double_bamboo_shoots": "Cold Bamboo Shoots",
+      "tofu_meat": "Mapo Tofu",
+      "tofu_combo": "Classic Tofu Combo",
+      "hearty_meal": "Hearty Meal Set",
+      "fo_tiao": "Buddha Jumps Over the Wall",
+      "amaranth_rice_ball": "Amaranth Rice Ball"
+    },
     "BoostReplaceFilter": {
       "name": "Boost Replace Filter",
-      "help": "Boosted product replacement rule"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
   "IslandBusinessShop2": {
     "_info": {
-      "name": "IslandBusinessShop2._info.name",
-      "help": "IslandBusinessShop2._info.help"
+      "name": "Polar Bear Drinks",
+      "help": ""
     },
     "Char1": {
-      "name": "IslandBusinessShop2.Char1.name",
-      "help": "IslandBusinessShop2.Char1.help",
+      "name": "Character 1",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -4850,28 +4901,28 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Char2": {
-      "name": "IslandBusinessShop2.Char2.name",
-      "help": "IslandBusinessShop2.Char2.help",
+      "name": "Character 2",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -4883,13 +4934,13 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Product1": {
-      "name": "IslandBusinessShop2.Product1.name",
-      "help": "IslandBusinessShop2.Product1.help",
+      "name": "Product 1",
+      "help": "",
       "None": "None",
       "spring_flower_tea": "spring_flower_tea",
       "strawberry_lemon": "strawberry_lemon",
@@ -4901,8 +4952,8 @@
       "watermelon_juice": "watermelon_juice"
     },
     "Product2": {
-      "name": "IslandBusinessShop2.Product2.name",
-      "help": "IslandBusinessShop2.Product2.help",
+      "name": "Product 2",
+      "help": "",
       "None": "None",
       "spring_flower_tea": "spring_flower_tea",
       "strawberry_lemon": "strawberry_lemon",
@@ -4914,8 +4965,8 @@
       "watermelon_juice": "watermelon_juice"
     },
     "Product3": {
-      "name": "IslandBusinessShop2.Product3.name",
-      "help": "IslandBusinessShop2.Product3.help",
+      "name": "Product 3",
+      "help": "",
       "None": "None",
       "spring_flower_tea": "spring_flower_tea",
       "strawberry_lemon": "strawberry_lemon",
@@ -4927,8 +4978,8 @@
       "watermelon_juice": "watermelon_juice"
     },
     "Product4": {
-      "name": "IslandBusinessShop2.Product4.name",
-      "help": "IslandBusinessShop2.Product4.help",
+      "name": "Product 4",
+      "help": "",
       "None": "None",
       "spring_flower_tea": "spring_flower_tea",
       "strawberry_lemon": "strawberry_lemon",
@@ -4940,46 +4991,46 @@
       "watermelon_juice": "watermelon_juice"
     },
     "Product5": {
-      "name": "IslandBusinessShop2.Product5.name",
-      "help": "IslandBusinessShop2.Product5.help",
+      "name": "Product 5",
+      "help": "",
       "None": "None",
-      "spring_flower_tea": "spring_flower_tea",
-      "strawberry_lemon": "strawberry_lemon",
-      "strawberry_honey": "strawberry_honey",
-      "floral_fruity": "floral_fruity",
-      "fruit_paradise": "fruit_paradise",
-      "lavender_tea": "lavender_tea",
-      "sunny_honey": "sunny_honey",
-      "watermelon_juice": "watermelon_juice"
+      "spring_flower_tea": "Spring Flower Tea",
+      "strawberry_lemon": "Strawberry Lemonade",
+      "strawberry_honey": "Strawberry Honey Smoothie",
+      "floral_fruity": "Floral Fruity",
+      "fruit_paradise": "Fruit Paradise",
+      "lavender_tea": "Lavender Tea",
+      "sunny_honey": "Sunny Honey",
+      "watermelon_juice": "Watermelon Juice"
     },
     "BoostReplaceFilter": {
       "name": "Boost Replace Filter",
-      "help": "Boosted product replacement rule"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
   "IslandBusinessShop3": {
     "_info": {
-      "name": "IslandBusinessShop3._info.name",
-      "help": "IslandBusinessShop3._info.help"
+      "name": "Juu Eatery",
+      "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "Char1": {
-      "name": "IslandBusinessShop3.Char1.name",
-      "help": "IslandBusinessShop3.Char1.help",
+      "name": "Character 1",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -4991,28 +5042,28 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Char2": {
-      "name": "IslandBusinessShop3.Char2.name",
-      "help": "IslandBusinessShop3.Char2.help",
+      "name": "Character 2",
+      "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -5024,13 +5075,13 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Product1": {
-      "name": "IslandBusinessShop3.Product1.name",
-      "help": "IslandBusinessShop3.Product1.help",
+      "name": "Product 1",
+      "help": "",
       "None": "None",
       "orchard_duo": "orchard_duo",
       "succulently_sweet": "succulently_sweet",
@@ -5039,8 +5090,8 @@
       "seafood_rice": "seafood_rice"
     },
     "Product2": {
-      "name": "IslandBusinessShop3.Product2.name",
-      "help": "IslandBusinessShop3.Product2.help",
+      "name": "Product 2",
+      "help": "",
       "None": "None",
       "orchard_duo": "orchard_duo",
       "succulently_sweet": "succulently_sweet",
@@ -5049,8 +5100,8 @@
       "seafood_rice": "seafood_rice"
     },
     "Product3": {
-      "name": "IslandBusinessShop3.Product3.name",
-      "help": "IslandBusinessShop3.Product3.help",
+      "name": "Product 3",
+      "help": "",
       "None": "None",
       "orchard_duo": "orchard_duo",
       "succulently_sweet": "succulently_sweet",
@@ -5059,8 +5110,8 @@
       "seafood_rice": "seafood_rice"
     },
     "Product4": {
-      "name": "IslandBusinessShop3.Product4.name",
-      "help": "IslandBusinessShop3.Product4.help",
+      "name": "Product 4",
+      "help": "",
       "None": "None",
       "orchard_duo": "orchard_duo",
       "succulently_sweet": "succulently_sweet",
@@ -5069,43 +5120,43 @@
       "seafood_rice": "seafood_rice"
     },
     "Product5": {
-      "name": "IslandBusinessShop3.Product5.name",
-      "help": "IslandBusinessShop3.Product5.help",
+      "name": "Product 5",
+      "help": "",
       "None": "None",
-      "orchard_duo": "orchard_duo",
-      "succulently_sweet": "succulently_sweet",
-      "berry_orange": "berry_orange",
-      "strawberry_charlotte": "strawberry_charlotte",
-      "seafood_rice": "seafood_rice"
+      "orchard_duo": "Orchard Duo",
+      "succulently_sweet": "Sweet Combo",
+      "berry_orange": "Berry Orange Dessert Set",
+      "strawberry_charlotte": "Strawberry Charlotte",
+      "seafood_rice": "Seafood Rice"
     },
     "BoostReplaceFilter": {
       "name": "Boost Replace Filter",
-      "help": "Boosted product replacement rule"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
   "IslandBusinessShop4": {
     "_info": {
       "name": "Squid BBQ",
-      "help": ""
+      "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "Char1": {
       "name": "Character 1",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -5117,28 +5168,28 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Char2": {
       "name": "Character 2",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -5150,88 +5201,88 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Product1": {
       "name": "Product 1",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Roasted Skewer",
-      "stir_fried_chicken": "Stir-fried Chicken",
+      "roasted_skewer": "Grilled Skewers",
+      "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
-      "carnival": "Carnival",
-      "double_energy": "Double Energy"
+      "carnival": "BBQ Carnival",
+      "double_energy": "Double Energy Combo"
     },
     "Product2": {
       "name": "Product 2",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Roasted Skewer",
-      "stir_fried_chicken": "Stir-fried Chicken",
+      "roasted_skewer": "Grilled Skewers",
+      "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
-      "carnival": "Carnival",
-      "double_energy": "Double Energy"
+      "carnival": "BBQ Carnival",
+      "double_energy": "Double Energy Combo"
     },
     "Product3": {
       "name": "Product 3",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Roasted Skewer",
-      "stir_fried_chicken": "Stir-fried Chicken",
+      "roasted_skewer": "Grilled Skewers",
+      "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
-      "carnival": "Carnival",
-      "double_energy": "Double Energy"
+      "carnival": "BBQ Carnival",
+      "double_energy": "Double Energy Combo"
     },
     "Product4": {
       "name": "Product 4",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Roasted Skewer",
-      "stir_fried_chicken": "Stir-fried Chicken",
+      "roasted_skewer": "Grilled Skewers",
+      "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
-      "carnival": "Carnival",
-      "double_energy": "Double Energy"
+      "carnival": "BBQ Carnival",
+      "double_energy": "Double Energy Combo"
     },
     "Product5": {
       "name": "Product 5",
       "help": "",
       "None": "None",
-      "roasted_skewer": "Roasted Skewer",
-      "stir_fried_chicken": "Stir-fried Chicken",
+      "roasted_skewer": "Grilled Skewers",
+      "stir_fried_chicken": "Stir-Fried Chicken",
       "steak_bowl": "Steak Bowl",
-      "carnival": "Carnival",
-      "double_energy": "Double Energy"
+      "carnival": "BBQ Carnival",
+      "double_energy": "Double Energy Combo"
     },
     "BoostReplaceFilter": {
       "name": "Boost Replace Filter",
-      "help": "Boosted product replacement rule"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
   "IslandBusinessShop5": {
     "_info": {
       "name": "Juu Coffee",
-      "help": ""
+      "help": "Meals are produced sequentially from 1 to 8. The production target is the Meal X quantity option. The next item is only executed after the previous one is fully satisfied. Later items will not affect the completion of earlier items during runtime."
     },
     "Char1": {
       "name": "Character 1",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -5243,28 +5294,28 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Char2": {
       "name": "Character 2",
       "help": "",
       "None": "None",
-      "WorkerJuu": "WorkerJuu",
+      "WorkerJuu": "Worker Juu",
       "Cheshire": "Cheshire",
-      "YingSwei": "YingSwei",
+      "YingSwei": "Ying Swei",
       "Saratoga": "Saratoga",
       "Akashi": "Akashi",
-      "NewJersey": "NewJersey",
+      "NewJersey": "New Jersey",
       "Tashkent": "Tashkent",
-      "LeMalin": "LeMalin",
+      "LeMalin": "Le Malin",
       "Shimakaze": "Shimakaze",
-      "Amagi_chan": "Amagi_chan",
+      "Amagi_chan": "Amagi-chan",
       "Unicorn": "Unicorn",
-      "ChaoHo": "ChaoHo",
-      "ChenHai": "ChenHai",
-      "WilliamDPorter": "WilliamDPorter",
+      "ChaoHo": "Chao Ho",
+      "ChenHai": "Chen Hai",
+      "WilliamDPorter": "William D. Porter",
       "Helena": "Helena",
       "Friedrich": "Friedrich",
       "Atago": "Atago",
@@ -5276,8 +5327,8 @@
       "Laffey": "Laffey",
       "Explorer": "Explorer",
       "Navigator": "Navigator",
-      "OceanCrosser": "OceanCrosser",
-      "FeiYun": "FeiYun",
+      "OceanCrosser": "Ocean Crosser",
+      "FeiYun": "Fei Yun",
       "Takao": "Takao"
     },
     "Product1": {
@@ -5285,9 +5336,9 @@
       "help": "",
       "None": "None",
       "cheese": "Cheese",
-      "strawberry_milkshake": "Strawberry Milkshake",
-      "morning_light": "Morning Light",
-      "wake_up_call": "Wake-up Call",
+      "strawberry_milkshake": "Strawberry Milk Tea",
+      "morning_light": "Morning Light Combo",
+      "wake_up_call": "Wake-Up Call Set",
       "fruity_fruitier": "Fruity Fruitier"
     },
     "Product2": {
@@ -5295,9 +5346,9 @@
       "help": "",
       "None": "None",
       "cheese": "Cheese",
-      "strawberry_milkshake": "Strawberry Milkshake",
-      "morning_light": "Morning Light",
-      "wake_up_call": "Wake-up Call",
+      "strawberry_milkshake": "Strawberry Milk Tea",
+      "morning_light": "Morning Light Combo",
+      "wake_up_call": "Wake-Up Call Set",
       "fruity_fruitier": "Fruity Fruitier"
     },
     "Product3": {
@@ -5305,9 +5356,9 @@
       "help": "",
       "None": "None",
       "cheese": "Cheese",
-      "strawberry_milkshake": "Strawberry Milkshake",
-      "morning_light": "Morning Light",
-      "wake_up_call": "Wake-up Call",
+      "strawberry_milkshake": "Strawberry Milk Tea",
+      "morning_light": "Morning Light Combo",
+      "wake_up_call": "Wake-Up Call Set",
       "fruity_fruitier": "Fruity Fruitier"
     },
     "Product4": {
@@ -5315,9 +5366,9 @@
       "help": "",
       "None": "None",
       "cheese": "Cheese",
-      "strawberry_milkshake": "Strawberry Milkshake",
-      "morning_light": "Morning Light",
-      "wake_up_call": "Wake-up Call",
+      "strawberry_milkshake": "Strawberry Milk Tea",
+      "morning_light": "Morning Light Combo",
+      "wake_up_call": "Wake-Up Call Set",
       "fruity_fruitier": "Fruity Fruitier"
     },
     "Product5": {
@@ -5325,14 +5376,14 @@
       "help": "",
       "None": "None",
       "cheese": "Cheese",
-      "strawberry_milkshake": "Strawberry Milkshake",
-      "morning_light": "Morning Light",
-      "wake_up_call": "Wake-up Call",
+      "strawberry_milkshake": "Strawberry Milk Tea",
+      "morning_light": "Morning Light Combo",
+      "wake_up_call": "Wake-Up Call Set",
       "fruity_fruitier": "Fruity Fruitier"
     },
     "BoostReplaceFilter": {
       "name": "Boost Replace Filter",
-      "help": "Boosted product replacement rule"
+      "help": "When multiple boosted products are detected, the first one in filter order is prioritized for replacement; the replacement slot is the last non-empty slot searched from Product5→1"
     }
   },
   "Daemon": {
