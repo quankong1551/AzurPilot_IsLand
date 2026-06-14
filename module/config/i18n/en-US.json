@@ -4634,6 +4634,46 @@
       "help": "IslandCargoPreparation.Blacklist.help"
     }
   },
+  "IslandBusiness": {
+    "_info": {
+      "name": "Business",
+      "help": "Manage island shop business operations"
+    },
+    "BatchEnabled": {
+      "name": "Enable Batch",
+      "help": "Split 5 shops into 2 batches to avoid staff conflicts",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "Batch1Shops": {
+      "name": "Batch 1 Shops",
+      "help": "Select shops for the first batch",
+      "1": "Fish Restaurant",
+      "2": "Teahouse",
+      "3": "Juu Eatery",
+      "4": "Grill",
+      "5": "Juu Coffee"
+    },
+    "Batch2Shops": {
+      "name": "Batch 2 Shops",
+      "help": "Select shops for the second batch",
+      "1": "Fish Restaurant",
+      "2": "Teahouse",
+      "3": "Juu Eatery",
+      "4": "Grill",
+      "5": "Juu Coffee"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "Seasonal Replace",
+      "help": "Auto-replace seasonal dishes when stock is low",
+      "True": "Enabled",
+      "False": "Disabled"
+    },
+    "SeasonalThreshold": {
+      "name": "Seasonal Threshold",
+      "help": "Replace seasonal dish when stock is below this number"
+    }
+  },
   "IslandBusinessShop1": {
     "_info": {
       "name": "IslandBusinessShop1._info.name",
@@ -4759,6 +4799,21 @@
       "hearty_meal": "hearty_meal",
       "fo_tiao": "fo_tiao",
       "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "SeasonalFallback": {
+      "name": "Seasonal Fallback",
+      "help": "Fallback dish when seasonal dish stock is low",
+      "None": "None",
+      "double_bamboo_shoots": "Double Bamboo Shoots",
+      "tofu_meat": "Tofu Meat",
+      "tofu_combo": "Tofu Combo",
+      "hearty_meal": "Hearty Meal",
+      "fo_tiao": "Fo Tiao",
+      "amaranth_rice_ball": "Amaranth Rice Ball"
+    },
+    "BoostReplaceFilter": {
+      "name": "Boost Replace Filter",
+      "help": "Boosted product replacement rule"
     }
   },
   "IslandBusinessShop2": {
@@ -4896,6 +4951,10 @@
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
       "watermelon_juice": "watermelon_juice"
+    },
+    "BoostReplaceFilter": {
+      "name": "Boost Replace Filter",
+      "help": "Boosted product replacement rule"
     }
   },
   "IslandBusinessShop3": {
@@ -5018,6 +5077,10 @@
       "berry_orange": "berry_orange",
       "strawberry_charlotte": "strawberry_charlotte",
       "seafood_rice": "seafood_rice"
+    },
+    "BoostReplaceFilter": {
+      "name": "Boost Replace Filter",
+      "help": "Boosted product replacement rule"
     }
   },
   "IslandBusinessShop4": {
@@ -5140,6 +5203,10 @@
       "steak_bowl": "Steak Bowl",
       "carnival": "Carnival",
       "double_energy": "Double Energy"
+    },
+    "BoostReplaceFilter": {
+      "name": "Boost Replace Filter",
+      "help": "Boosted product replacement rule"
     }
   },
   "IslandBusinessShop5": {
@@ -5262,6 +5329,10 @@
       "morning_light": "Morning Light",
       "wake_up_call": "Wake-up Call",
       "fruity_fruitier": "Fruity Fruitier"
+    },
+    "BoostReplaceFilter": {
+      "name": "Boost Replace Filter",
+      "help": "Boosted product replacement rule"
     }
   },
   "Daemon": {

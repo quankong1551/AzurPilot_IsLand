@@ -4634,6 +4634,46 @@
       "help": "IslandCargoPreparation.Blacklist.help"
     }
   },
+  "IslandBusiness": {
+    "_info": {
+      "name": "経営モジュール",
+      "help": "島の店舗経営を管理します"
+    },
+    "BatchEnabled": {
+      "name": "バッチ経営を有効化",
+      "help": "5つの店舗を2バッチに分割して経営し、スタッフの競合を回避",
+      "True": "有効",
+      "False": "無効"
+    },
+    "Batch1Shops": {
+      "name": "第1バッチ店舗",
+      "help": "最初のバッチで経営する店舗を選択",
+      "1": "有魚餐馆",
+      "2": "白熊飲品",
+      "3": "啾啾簡餐",
+      "4": "烏魚烤肉",
+      "5": "啾珈琲"
+    },
+    "Batch2Shops": {
+      "name": "第2バッチ店舗",
+      "help": "2番目のバッチで経営する店舗を選択",
+      "1": "有魚餐馆",
+      "2": "白熊飲品",
+      "3": "啾啾簡餐",
+      "4": "烏魚烤肉",
+      "5": "啾珈琲"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "季節限定置き換え",
+      "help": "季節限定メニューの在庫が少ない場合に自動置き換え",
+      "True": "有効",
+      "False": "無効"
+    },
+    "SeasonalThreshold": {
+      "name": "季節置き換え閾値",
+      "help": "在庫がこの数値を下回ると置き換えを実行"
+    }
+  },
   "IslandBusinessShop1": {
     "_info": {
       "name": "IslandBusinessShop1._info.name",
@@ -4759,6 +4799,21 @@
       "hearty_meal": "hearty_meal",
       "fo_tiao": "fo_tiao",
       "amaranth_rice_ball": "amaranth_rice_ball"
+    },
+    "SeasonalFallback": {
+      "name": "季節代替メニュー",
+      "help": "季節限定メニューの在庫不足時に置き換えるメニュー",
+      "None": "なし",
+      "double_bamboo_shoots": "涼拌双筍",
+      "tofu_meat": "肉末焼豆腐",
+      "tofu_combo": "經典豆腐套餐",
+      "hearty_meal": "綿玉定食",
+      "fo_tiao": "佛跳牆",
+      "amaranth_rice_ball": "莧菜飯糰"
+    },
+    "BoostReplaceFilter": {
+      "name": "ブースト置き換えフィルター",
+      "help": "ブースト商品の置き換えルール"
     }
   },
   "IslandBusinessShop2": {
@@ -4896,6 +4951,10 @@
       "lavender_tea": "lavender_tea",
       "sunny_honey": "sunny_honey",
       "watermelon_juice": "watermelon_juice"
+    },
+    "BoostReplaceFilter": {
+      "name": "ブースト置き換えフィルター",
+      "help": "ブースト商品の置き換えルール"
     }
   },
   "IslandBusinessShop3": {
@@ -5018,6 +5077,10 @@
       "berry_orange": "berry_orange",
       "strawberry_charlotte": "strawberry_charlotte",
       "seafood_rice": "seafood_rice"
+    },
+    "BoostReplaceFilter": {
+      "name": "ブースト置き換えフィルター",
+      "help": "ブースト商品の置き換えルール"
     }
   },
   "IslandBusinessShop4": {
@@ -5140,6 +5203,10 @@
       "steak_bowl": "ステーキ丼",
       "carnival": "カーニバル",
       "double_energy": "ダブルエナジー"
+    },
+    "BoostReplaceFilter": {
+      "name": "ブースト置き換えフィルター",
+      "help": "ブースト商品の置き換えルール"
     }
   },
   "IslandBusinessShop5": {
@@ -5262,6 +5329,10 @@
       "morning_light": "モーニングライト",
       "wake_up_call": "ウェイクアップコール",
       "fruity_fruitier": "フルーティーフルーティエ"
+    },
+    "BoostReplaceFilter": {
+      "name": "ブースト置き換えフィルター",
+      "help": "ブースト商品の置き換えルール"
     }
   },
   "Daemon": {

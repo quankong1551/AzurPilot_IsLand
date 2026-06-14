@@ -4634,6 +4634,46 @@
       "help": "命中黑名单货物时更换委托。目前仅支持 Milk（牛奶）。"
     }
   },
+  "IslandBusiness": {
+    "_info": {
+      "name": "经营模块",
+      "help": "管理岛屿商店的经营运作，支持分批经营、季节限定替换和加成商品替换"
+    },
+    "BatchEnabled": {
+      "name": "启用分批经营",
+      "help": "将5个商店分成两批执行，避免共用经营人员的商店同批派出",
+      "True": "启用",
+      "False": "禁用"
+    },
+    "Batch1Shops": {
+      "name": "第一批经营商店",
+      "help": "选择第一批要经营的商店，默认配置为啾啾简餐、有鱼餐馆、啾咖啡",
+      "1": "有鱼餐馆",
+      "2": "白熊饮品",
+      "3": "啾啾简餐",
+      "4": "乌鱼烤肉",
+      "5": "啾咖啡"
+    },
+    "Batch2Shops": {
+      "name": "第二批经营商店",
+      "help": "选择第二批要经营的商店，默认配置为白熊饮品、乌鱼烤肉",
+      "1": "有鱼餐馆",
+      "2": "白熊饮品",
+      "3": "啾啾简餐",
+      "4": "乌鱼烤肉",
+      "5": "啾咖啡"
+    },
+    "SeasonalReplaceEnabled": {
+      "name": "启用季节限定替换",
+      "help": "季节限定菜品库存不足时自动替换为备用餐品",
+      "True": "启用",
+      "False": "禁用"
+    },
+    "SeasonalThreshold": {
+      "name": "季节限定替换阈值",
+      "help": "季节限定菜品库存低于此数量时触发替换"
+    }
+  },
   "IslandBusinessShop1": {
     "_info": {
       "name": "有鱼餐馆",
@@ -4759,6 +4799,21 @@
       "hearty_meal": "绵玉定食",
       "fo_tiao": "佛跳墙",
       "amaranth_rice_ball": "苋菜饭团"
+    },
+    "SeasonalFallback": {
+      "name": "季节餐品备用餐品",
+      "help": "有鱼餐馆当前季节餐品库存不足时替换成该餐品",
+      "None": "无",
+      "double_bamboo_shoots": "凉拌双笋",
+      "tofu_meat": "肉末烧豆腐",
+      "tofu_combo": "经典豆腐套餐",
+      "hearty_meal": "绵玉定食",
+      "fo_tiao": "佛跳墙",
+      "amaranth_rice_ball": "苋菜饭团"
+    },
+    "BoostReplaceFilter": {
+      "name": "有鱼餐馆加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：double_bamboo_shoots:凉拌双笋, tofu_meat:肉末烧豆腐, tofu_combo:经典豆腐套餐, hearty_meal:绵玉定食, fo_tiao:佛跳墙, amaranth_rice_ball:苋菜饭团\n示例：fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20 > double_bamboo_shoots > 10"
     }
   },
   "IslandBusinessShop2": {
@@ -4896,6 +4951,10 @@
       "lavender_tea": "薰衣草茶",
       "sunny_honey": "阳光蜜水",
       "watermelon_juice": "西瓜汁"
+    },
+    "BoostReplaceFilter": {
+      "name": "白熊饮品加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：spring_flower_tea:迎春花茶, strawberry_lemon:草莓蜜沁, strawberry_honey:草莓蜂蜜冰沙, floral_fruity:花香果韵, fruit_paradise:缤纷果乐园, lavender_tea:薰衣草茶, sunny_honey:阳光蜜水, watermelon_juice:西瓜汁\n示例：fruit_paradise > floral_fruity > 30 > lavender_tea > sunny_honey > 20 > spring_flower_tea > 10"
     }
   },
   "IslandBusinessShop3": {
@@ -5018,6 +5077,10 @@
       "berry_orange": "莓果香橙甜点组",
       "strawberry_charlotte": "草莓夏洛特",
       "seafood_rice": "海鲜饭"
+    },
+    "BoostReplaceFilter": {
+      "name": "啾啾简餐加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：orchard_duo:果园二重奏, succulently_sweet:香甜组合, berry_orange:莓果香橙甜点组, strawberry_charlotte:草莓夏洛特, seafood_rice:海鲜饭\n示例：seafood_rice > strawberry_charlotte > 30 > berry_orange > succulently_sweet > 20 > orchard_duo > 10"
     }
   },
   "IslandBusinessShop4": {
@@ -5140,6 +5203,10 @@
       "steak_bowl": "汉堡肉饭",
       "carnival": "烤肉狂欢",
       "double_energy": "能量双拼套餐"
+    },
+    "BoostReplaceFilter": {
+      "name": "乌鱼烤肉加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：roasted_skewer:碳烤肉串, stir_fried_chicken:爆炒禽肉, steak_bowl:汉堡肉饭, carnival:烤肉狂欢, double_energy:能量双拼套餐\n示例：double_energy > carnival > 30 > steak_bowl > stir_fried_chicken > 20 > roasted_skewer > 10"
     }
   },
   "IslandBusinessShop5": {
@@ -5262,6 +5329,10 @@
       "morning_light": "晨光活力组合",
       "wake_up_call": "醒神套餐",
       "fruity_fruitier": "果香双杯乐"
+    },
+    "BoostReplaceFilter": {
+      "name": "啾咖啡加成替换过滤",
+      "help": "多个加成餐品时按过滤顺序优先替换第一个；替换槽位从餐品5→1倒查替换最后一个非空餐品\n可用餐品key对照：cheese:芝士, strawberry_milkshake:草莓奶绿, morning_light:晨光活力组合, wake_up_call:醒神套餐, fruity_fruitier:果香双杯乐\n示例：fruity_fruitier > wake_up_call > 30 > morning_light > strawberry_milkshake > 20 > cheese > 10"
     }
   },
   "Daemon": {

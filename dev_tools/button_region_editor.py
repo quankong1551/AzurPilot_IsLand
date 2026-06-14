@@ -29,16 +29,7 @@ from PIL import Image
 TASKS = [
     # ("./assets/cn/island_daily_order/TEMPLATE_CHEESE.png", (905,335,950,380)),
     # ("./assets/cn/island_daily_order/TEMPLATE_TOFU.png", (905,255,950,300)),
-    ("./assets/cn/island_pearl_sell/ISLAND_PEARL_FRIEND_RANK_TAB.png", (586, 91, 657, 112)),
-    ("./assets/cn/island_pearl_sell/ISLAND_PEARL_SHOP_BUY_ENTER.png", (804, 448, 938, 474)),
-    ("./assets/cn/island_pearl_sell/ISLAND_PEARL_SHOP_CHECK.png", (113, 22, 229, 44)),
-    ("./assets/cn/island_pearl_sell/ISLAND_PEARL_SHOP_SELL_ENTER.png", (806, 413, 980, 439)),
-    ("./assets/cn/island_pearl_sell/ISLAND_PEARL_TRADE.png", (226, 229, 295, 300)),
-    ("./assets/cn/island_pearl_sell/OCR_ISLAND_PEARL_CURRENT_COUNT.png", (960, 20, 1000, 44)),
-    ("./assets/cn/island_pearl_sell/OCR_ISLAND_PEARL_PRICE.png", (254, 354, 305, 379)),
-    ("./assets/cn/island_pearl_sell/OCR_ISLAND_PEARL_TRADE_COUNT.png", (783, 360, 823, 381)),
-    ("./assets/cn/island_pearl_sell/OCR_ISLAND_PEARL_WEEKLY_PURCHASE.png", (990, 69, 1210, 88)),
-    ("./assets/cn/island_pearl_sell/TEMPLATE_ISLAND_PEARL_RANK_VISIT.png", (1030, 350, 1105, 379)),
+    ("./assets/cn/island_business/TEMPLATE_BUSINESS_LIST_SHOP_JUU_COFFEE.png",      (219, 533,  326, 559)),
 ]
 
 

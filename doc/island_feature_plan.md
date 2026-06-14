@@ -10,7 +10,7 @@
 - [x] **功能2**: 每日订单功能 — 自动检测订单类型（紧急/挑战/轻松），根据物品条件交付或驳回
 - [x] **功能3**: 货运委托功能 — 重写货运委托系统，五种颜色状态检测+对应处理逻辑
 - [x] **功能4**: 每周珍珠采购与售卖 — 按配置日低价采购珍珠并在满足价格时售卖
-- [ ] **功能5**: 经营模块智能分波 — 季节限定数量检测替换 + 加成商品检测替换
+- [ ] **功能5**: 经营模块智能分批 — 第一批/第二批商店可配置，避免共享经营人员同批派出冲突 + 季节限定数量检测替换 + 加成商品检测替换
 - [ ] **功能6**: 自动采集角色体力检测 — 体力 < 100 自动换人
 - [ ] **功能7**: 摸猫/JUU速运任务 — 每日互动任务
 - [ ] **功能8**: 自动清空开发季商店 — 花光开发季 PT 买空商店
@@ -27,7 +27,7 @@
 2. [功能2: 每日订单功能](#功能2-每日订单功能)
 3. [功能3: 货运委托功能](#功能3-货运委托功能)
 4. [功能4: 每周珍珠采购与售卖](#功能4-每周珍珠采购与售卖)
-5. [功能5: 经营模块智能分波](#功能5-经营模块智能分波)
+5. [功能5: 经营模块智能分批](#功能5-经营模块智能分批)
 6. [功能6: 自动采集角色体力检测换人](#功能6-自动采集角色体力检测换人)
 7. [功能7: 摸猫/JUU速运任务](#功能7-摸猫juu速运任务)
 8. [功能8: 自动清空开发季商店](#功能8-自动清空开发季商店)
@@ -975,13 +975,13 @@ IslandPearlSell:
 
 ---
 
-## 功能5: 经营模块智能分波
+## 功能5: 经营模块智能分批
 
 ### 目标
 
 对现有 [`IslandBusiness`](module/island/island_business.py:39) 经营模块进行三项增强：
 
-1. **分两波经营**：将 5 个商店分成两波执行，避免单次运行时间过长
+1. **分两批经营**：岛屿计划经营模块需要执行两次，第一批和第二批分别处理用户配置的商店。这样可避免部分商店共用经营人员时，同一时间派出导致后续商店无法选到设定角色。
 2. **季节限定检测替换**：检测季节限定餐品库存数量，如果 < 7 则替换为另一个可配置菜品
 3. **加成商品检测替换**：检测当天具有加成的商品，如果条件满足则替换，优先从下往上替换
 
@@ -989,18 +989,38 @@ IslandPearlSell:
 
 修改文件: [`module/island/island_business.py`](module/island/island_business.py)
 
-#### 6.1 分两波经营
+#### 5.1 分两批经营
 
-将 5 个商店分成两个 Wave：
+将 5 个商店按用户配置分成两个 Batch。截图中的经营页面从上到下依次为：有鱼餐馆、白熊饮品、啾啾简餐、乌鱼烤肉，当前代码中第 5 个商店为啾咖啡。
+
+核心要求：
+
+- 经营模块需要支持执行两次：第一批只处理第一批商店；第一批完成并释放经营人员后，再触发第二批。
+- 第一批和第二批分别由配置项指定商店列表，避免把共用经营人员的商店放在同一批同时派出。
+- 每批执行时必须只领取、配置、开始该批商店；不在当前批次内的商店跳过。
+- 两批应有独立的运行状态与延后时间，避免第一批的经营中剩余时间直接阻塞第二批。
+- 如果第二批触发时第一批商店仍在经营中，不处理第二批；应 OCR 第一批商店的剩余时间，并按最早释放时间设置下次执行时间。
+
+商店索引约定：
+
+| 索引 | 商店 | 资源按钮 |
+|---|---|---|
+| 1 | 有鱼餐馆 | `BUSINESS_SHOP_FISH_RESTAURANT` |
+| 2 | 白熊饮品 | `BUSINESS_SHOP_TEAHOUSE` |
+| 3 | 啾啾简餐 | `BUSINESS_SHOP_JUU_EATERY` |
+| 4 | 乌鱼烤肉 | `BUSINESS_SHOP_GRILL` |
+| 5 | 啾咖啡 | `BUSINESS_SHOP_JUU_COFFEE` |
+
+默认批次配置：
 
 ```python
-WAVE_CONFIG = {
-    'wave1': {
-        'shops': ['有鱼餐馆', '白熊饮品', '啾啾简餐'],  # 前3个
+BATCH_CONFIG = {
+    'batch1': {
+        'shops': ['啾啾简餐', '有鱼餐馆', '啾咖啡'],
         'priority': 70,
     },
-    'wave2': {
-        'shops': ['乌鱼烤肉', '啾咖啡'],                # 后2个
+    'batch2': {
+        'shops': ['白熊饮品', '乌鱼烤肉'],
         'priority': 71,
     }
 }
@@ -1010,167 +1030,149 @@ WAVE_CONFIG = {
 
 ```yaml
 IslandBusiness:
-  WaveEnabled: true              # 启用分波
-  Wave1Shops: [1, 2, 3]         # 第一波商店索引
-  Wave2Shops: [4, 5]            # 第二波商店索引
-  Wave1Time: "08:00"            # 第一波执行时间
-  Wave2Time: "14:00"            # 第二波执行时间
+  BatchEnabled: true             # 启用分批经营
+  Batch1Shops: [3, 1, 5]         # 第一批商店索引：啾啾简餐、有鱼餐馆、啾咖啡
+  Batch2Shops: [2, 4]            # 第二批商店索引：白熊饮品、乌鱼烤肉
 ```
 
 **执行流程**：
 
 ```python
-def should_run_wave1(self):
-    """判断第一波是否需要执行"""
-    now = datetime.now()
-    wave1_time = now.replace(hour=8, minute=0, second=0)
-    return now >= wave1_time
+def should_run_batch2(self):
+    """判断第二批是否需要执行"""
+    if self._batch_is_running(self.batch1_shops):
+        remain = self._ocr_batch_remaining_time(self.batch1_shops)
+        self.config.task_delay(server_update=True, target=remain)
+        return False
+    return True
 
-def should_run_wave2(self):
-    """判断第二波是否需要执行"""
-    now = datetime.now()
-    wave2_time = now.replace(hour=14, minute=0, second=0)
-    return now >= wave2_time
-
-def run_wave(self, shop_list):
+def run_batch(self, shop_list):
     """执行指定商店列表的经营"""
+    if not shop_list:
+        logger.info("当前批次未配置商店，跳过")
+        return
     for shop in shop_list:
         self._process_single_shop(shop)
 ```
 
-#### 6.2 季节限定餐品数量检测替换
+**边界规则**：
 
-核心逻辑：在经营前检查仓库中季节限定餐品的数量，如果 < 7 则替换为备用菜品。
+- 同一商店同时出现在第一批和第二批时，按第一批优先；第二批执行前应从第二批列表中去重移除。
+- 某一批配置为空时，直接跳过该批，不视为关闭分批功能。
+- 第二批只在第一批商店全部结束并释放经营人员后执行；如果第一批仍在经营中，通过 OCR 识别第一批多个商店的剩余时间，取最早结束时间作为下次执行时间。
 
-```python
-def check_seasonal_dish_quantity(self, shop_name):
-    """
-    检查指定商店的季节限定餐品库存数量。
-    
-    Returns:
-        list: 需要替换的餐品列表 [(原餐品, 替换餐品), ...]
-    """
-    replacement_plan = []
-    
-    # 获取当前商店的季节限定餐品
-    seasonal_items = self._get_seasonal_items_for_shop(shop_name)
-    if not seasonal_items:
-        return replacement_plan
-    
-    # 遍历当前激活的餐品配置，检查季节限定品
-    for product in self.active_products.get(shop_name, []):
-        if product['name'] in seasonal_items:
-            # 通过仓库 OCR 检测该餐品数量
-            count = self._check_product_quantity(product['name'])
-            if count < 7:
-                logger.info(
-                    f"{shop_name}: 季节限定 {product['name']} 库存 {count} < 7，"
-                    f"需要替换"
-                )
-                # 查找备用菜品配置
-                fallback = self._get_fallback_product(shop_name, product['name'])
-                if fallback:
-                    replacement_plan.append((product, fallback))
-    
-    return replacement_plan
-```
+#### 5.2 季节限定餐品数量检测替换
 
-**备用菜品配置**：
+核心逻辑：只处理有鱼餐馆的季节限定餐品。当前季节餐品如果已经出现在有鱼餐馆 `Product1~5` 配置中，则在经营前检查仓库库存；库存 `< 7` 时，将该餐品替换为用户配置的备用餐品。如果当前餐品配置里没有选择季节限定餐品，则不检查、不替换。
+
+季节限定餐品映射：
+
+| 季节 | 检测餐品 | 配置值 |
+|---|---|---|
+| 春季 | 双笋 | `double_bamboo_shoots` |
+| 夏季 | 苋菜饭团 | `amaranth_rice_ball` |
+
+**有鱼餐馆新增配置项**：
 
 ```yaml
-IslandBusinessShop1:        # 有鱼餐馆
-  # ... 现有 Product1~5 配置
-  SeasonalFallback1: hearty_meal   # 季节限定餐品1的备用替换
-  SeasonalFallback2: fo_tiao       # 季节限定餐品2的备用替换
+IslandBusinessShop1:
+  # ... 现有 Char1~2、Product1~5
+  SeasonalFallback: hearty_meal  # 季节餐品库存不足时替换成哪个餐品
 ```
 
-#### 6.3 加成商品检测替换
-
-核心逻辑：进入商店后，检测当天具有加成的商品（UI 上带有"推荐""流行"等标记），如果加成条件满足则替换当前商品，**优先从下往上替换**（即先替换最后一个槽位的商品）。
+**执行流程**：
 
 ```python
-def check_boosted_products(self, shop_name):
+def check_seasonal_dish_quantity(self):
     """
-    检测当天具有加成的商品，从下往上替换。
-    
-    加成判定：
-    - 游戏 UI 中商品可能有特殊标记（如"推荐"标签、高亮边框等）
-    - 通过模板匹配或颜色检测识别加成标记
-    
-    替换策略（从下往上）：
-    - 假设有 5 个商品槽位：P1, P2, P3, P4, P5
-    - 优先替换 P5 → P4 → P3 → P2 → P1
+    检查有鱼餐馆当前季节餐品库存。
+
+    仅当 Product1~5 中选择了当前季节餐品时才检查仓库库存。
     """
-    # 1. 截图商品区域
-    self.device.screenshot()
-    
-    # 2. 检测所有商品的加成状态
-    boosted_products = self._detect_boosted(shop_name)
-    if not boosted_products:
-        logger.info(f"{shop_name}: 没有检测到加成商品")
-        return
-    
-    # 3. 获取当前已选择的商品列表（从下往上遍历）
-    current_products = self.active_products.get(shop_name, [])
-    # 倒序，从最后一个槽位开始检查
-    for product in reversed(current_products):
-        # 检查是否有加成商品可以替换这个槽位
-        for boosted in boosted_products:
-            if boosted['name'] != product['name']:
-                # 检查加成条件是否满足
-                if self._check_boost_condition(boosted):
-                    logger.info(
-                        f"{shop_name}: 加成商品 {boosted['name']} "
-                        f"替换槽位商品 {product['name']}（从下往上）"
-                    )
-                    # 执行替换
-                    self._replace_product(shop_name, product, boosted)
-                    break
+    seasonal_product = {
+        'spring': 'double_bamboo_shoots',
+        'summer': 'amaranth_rice_ball',
+    }.get(self.current_season)
+    if not seasonal_product:
+        return []
+
+    selected_products = self.active_products.get('有鱼餐馆', [])
+    if seasonal_product not in [p['name'] for p in selected_products]:
+        return []
+
+    count = self._check_product_quantity(seasonal_product)
+    if count >= 7:
+        return []
+
+    fallback = self.config.IslandBusinessShop1_SeasonalFallback
+    return [(seasonal_product, fallback)]
 ```
 
-**加成商品检测方法**：
+#### 5.3 加成商品检测替换
 
-```python
-def _detect_boosted(self, shop_name):
-    """
-    检测加成商品。
-    
-    方法1: 模板匹配 — 检测商品图标上的"推荐"标签
-    方法2: 颜色检测 — 检测商品边框的特殊颜色
-    方法3: OCR — 读取商品名称旁边的特殊文本
-    """
-    products = self.shop_products.get(shop_name, [])
-    boosted = []
-    
-    for p in products:
-        b = p.get('button')
-        if not b:
-            continue
-        
-        # 检测商品区域是否有"推荐"模板
-        if hasattr(self, f'TEMPLATE_BOOSTED_{p["name"].upper()}'):
-            template = getattr(self, f'TEMPLATE_BOOSTED_{p["name"].upper()}')
-            if self.appear(template, offset=30):
-                boosted.append(p)
-                continue
-        
-        # 或者检测商品图标上叠加的加成标记
-        TEMPLATE_BOOSTED_TAG = getattr(self, 'TEMPLATE_BOOSTED_TAG', None)
-        if TEMPLATE_BOOSTED_TAG:
-            area_img = crop(self.device.image, b.area)
-            if TEMPLATE_BOOSTED_TAG.match(area_img, similarity=0.8):
-                boosted.append(p)
-    
-    return boosted
-```
+核心逻辑：打开某个经营商店界面后，在选择经营角色之前检测该商店当天是否有餐品加成。正常一天只有一个商店有加成，但具体是哪个商店、哪些餐品有加成不固定；因此每个商店都需要独立检测，并且每个商店单独配置加成替换规则。
 
-**配置项**：
+加成数量规则：
+
+| 加成 | 当日加成餐品数量 |
+|---|---|
+| 30% | 1 个餐品 |
+| 20% | 2 个餐品 |
+| 10% | 3 个餐品 |
+
+替换规则：
+
+- 检测到当前商店有加成餐品后，从 `Product5 -> Product4 -> Product3 -> Product2 -> Product1` 查找第一个有值的餐品槽位。
+- 找到第一个有值槽位后，用玩家配置中匹配当前加成档位的餐品替换该槽位。
+- 替换餐品由玩家用过滤串配置，脚本只按配置顺序选择第一个同时满足“属于当前加成档位、当天确实有加成”的餐品。
+- 过滤串表现形式为：`xxx > yyy > 30 > zzz > mmm > 20 > nnn > 10`。
+- 解析含义：`30`、`20`、`10` 是加成档位分隔符；分隔符前面的餐品归属于该档位，直到遇到下一个档位分隔符。例如 `xxx > yyy > 30` 表示 `xxx`、`yyy` 是 30% 加成时的候选替换餐品。
+
+**每个商店新增独立配置项**：
 
 ```yaml
-IslandBusiness:
-  BoostedReplace: true            # 启用加成商品替换
-  BoostThreshold: 1.2             # 加成倍率阈值（如 1.2 倍以上才替换）
-  BoostReplaceDirection: bottom_up  # 替换方向：bottom_up（从下往上）
+IslandBusinessShop1:
+  BoostReplaceFilter: |-
+    fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20 > double_bamboo_shoots > 10
+
+IslandBusinessShop2:
+  BoostReplaceFilter: |-
+    fruit_paradise > floral_fruity > 30 > lavender_tea > sunny_honey > 20 > spring_flower_tea > 10
+
+IslandBusinessShop3:
+  BoostReplaceFilter: |-
+    seafood_rice > strawberry_charlotte > 30 > berry_orange > succulently_sweet > 20 > orchard_duo > 10
+
+IslandBusinessShop4:
+  BoostReplaceFilter: |-
+    double_energy > carnival > 30 > steak_bowl > stir_fried_chicken > 20 > roasted_skewer > 10
+
+IslandBusinessShop5:
+  BoostReplaceFilter: |-
+    fruity_fruitier > wake_up_call > 30 > morning_light > strawberry_milkshake > 20 > cheese > 10
+```
+
+**执行流程**：
+
+```python
+def check_boosted_products_before_character_select(self, shop_name):
+    """
+    在进入商店后、选择角色前检测当天加成餐品，并按商店独立配置执行替换。
+    """
+    boosted = self._detect_shop_boosted_products(shop_name)
+    if not boosted:
+        return False
+
+    replacement = self._select_boost_replacement(shop_name, boosted)
+    if not replacement:
+        return False
+
+    target_slot = self._find_first_filled_product_slot_bottom_up(shop_name)
+    if not target_slot:
+        return False
+
+    self._replace_product_slot(shop_name, target_slot, replacement)
+    return True
 ```
 
 ---
@@ -1542,23 +1544,34 @@ IslandForest:
   MinNatural: 0
 
 IslandBusiness:
-  # --- 分波经营 ---
-  WaveEnabled: true
-  Wave1Shops: [1, 2, 3]
-  Wave2Shops: [4, 5]
-  Wave1Time: "08:00"
-  Wave2Time: "14:00"
+  # --- 分批经营 ---
+  BatchEnabled: true
+  Batch1Shops: [3, 1, 5]
+  Batch2Shops: [2, 4]
   # --- 季节限定替换 ---
   SeasonalReplaceEnabled: true
   SeasonalThreshold: 7
-  # --- 加成商品替换 ---
-  BoostedReplace: true
-  BoostThreshold: 1.2
-  BoostReplaceDirection: bottom_up
 
 IslandBusinessShop1:
-  SeasonalFallback1: hearty_meal
-  SeasonalFallback2: fo_tiao
+  SeasonalFallback: hearty_meal
+  BoostReplaceFilter: |-
+    fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20 > double_bamboo_shoots > 10
+
+IslandBusinessShop2:
+  BoostReplaceFilter: |-
+    fruit_paradise > floral_fruity > 30 > lavender_tea > sunny_honey > 20 > spring_flower_tea > 10
+
+IslandBusinessShop3:
+  BoostReplaceFilter: |-
+    seafood_rice > strawberry_charlotte > 30 > berry_orange > succulently_sweet > 20 > orchard_duo > 10
+
+IslandBusinessShop4:
+  BoostReplaceFilter: |-
+    double_energy > carnival > 30 > steak_bowl > stir_fried_chicken > 20 > roasted_skewer > 10
+
+IslandBusinessShop5:
+  BoostReplaceFilter: |-
+    fruity_fruitier > wake_up_call > 30 > morning_light > strawberry_milkshake > 20 > cheese > 10
 
 IslandBusinessTransport:
   Enabled: true
@@ -1627,7 +1640,7 @@ module/island/
 ├── island_daily_interact.py     # 新增 - 摸猫/速运/打招呼
 ├── island_business_transport.py # 新增 - 货运委托业务
 ├── island_mine_forest.py        # 修改 - 增加库存检测
-├── island_business.py           # 修改 - 分波 + 季节检测 + 加成检测
+├── island_business.py           # 修改 - 分批 + 季节检测 + 加成检测
 ├── island_daily_gather.py       # 修改 - 体力检测换人
 ├── transport.py                 # 已有 - 旧货运委托（可选保留）
 ├── assets.py                    # 已有 - 通用按钮资源
@@ -1654,15 +1667,20 @@ module/island_business_transport/
   "Island.IslandForest.MinSelected": "精选木材最低库存",
   "Island.IslandForest.MinNatural": "自然木材最低库存",
 
-  "Island.IslandBusiness.WaveEnabled": "启用分波经营",
-  "Island.IslandBusiness.WaveEnabled.description": "将5个商店分成两波执行",
+  "Island.IslandBusiness.BatchEnabled": "启用分批经营",
+  "Island.IslandBusiness.BatchEnabled.description": "将5个商店分成两批执行，避免共用经营人员的商店同批派出",
+  "Island.IslandBusiness.Batch1Shops": "第一批经营商店",
+  "Island.IslandBusiness.Batch2Shops": "第二批经营商店",
   "Island.IslandBusiness.SeasonalReplaceEnabled": "季节限定替换",
   "Island.IslandBusiness.SeasonalReplaceEnabled.description": "季节限定菜品库存不足时自动替换",
   "Island.IslandBusiness.SeasonalThreshold": "季节限定替换阈值",
-  "Island.IslandBusiness.BoostedReplace": "加成商品替换",
-  "Island.IslandBusiness.BoostedReplace.description": "检测当天加成商品自动替换（从下往上）",
-  "Island.IslandBusiness.BoostThreshold": "加成倍率阈值",
-  "Island.IslandBusinessShop1.SeasonalFallback1": "季节限定备用菜品1",
+  "Island.IslandBusinessShop1.SeasonalFallback": "季节餐品备用餐品",
+  "Island.IslandBusinessShop1.SeasonalFallback.description": "有鱼餐馆当前季节餐品库存不足时替换成该餐品",
+  "Island.IslandBusinessShop1.BoostReplaceFilter": "有鱼餐馆加成替换",
+  "Island.IslandBusinessShop2.BoostReplaceFilter": "白熊饮品加成替换",
+  "Island.IslandBusinessShop3.BoostReplaceFilter": "啾啾简餐加成替换",
+  "Island.IslandBusinessShop4.BoostReplaceFilter": "乌鱼烤肉加成替换",
+  "Island.IslandBusinessShop5.BoostReplaceFilter": "啾咖啡加成替换",
 
   "Island.IslandBusinessTransport.Enabled": "启用货运委托",
   "Island.IslandBusinessTransport.Enabled.description": "自动管理岛屿货运委托",
@@ -1697,7 +1715,7 @@ module/island_business_transport/
 | 优先级 | 功能 | 预计工作量 |
 |--------|------|-----------|
 | P0 | 矿山/森林库存阈值 | 小（改现有代码） |
-| P0 | 经营模块智能分波 | 中（改现有代码） |
+| P0 | 经营模块智能分批 | 中（改现有代码） |
 | P0 | 经营模块季节限定替换 | 中（新增逻辑） |
 | P1 | 货运委托重写 | 中（新文件：五种状态检测+处理逻辑） |
 | P1 | 经营模块加成商品替换 | 中（需截图资源） |
