@@ -301,6 +301,12 @@ class IslandBusiness(Island):
         # 仓库专用模板映射，直接使用已有模板文件路径
         # 使用 Template 直接引用文件，避免循环导入
         warehouse_files = {
+            'double_bamboo_shoots': Template(file={
+                'cn': './assets/cn/island_restaurant/TEMPLATE_DOUBLE_BAMBOO_SHOOTS.png',
+                'en': './assets/cn/island_restaurant/TEMPLATE_DOUBLE_BAMBOO_SHOOTS.png',
+                'jp': './assets/cn/island_restaurant/TEMPLATE_DOUBLE_BAMBOO_SHOOTS.png',
+                'tw': './assets/cn/island_restaurant/TEMPLATE_DOUBLE_BAMBOO_SHOOTS.png',
+            }),
             'amaranth_rice_ball': Template(file={
                 'cn': './assets/cn/island_restaurant/TEMPLATE_AMARANTH_RICE_BALL.png',
                 'en': './assets/cn/island_restaurant/TEMPLATE_AMARANTH_RICE_BALL.png',
@@ -347,10 +353,10 @@ class IslandBusiness(Island):
         """
         加载每个商店的加成绩替换过滤配置。
 
-        过滤串格式: 餐品A > 餐品B > 30 > 餐品C > 餐品D > 20 > 餐品E > 10
+        过滤串格式（级联规则）: 30 > 20 > 餐品A > 餐品B > 10
 
-        含义：30/20/10 是加成档位分隔符，
-        分隔符前面的餐品归属于该档位。
+        含义：数字（30/20/10）代表加成档位从高到低排列，
+        所有餐品最终归入最后/最低的数字档位。
         """
         self.boost_filters = {}
         for shop in self.shops:
@@ -366,46 +372,96 @@ class IslandBusiness(Island):
         """
         解析加成绩替换过滤串。
 
-        支持两种格式：
-        1. 标准格式（餐品在数字前）：  "fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20"
-        2. 反向格式（数字在餐品前）：  "20 > double_bamboo_shoots"
-        3. 混合格式：                  "fo_tiao > 30 > 20 > double_bamboo_shoots"
+        支持两种模式，根据字符串首元素自动判断：
+
+        **级联模式**（首元素是数字 30/20/10）：
+        数字代表加成档位从高到低排列。餐品归入当前数字的**下一档位**：
+        30→20, 20→10, 10→10。遇到更低数字时，较高档位的餐品
+        **快照复制**到该档位（向下级联）。
+        例如：
+        "30 > fruit_paradise"                            → {20: ['fruit_paradise']}
+        "30 > strawberry_honey > 20 > fruit_paradise > 10" → {20: ['strawberry_honey'], 10: ['strawberry_honey', 'fruit_paradise']}
+
+        **标准模式**（首元素是餐品名）：
+        餐品在数字前，归属于该数字档位。支持正向和反向格式。
+        例如： "fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20 > double_bamboo_shoots > 10"
+        返回： {30: ['fo_tiao', 'hearty_meal'], 20: ['tofu_combo', 'tofu_meat'], 10: ['double_bamboo_shoots']}
 
         Args:
-            filter_str: 如 "fo_tiao > hearty_meal > 30 > tofu_combo > tofu_meat > 20 > double_bamboo_shoots > 10"
+            filter_str: 过滤串
 
         Returns:
-            dict: {30: ['fo_tiao', 'hearty_meal'], 20: ['tofu_combo', 'tofu_meat'], 10: ['double_bamboo_shoots']}
+            dict: 加成档位到餐品列表的映射
         """
         parts = [p.strip() for p in filter_str.replace('\n', ' ').split('>') if p.strip()]
-        result = {}
-        current_items = []
-        pending_boost = None  # 跟踪 "20 > item" 反向格式
 
-        for part in parts:
-            if part in ('30', '20', '10'):
-                boost = int(part)
-                if current_items:
-                    # 标准格式：餐品 > 数字（如 "fo_tiao > hearty_meal > 30"）
-                    result[boost] = current_items
-                    current_items = []
-                else:
-                    # 反向格式：数字 > 餐品（如 "20 > double_bamboo_shoots"）
-                    pending_boost = boost
-            else:
-                if pending_boost is not None:
-                    # 数字先出现，此餐品归属于前面的数字档位
-                    result.setdefault(pending_boost, []).append(part)
-                    pending_boost = None
-                else:
-                    current_items.append(part)
+        if not parts:
+            return {}
 
-        # 兜底处理：循环结束后残留的餐品默认归到最低档 10%
-        if current_items:
-            result.setdefault(10, []).extend(current_items)
+        # 首元素是数字 → 级联模式；首元素是餐品 → 标准模式
+        is_cascade = parts[0] in ('30', '20', '10')
+
+        if is_cascade:
+            # ========== 级联模式 ==========
+            # 餐品归入当前数字的下一档位（30→20, 20→10, 10→10）
+            # 遇到更低数字时，较高档位的餐品快照复制到该档位
+
+            def _next_lower(tier):
+                if tier == 30:
+                    return 20
+                elif tier == 20:
+                    return 10
+                return 10
+
+            result = {}
+            current_tier = None
+
+            for part in parts:
+                if part in ('30', '20', '10'):
+                    boost = int(part)
+                    # 遇到更低数字：较高档位的餐品快照复制到当前档位
+                    if current_tier is not None and boost < current_tier:
+                        for tier in sorted(result.keys(), reverse=True):
+                            if tier > boost:
+                                result.setdefault(boost, []).extend(result[tier])
+                    current_tier = boost
+                else:
+                    # 餐品归入当前档位的下一档
+                    target_tier = _next_lower(current_tier)
+                    result.setdefault(target_tier, []).append(part)
+
+            # 清除空档位
+            return {k: v for k, v in result.items() if v}
+        else:
+            # ========== 标准模式 ==========
+            # 餐品在数字前，归属于该数字档位，分配后清空
+            result = {}
             current_items = []
+            pending_boost = None  # 跟踪 "数字 > 餐品" 反向格式
 
-        return result
+            for part in parts:
+                if part in ('30', '20', '10'):
+                    boost = int(part)
+                    if current_items:
+                        # 标准格式：餐品 > 数字（如 "fo_tiao > hearty_meal > 30"）
+                        result[boost] = current_items
+                        current_items = []
+                    else:
+                        # 反向格式：数字 > 餐品（如 "20 > double_bamboo_shoots"）
+                        pending_boost = boost
+                else:
+                    if pending_boost is not None:
+                        # 数字先出现，此餐品归属于前面的数字档位
+                        result.setdefault(pending_boost, []).append(part)
+                        pending_boost = None
+                    else:
+                        current_items.append(part)
+
+            # 兜底处理：残留餐品默认归到最低档 10%
+            if current_items:
+                result.setdefault(10, []).extend(current_items)
+
+            return result
 
     def _detect_boosted_products(self, shop_name, skip_names=None):
         """
@@ -545,7 +601,15 @@ class IslandBusiness(Island):
 
         # 从 Product5 → Product1 查找
         for i in range(len(products) - 1, -1, -1):
-            return i  # 第一个找到的就是最后面有值的槽位
+            product = products[i]
+            if not product:
+                continue
+            if isinstance(product, dict):
+                name = product.get('name')
+                if name and name != 'None':
+                    return i
+                continue
+            return i
 
         return None
 
@@ -564,8 +628,9 @@ class IslandBusiness(Island):
             return False
 
         products = self.active_products.get(shop_name, [])
-        if not products or slot_index >= len(products):
-            logger.warning(f"槽位 {slot_index + 1} 无效")
+        if not products or slot_index is None or slot_index < 0 or slot_index >= len(products):
+            slot_display = slot_index + 1 if isinstance(slot_index, int) else slot_index
+            logger.warning(f"槽位 {slot_display} 无效")
             return False
 
         old_name = products[slot_index]['name']
@@ -633,7 +698,10 @@ class IslandBusiness(Island):
             return False
 
         # 从 Product5 → Product1 倒查最后一个有值的配置槽位
-        target_slot = len(products) - 1
+        target_slot = self._find_first_filled_product_slot_bottom_up(shop_name)
+        if target_slot is None:
+            logger.info(f"{shop_name}: 没有可替换的餐品槽位")
+            return False
 
         # 执行替换
         return self._replace_product_slot(shop_name, target_slot, replacement)
@@ -939,9 +1007,11 @@ class IslandBusiness(Island):
     # ===================================================================
 
     # 商店列表中的行常量
-    # 商店标签区域：x=(548, 668)，各行Y不同
-    # 按钮与标签的偏移：从标签左上角到按钮左上角
-    _SHOP_LABEL_TO_BUTTON_OFFSET = (472, 89)
+    # 列表页店名标签模板位于左侧，右侧经营按钮的 X 位置固定。
+    # Y 位置跟随店名标签所在行偏移，用于检测/点击蓝色、黄色、深蓝按钮。
+    _SHOP_BUTTON_X_RANGE = (1020, 1154)
+    _SHOP_LABEL_TO_BUTTON_OFFSET_Y = 88
+    _SHOP_BUTTON_HEIGHT = 27
     # 经营商店列表的可视区域
     _BUSINESS_LIST_SEARCH_AREA = (50, 80, 1200, 640)
     # 商店行高（经验值，适用于各行）
@@ -978,9 +1048,12 @@ class IslandBusiness(Island):
             ly2 = btn.area[3] + sy1
             label_rect = (lx1, ly1, lx2, ly2)
 
-            # 计算按钮区域
-            dx, dy = self._SHOP_LABEL_TO_BUTTON_OFFSET
-            button_rect = (lx1 + dx, ly1 + dy, lx2 + dx, ly2 + dy)
+            # 计算右侧经营按钮区域。按钮宽度不能沿用店名标签宽度偏移，
+            # 否则会落到中间餐品图标上，导致黄色结算按钮被误判为 gray。
+            bx1, bx2 = self._SHOP_BUTTON_X_RANGE
+            by1 = ly1 + self._SHOP_LABEL_TO_BUTTON_OFFSET_Y
+            by2 = by1 + self._SHOP_BUTTON_HEIGHT
+            button_rect = (bx1, by1, bx2, by2)
 
             return {
                 'label_rect': label_rect,
@@ -1138,7 +1211,8 @@ class IslandBusiness(Island):
         # 先回到列表顶部
         self._scroll_business_to_top()
 
-        for scroll_attempt in range(max_scrolls):
+        scroll_attempt = 0
+        while scroll_attempt < max_scrolls:
             visible_shops = self._scan_visible_batch_shops(batch_shops)
 
             if not visible_shops:
@@ -1146,6 +1220,7 @@ class IslandBusiness(Island):
                 if scroll_attempt < max_scrolls - 1:
                     self._scroll_business_down()
                     self.device.sleep(0.5)
+                    scroll_attempt += 1
                     continue
                 else:
                     break
@@ -1193,6 +1268,7 @@ class IslandBusiness(Island):
 
                     # 返回后重新扫描（列表可能有变化）
                     self._scroll_business_to_top()
+                    scroll_attempt = 0
                     break  # 重新扫描
 
                 elif status == 'yellow':
@@ -1216,6 +1292,7 @@ class IslandBusiness(Island):
 
                     # 返回后重新扫描
                     self._scroll_business_to_top()
+                    scroll_attempt = 0
                     break  # 重新扫描
 
                 elif status == 'darkblue':
@@ -1233,6 +1310,7 @@ class IslandBusiness(Island):
                     if scroll_attempt < max_scrolls - 1:
                         self._scroll_business_down()
                         self.device.sleep(0.5)
+                        scroll_attempt += 1
                         continue
                     else:
                         break

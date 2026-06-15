@@ -9,7 +9,6 @@ from module.island.warehouse import *
 class IslandMineForest(Island,LoginHandler):
     def __init__(self, *args, **kwargs):
         Island.__init__(self, *args, **kwargs)
-        WarehouseOCR.__init__(self)
 
         # 矿山和林场的库存配置（模仿农田模块的 INVENTORY_CONFIG）
         self.inventory_config = {

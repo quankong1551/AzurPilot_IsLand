@@ -454,10 +454,12 @@ def parse_pin_value(val, valuetype: str = None):
             # 无 'value' 键时原样返回 dict
             return val
     elif isinstance(val, list):
+        if valuetype == 'ignore':
+            if len(val) == 0:
+                return False
+            return val
         if len(val) == 0:
             return []
-        if valuetype == 'ignore':
-            return val
         # 区分 checkbox ([True]) 和 multiselect ([3, 1, 5])
         # checkbox 的值始终是 [True] 或 []，非空列表且不含 bool 之外的元素即为 multiselect
         if all(isinstance(x, bool) for x in val):

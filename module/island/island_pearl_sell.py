@@ -569,7 +569,7 @@ class IslandPearlSell(Island):
         )
         try:
             return str(ocr.ocr(self.device.image))
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return ""
 
     # ==================== 交易数量与确认 ====================
