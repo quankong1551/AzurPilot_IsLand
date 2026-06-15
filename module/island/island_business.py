@@ -833,6 +833,20 @@ class IslandBusiness(Island):
             return review_btn
         return None
 
+    def _appear_business_settlement(self):
+        """检测经营结算按钮，并用按钮颜色过滤灰色休息中按钮条的误匹配。"""
+        settlement = self._appear_at_positions(BUSINESS_SETTLEMENT)
+        if not settlement:
+            return None
+
+        from module.base.utils import get_color, color_similar
+        area_color = get_color(self.device.image, settlement.area)
+        if color_similar(area_color, BUSINESS_SETTLEMENT.color, threshold=50):
+            return settlement
+
+        logger.info(f"经营结算按钮颜色不匹配，跳过: {area_color}")
+        return None
+
     def _parse_character_config(self, config_str):
         if isinstance(config_str, str):
             return [char.strip() for char in config_str.split('>')]
@@ -1273,7 +1287,6 @@ class IslandBusiness(Island):
 
                 elif status == 'yellow':
                     logger.info(f"{shop_name}: 黄色可领取奖励")
-                    self._has_seen_blue = True
 
                     # 点击该商店的黄色按钮
                     btn = Button(
@@ -1559,7 +1572,7 @@ class IslandBusiness(Island):
             # 检测到"经营结算"按钮 → 优先处理结算（必须在 ISLAND_BACK 之前检测，
             # 防止结算界面出现时返回按钮也被检测到而导致提前退出）
             # 同时检测偏移150px位置（美食评审模式）
-            settlement = self._appear_at_positions(BUSINESS_SETTLEMENT)
+            settlement = self._appear_business_settlement()
             if settlement:
                 logger.info("检测到经营结算按钮")
                 self.device.click(settlement)
