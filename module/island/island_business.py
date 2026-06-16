@@ -7,7 +7,7 @@ from module.island_select_character.assets import *
 from module.logger import logger
 from module.base.button import Button
 from module.base.template import Template
-from module.base.utils import crop
+from module.base.utils import crop, get_color, color_similar
 from module.island.island_season import SEASONAL_ITEMS
 from datetime import datetime, timedelta
 from module.ocr.ocr import Duration
@@ -839,7 +839,6 @@ class IslandBusiness(Island):
         if not settlement:
             return None
 
-        from module.base.utils import get_color, color_similar
         area_color = get_color(self.device.image, settlement.area)
         if color_similar(area_color, BUSINESS_SETTLEMENT.color, threshold=50):
             return settlement
@@ -1089,8 +1088,6 @@ class IslandBusiness(Island):
         Returns:
             str: 'blue' | 'yellow' | 'darkblue' | 'gray'
         """
-        from module.base.utils import get_color, color_similar
-
         x1, y1, x2, y2 = button_rect
         area_color = get_color(self.device.image, (x1, y1, x2, y2))
 

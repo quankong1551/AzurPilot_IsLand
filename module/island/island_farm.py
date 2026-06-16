@@ -4,6 +4,7 @@ from datetime import datetime
 from module.handler.login import LoginHandler
 from module.island.warehouse import *
 from module.logger import logger
+from module.base.timer import Timer
 
 
 class IslandFarm(Island, WarehouseOCR, LoginHandler):
