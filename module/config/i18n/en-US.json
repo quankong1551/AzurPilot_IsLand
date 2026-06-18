@@ -519,6 +519,7 @@
       "cn_channel-2": "[国服] 十字军行动",
       "cn_channel-3": "[国服] 龙骑兵行动",
       "cn_channel-4": "[国服] 冥王星行动",
+      "cn_channel-5": "[国服] 群岛计划",
       "en-0": "[EN] Avrora",
       "en-1": "[EN] Lexington",
       "en-2": "[EN] Sandy",
@@ -1051,7 +1052,7 @@
       "event_20231221_cn": "Light-Chasing Sea of Stars Rerun",
       "event_20240229_cn": "Snowrealm Peregrination Rerun",
       "event_20240425_cn": "Heart-Linking Harmony",
-      "event_20240521_cn": "Light of the Martyrium",
+      "event_20240521_cn": "Light of the Martyrium Rerun",
       "event_20240725_cn": "Interlude of Illusions",
       "event_20240815_cn": "Windborne Steel Wings",
       "event_20240829_cn": "Whence Flowers Bear No Fruit",
@@ -2144,7 +2145,11 @@
     },
     "ConsumeCoins": {
       "name": "Consumption of overflow supplies",
-      "help": "When the supplies exceed 550,000, purchase all items that consume supplies."
+      "help": "When supplies exceed the threshold, purchase all items that consume supplies. 0 means disabled. Range: 1-600000"
+    },
+    "OverflowCoins": {
+      "name": "Buy Meowfficer Boxes on Coin Overflow",
+      "help": "Automatically buy meowfficer boxes when coins exceed the threshold. 0 means disabled. Range: 1-600000"
     },
     "Filter": {
       "name": "Shop Filter",
