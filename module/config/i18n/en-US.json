@@ -346,6 +346,10 @@
       "name": "Daily Order",
       "help": "Enter the daily order interface from the island phone page, automatically detect order types (Urgent/Challenge/Easy), deliver or reject based on item conditions. \"Standard\" type orders are not supported."
     },
+    "IslandDailyInteract": {
+      "name": "Daily Interactions",
+      "help": "Handles island petting, JUU Express, Business Delivery, and weekly photo tasks. Enable after related button assets are generated."
+    },
     "IslandPearlSell": {
       "name": "Weekly Pearl Trade",
       "help": "Process pearls every Tuesday at 01:00."
@@ -4594,6 +4598,18 @@
       "help": "Cooldown time for urgent commission detection. Skips urgent commission detection before this time. Format: YYYY-MM-DD HH:mm:ss"
     }
   },
+  "IslandDailyInteract": {
+    "_info": {
+      "name": "Daily Interactions",
+      "help": "Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, and weekly photo tasks in Development Plan."
+    },
+    "WeeklyPhoto": {
+      "name": "Weekly Photo Task",
+      "help": "Start the weekly photo task from Development Plan, loop through three camera and idle selections, until the task icon disappears.",
+      "True": "True",
+      "False": "False"
+    }
+  },
   "IslandPearlSell": {
     "_info": {
       "name": "Weekly Pearl Trade",
@@ -4628,86 +4644,6 @@
     "Blacklist": {
       "name": "Cargo Blacklist",
       "help": "Replace commission when blacklisted cargo is detected. Currently only supports Milk."
-    }
-  },
-  "IslandBusiness": {
-    "_info": {
-      "name": "Business",
-      "help": "Manage island shop business operations"
-    },
-    "BatchEnabled": {
-      "name": "Enable Batch",
-      "help": "Split 5 shops into 2 batches to avoid staff conflicts",
-      "True": "Enabled",
-      "False": "Disabled"
-    },
-    "Batch1Shops": {
-      "name": "Batch 1 Shops",
-      "help": "Select shops for the first batch",
-      "1": "Fish Restaurant",
-      "2": "Teahouse",
-      "3": "Juu Eatery",
-      "4": "Grill",
-      "5": "Juu Coffee"
-    },
-    "Batch2Shops": {
-      "name": "Batch 2 Shops",
-      "help": "Select shops for the second batch",
-      "1": "Fish Restaurant",
-      "2": "Teahouse",
-      "3": "Juu Eatery",
-      "4": "Grill",
-      "5": "Juu Coffee"
-    },
-    "SeasonalReplaceEnabled": {
-      "name": "Seasonal Replace",
-      "help": "Auto-replace seasonal dishes when stock is low",
-      "True": "Enabled",
-      "False": "Disabled"
-    },
-    "SeasonalThreshold": {
-      "name": "Seasonal Threshold",
-      "help": "Replace seasonal dish when stock is below this number"
-    }
-  },
-  "IslandBusiness": {
-    "_info": {
-      "name": "Business",
-      "help": "Manage island shop business operations"
-    },
-    "BatchEnabled": {
-      "name": "Enable Batch",
-      "help": "Split 5 shops into 2 batches to avoid staff conflicts",
-      "True": "Enabled",
-      "False": "Disabled"
-    },
-    "Batch1Shops": {
-      "name": "Batch 1 Shops",
-      "help": "Select shops for the first batch",
-      "1": "Fish Restaurant",
-      "2": "Teahouse",
-      "3": "Juu Eatery",
-      "4": "Grill",
-      "5": "Juu Coffee"
-    },
-    "Batch2Shops": {
-      "name": "Batch 2 Shops",
-      "help": "Select shops for the second batch",
-      "1": "Fish Restaurant",
-      "2": "Teahouse",
-      "3": "Juu Eatery",
-      "4": "Grill",
-      "5": "Juu Coffee"
-    },
-    "SeasonalReplaceEnabled": {
-      "name": "Seasonal Replace",
-      "help": "Auto-replace seasonal dishes when stock is low",
-      "True": "Enabled",
-      "False": "Disabled"
-    },
-    "SeasonalThreshold": {
-      "name": "Seasonal Threshold",
-      "help": "Replace seasonal dish when stock is below this number"
     }
   },
   "IslandBusiness": {
