@@ -77,6 +77,7 @@ class IslandDailyInteract(Island):
                 tab_label='每日计划',
                 label='JUU速运'):
             logger.info('未检测到 JUU 速运任务，跳过')
+            self._back_to_island_phone_from_development_plan()
             return True
 
         completed = True
@@ -119,6 +120,7 @@ class IslandDailyInteract(Island):
                 tab_label='每日计划',
                 label='商区外送服务'):
             logger.info('未检测到商区外送服务任务，跳过')
+            self._back_to_island_phone_from_development_plan()
             return True
 
         completed = True
@@ -164,6 +166,7 @@ class IslandDailyInteract(Island):
                     tab_label='每周计划',
                     label='每周照相任务'):
                 logger.info('未检测到每周照相任务，结束循环')
+                self._back_to_island_phone_from_development_plan()
                 break
 
             if not self._run_weekly_photo_once():
@@ -171,7 +174,9 @@ class IslandDailyInteract(Island):
                 completed = False
                 break
 
-            self._back_to_island_phone()
+            if not self._back_to_island_phone():
+                completed = False
+                break
 
         return completed
 
@@ -466,6 +471,18 @@ class IslandDailyInteract(Island):
             self.device.screenshot()
             self.device.click(ISLAND_CLICK_SAFE_AREA)
 
+    def _back_to_island_phone_from_development_plan(self):
+        logger.info('退出开发计划页面')
+        for _ in self.loop(timeout=8):
+            if self.appear(ISLAND_PHONE_CHECK):
+                return True
+            if self.appear_then_click(ISLAND_BACK, interval=2):
+                continue
+            if self._handle_island_reward_once():
+                continue
+        logger.warning('退出开发计划页面超时')
+        return False
+
     def _back_to_island_phone(self):
         logger.info('返回岛屿手机页面')
         for _ in self.loop(timeout=20):
@@ -475,12 +492,11 @@ class IslandDailyInteract(Island):
                 continue
             if self._handle_island_reward_once():
                 continue
-        logger.warning('返回岛屿手机页面超时，尝试导航到手机页面')
-        self.ui_goto(page_island_phone, get_ship=False)
-        return True
+        logger.warning('返回岛屿手机页面超时')
+        return False
 
     def _delay_to_next_day(self):
-        target = datetime.now().replace(hour=3, minute=30, second=0, microsecond=0)
+        target = datetime.now().replace(hour=3, minute=0, second=0, microsecond=0)
         if target <= datetime.now():
             target += timedelta(days=1)
         self.config.task_delay(target=target)
