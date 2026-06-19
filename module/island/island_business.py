@@ -988,6 +988,14 @@ class IslandBusiness(Island):
         batch1_shops = self._get_batch1_shops()
         batch2_shops = self._get_batch2_shops()
 
+        if not batch1_shops and not batch2_shops:
+            logger.info("第一批未配置商店，跳过")
+            logger.info("第二批未配置商店，跳过")
+            logger.info("未配置任何经营商店，延后至明天0点")
+            tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            self.config.task_delay(target=tomorrow)
+            return
+
         if not batch1_shops:
             logger.info("第一批未配置商店，跳过")
         else:
