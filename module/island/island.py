@@ -182,14 +182,66 @@ class Island(SelectCharacter):
             if self.appear(ISLAND_SEASON_CHECK, offset=1):
                 self.ui_goto(page_island_management, get_ship=False)
 
-    def goto_island_map(self):
-        self.ui_goto(page_island,get_ship=False)
-        while True:
-            self.device.screenshot()
-            if self.appear_then_click(ISLAND_GOTO_MAP):
+    def is_in_friend_island(self):
+        leave = self.appear(AIR_DROP_RUN_AWAY, offset=(20, 20))
+        access_map = self.appear(ISLAND_ACCESS_MAP, offset=(20, 20))
+        return leave and access_map
+
+    def _wait_island_map_entry(self, timeout=3):
+        last_status = None
+        for _ in self.loop(timeout=timeout, skip_first=False):
+            in_map = self.appear(ISLAND_MAP_CHECK)
+            leave = self.appear(AIR_DROP_RUN_AWAY, offset=(20, 20))
+            access_map = self.appear(ISLAND_ACCESS_MAP, offset=(20, 20))
+            home_map = self.appear(ISLAND_GOTO_MAP)
+            in_friend = leave and access_map
+            last_status = {
+                "in_map": in_map,
+                "in_friend": in_friend,
+                "home_map": home_map,
+                "access_map": access_map,
+                "leave": leave,
+            }
+            if in_map or in_friend or home_map or access_map:
+                return last_status
+            if self.ui_additional(get_ship=False):
                 continue
+        return last_status or {
+            "in_map": False,
+            "in_friend": False,
+            "home_map": False,
+            "access_map": False,
+            "leave": False,
+        }
+
+    def goto_island_map(self):
+        logger.hr("Island goto map", level=2)
+        expect_friend = bool(getattr(self, "_island_expect_friend", False))
+        status = self._wait_island_map_entry(timeout=10 if expect_friend else 3)
+        in_map = status["in_map"]
+        in_friend = status["in_friend"]
+        home_map = status["home_map"]
+        access_map = status["access_map"]
+        if not in_map and not in_friend and not home_map and not access_map:
+            if expect_friend:
+                logger.warning("预期已进入好友岛，但暂未识别到地图入口，继续等待好友岛入口")
+            else:
+                logger.info("当前不在岛屿地图或好友岛，先导航到本岛")
+                self.ui_goto(page_island,get_ship=False)
+
+        for _ in self.loop(timeout=30 if expect_friend else 20, skip_first=False):
             if self.appear(ISLAND_MAP_CHECK):
-                break
+                logger.info("已进入岛屿地图")
+                return True
+            if self.appear_then_click(ISLAND_GOTO_MAP):
+                logger.info("点击本岛地图入口")
+                continue
+            if self.appear_then_click(ISLAND_ACCESS_MAP, offset=(20, 20)):
+                logger.info("点击好友岛右上角地图入口")
+                continue
+        else:
+            logger.warning("进入岛屿地图超时")
+            return False
 
     def island_map_goto(self,destination):
         def get_destination_buttons(name):
@@ -207,17 +259,33 @@ class Island(SelectCharacter):
                 return ISLAND_MAP_PORT_BUSINESS, ISLAND_MAP_PORT_BUSINESS_CHECK
             raise ValueError(f"未知的岛屿地图目的地: {name}")
 
+        def get_friend_destination_check_button(name):
+            if name == 'assembly':
+                return ISLAND_MAP_ASSEMBLY_FRIEND_CHECK
+            if name == 'port':
+                return ISLAND_MAP_PORT_FRIEND_CHECK
+            raise ValueError(f"好友岛地图不支持目的地: {name}")
+
         destination_button, check_button = get_destination_buttons(destination)
-        self.goto_island_map()
+        in_friend = bool(getattr(self, "_island_expect_friend", False))
+        if in_friend:
+            check_button = get_friend_destination_check_button(destination)
+        if not self.goto_island_map():
+            return False
         destination_clicked = False
         confirmed = False
         for _ in self.loop(timeout=20, skip_first=False):
             if not destination_clicked:
                 if self.appear_then_click(destination_button, interval=1):
+                    logger.info(f"点击岛屿地图目的地: {destination}")
                     destination_clicked = True
                 continue
 
             if self.appear(check_button, offset=(20, 20)):
+                logger.info(
+                    f"岛屿地图目的地详情已识别: {destination} "
+                    f"({check_button.name})"
+                )
                 self.device.click(ISLAND_MAP_CONFIRM)
                 confirmed = True
                 break
@@ -230,7 +298,7 @@ class Island(SelectCharacter):
 
         confirm_wait = Timer(ISLAND_MAP_CONFIRM_WAIT).start()
         for _ in self.loop(timeout=20, skip_first=False):
-            if self.ui_additional():
+            if self.ui_additional(get_ship=False):
                 continue
 
             if self.appear_then_click(ISLAND_MAP_CONFIRM, interval=2):
@@ -240,7 +308,10 @@ class Island(SelectCharacter):
             if self.ui_page_appear(page_island_map):
                 continue
 
-            if confirm_wait.reached() and self.appear(ISLAND_CHECK, offset=(20, 20)):
+            if confirm_wait.reached() and (
+                    self.appear(ISLAND_CHECK, offset=(20, 20))
+                    or (in_friend and self.is_in_friend_island())
+            ):
                 return True
 
         logger.warning(f"岛屿地图进入目的地超时: {destination}")
