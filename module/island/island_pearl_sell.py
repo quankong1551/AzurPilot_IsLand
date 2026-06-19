@@ -690,13 +690,17 @@ class IslandPearlSell(Island):
     def trade_count_adjust_buttons(current, target):
         diff = target - current
         if diff >= 10:
-            return ADD_TEN_A, ADD_TEN_B, ADD_TEN_C
+            return IslandPearlSell._repeat_buttons(
+                (ADD_TEN_A, ADD_TEN_B, ADD_TEN_C), diff // 10
+            )
         if diff > 0:
             return IslandPearlSell._repeat_buttons(
                 (ADD_ONE_A, ADD_ONE_B, ADD_ONE_C), diff
             )
         if diff <= -10:
-            return MINUS_TEN_A, MINUS_TEN_B, MINUS_TEN_C
+            return IslandPearlSell._repeat_buttons(
+                (MINUS_TEN_A, MINUS_TEN_B, MINUS_TEN_C), abs(diff) // 10
+            )
         return IslandPearlSell._repeat_buttons(
             (MINUS_ONE_A, MINUS_ONE_B, MINUS_ONE_C), abs(diff)
         )
@@ -719,17 +723,15 @@ class IslandPearlSell(Island):
         confirm_timer = Timer(1, count=2).start()
         check_button = self.current_pearl_shop_check_button()
         confirmed = False
-        got_items = False
         for _ in self.loop(timeout=15):
             if self.appear_then_click(confirm_button, offset=(20, 20), interval=1):
                 confirmed = True
                 confirm_timer.reset()
                 continue
-            if confirmed and self.handle_pearl_get_items():
-                got_items = True
+            if self.handle_pearl_get_items():
                 confirm_timer.reset()
                 continue
-            if confirmed and got_items and self.appear(check_button, offset=(20, 20)):
+            if confirmed and self.appear(check_button, offset=(20, 20)):
                 if confirm_timer.reached():
                     return True
             else:

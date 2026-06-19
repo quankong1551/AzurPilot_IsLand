@@ -113,6 +113,63 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                 for _ in range(fry_needed):
                     self.to_plant_list.append(item_name)
 
+    def _remove_plant_demand(self, product, quantity):
+        """从补种需求中扣除已在岗位中的鱼苗数量。"""
+        removed = 0
+        for _ in range(max(0, quantity)):
+            try:
+                self.to_plant_list.remove(product)
+                removed += 1
+            except ValueError:
+                break
+        return removed
+
+    def _build_supply_plant_products(self, idle_count):
+        """按岗位容量把鱼苗需求压缩成待养殖产品列表。"""
+        products_to_plant = []
+        supply_post_counts = {}
+        remaining_idle = idle_count
+
+        for item_config in self.FISHERY_ITEMS:
+            product = item_config['name']
+            fry_needed = self.to_plant_list.count(product)
+            if fry_needed <= 0:
+                continue
+
+            buy_max = item_config.get('buy_max', 4)
+            post_capacity = buy_max + 1
+            post_needed = (fry_needed + post_capacity - 1) // post_capacity
+            post_to_use = min(post_needed, remaining_idle)
+
+            if post_to_use <= 0:
+                break
+
+            products_to_plant.extend([product] * post_to_use)
+            supply_post_counts[product] = supply_post_counts.get(product, 0) + post_to_use
+            remaining_idle -= post_to_use
+            logger.info(
+                f"{product}: 需养殖{fry_needed}个鱼苗，每岗容量{post_capacity}，"
+                f"本轮占用{post_to_use}个岗位"
+            )
+
+            if remaining_idle <= 0:
+                break
+
+        return products_to_plant, remaining_idle, supply_post_counts
+
+    def _planned_fry_purchase_quantity(self, product, post_count, supply_post_counts, default_post_counts):
+        """计算本轮需要购买的鱼苗数量，保证每个同类岗位至少能下单。"""
+        buy_max = self.name_to_config[product].get('buy_max', 4)
+        post_capacity = buy_max + 1
+        supply_posts = supply_post_counts.get(product, 0)
+        default_posts = default_post_counts.get(product, 0)
+        supply_demand = len([p for p in self.to_plant_list if p == product])
+        max_purchase = post_count * buy_max
+        base_purchase = min(supply_demand, supply_posts * buy_max) + default_posts * buy_max
+        min_purchase_for_posts = min(max_purchase, post_capacity * (post_count - 1) + 1)
+        total_purchase = min(max_purchase, max(base_purchase, min_purchase_for_posts))
+        return total_purchase, supply_demand, buy_max
+
     def warehouse_inventory(self):
         """获取仓库库存信息"""
         self.warehouse_filter('fishery')
@@ -166,7 +223,11 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         elif self.appear(ISLAND_WORKING):
             product_name = self.post_plant_check()
             if product_name in self.to_plant_list:
-                self.to_plant_list.remove(product_name)
+                ocr_post_number = Digit(OCR_POST_NUMBER, letter=(57, 58, 60), threshold=100,
+                                        alphabet='0123456789')
+                post_number = ocr_post_number.ocr(self.device.image) or 1
+                removed = self._remove_plant_demand(product_name, post_number)
+                logger.info(f"已在养殖中的{product_name}扣除补种需求: {removed}/{post_number}")
             self.posts[post_id]['crop'] = product_name or 'unknown'
             # 记录正在工作中的岗位的完成时间
             time_work = Duration(ISLAND_WORKING_TIME)
@@ -216,6 +277,9 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         time_work = Duration(ISLAND_WORKING_TIME)
         time_value = time_work.ocr(self.device.image)
         finish_time = datetime.now() + time_value
+        ocr_post_number = Digit(OCR_POST_NUMBER, letter=(57, 58, 60), threshold=100,
+                                alphabet='0123456789')
+        post_number = ocr_post_number.ocr(self.device.image) or 1
         if post_index < len(self.fishery_times):
             self.fishery_times[post_index] = finish_time
 
@@ -224,6 +288,9 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
             if post_info['button'] == post_button:
                 post_info['crop'] = product
                 break
+        if product in self.to_plant_list:
+            removed = self._remove_plant_demand(product, post_number)
+            logger.info(f"已安排养殖{product}扣除补种需求: {removed}/{post_number}")
 
         # 关闭详情弹窗，防止后续操作被弹窗遮挡
         self.post_close()
@@ -234,7 +301,7 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         导航到渔具商店页签。
         渔具商店是渔场独有的左侧栏页签，入口在商店页面的左侧边栏（鱼苗图标按钮，y~467）。
         """
-        self.ui_goto(page_island_shop, get_ship=False)
+        self.ui_goto(page_island_shop, get_ship=False, offset=0)
         self.device.sleep(0.5)
         self.device.click(ISLAND_SHOP_GOTO_FISHERY_GEAR)
         while 1:
@@ -341,17 +408,10 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
             logger.info("没有空闲岗位，跳过养殖")
         else:
             # 确定需要养殖的产品
-            products_to_buy = []
+            products_to_buy, remaining_idle, supply_post_counts = self._build_supply_plant_products(len(idle_posts))
+            default_post_counts = {}
 
-            # 1. 从补种列表中选取
-            num_from_list = min(len(self.to_plant_list), len(idle_posts))
-            for i in range(num_from_list):
-                products_to_buy.append(self.to_plant_list[i])
-
-            # 2. 空闲岗位剩余数
-            remaining_idle = len(idle_posts) - num_from_list
-
-            # 3. 计算已种植黄鳍金枪鱼的数量
+            # 继续用剩余空闲岗位满足默认黄鳍金枪鱼岗位数
             already_planted_default = 0
             for i in range(self.fishery_positions):
                 post_id = f'ISLAND_FISHERY_POST{i + 1}'
@@ -366,12 +426,13 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                 actual_default = min(remaining_idle, need_default)
                 for _ in range(actual_default):
                     products_to_buy.append('yellowfin_tuna')
+                    default_post_counts['yellowfin_tuna'] = default_post_counts.get('yellowfin_tuna', 0) + 1
 
             if products_to_buy:
                 logger.info(f"\n需要购买的产品: {products_to_buy}")
 
                 # 前往鱼苗商店（不是种子商店），鱼苗商店有独立的页签
-                self.ui_goto(page_island_shop, get_ship=False)
+                self.ui_goto(page_island_shop, get_ship=False, offset=0)
                 self.device.sleep(0.5)
                 self.device.click(ISLAND_SHOP_GOTO_FISHERY_GEAR)
                 while 1:
@@ -389,14 +450,16 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                     product_counts[product_name] = product_counts.get(product_name, 0) + 1
 
                 for product, count in product_counts.items():
-                    buy_max = self.name_to_config[product].get('buy_max', 4)
                     # 计算需求量：优先使用补种列表中的数量（库存短缺计算所得），
                     # 若产品不在补种列表中（如由配置强制种植），则按每岗上限填满
-                    total_demand = len([p for p in self.to_plant_list if p == product])
-                    if total_demand == 0:
-                        total_demand = count * buy_max
-                    logger.info(f"购买{product}鱼苗，需求{total_demand}个，空闲{count}岗，每岗上限{buy_max}个")
-                    remaining = total_demand
+                    total_purchase, supply_demand, buy_max = self._planned_fry_purchase_quantity(
+                        product, count, supply_post_counts, default_post_counts
+                    )
+                    logger.info(
+                        f"购买{product}鱼苗，补种需求{supply_demand}个，排产{count}岗，"
+                        f"本轮购买{total_purchase}个，每岗购买上限{buy_max}个"
+                    )
+                    remaining = total_purchase
                     for _ in range(count):
                         if remaining <= 0:
                             break
@@ -431,8 +494,6 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
 
                     if success:
                         logger.info(f"养殖渔场岗位{post_info['post_id']}成功: {product_to_plant}")
-                        if product_to_plant in self.to_plant_list:
-                            self.to_plant_list.remove(product_to_plant)
 
         logger.info("\n渔场管理完成！")
 

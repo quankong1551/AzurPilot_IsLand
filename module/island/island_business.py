@@ -1895,9 +1895,9 @@ class IslandBusiness(Island):
         else:
             shop_name_set = set(shop_names)
             tasks = [
-                self.SHOP_REFILL_TASK_MAP[shop['name']]
-                for shop in self.shops
-                if shop['name'] in shop_name_set and shop['name'] in self.SHOP_REFILL_TASK_MAP
+                task
+                for shop_name, task in self.SHOP_REFILL_TASK_MAP.items()
+                if shop_name in shop_name_set
             ]
 
         if not tasks:

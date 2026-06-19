@@ -528,7 +528,7 @@ class IslandCargoPreparation(IslandUI):
             return
 
         future_finish = [
-            finish for finish in commissions.get('finish_time')
+            finish for finish in commissions.get('finish_time') or []
             if finish is not None and finish > datetime.now()
         ]
         if future_finish:

@@ -350,7 +350,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
             self.set_buy_number(target)
         while 1:
             self.device.screenshot()
-            if self.appear(ISLAND_SHOP_CHECK, offset=1):
+            if self.appear(ISLAND_SHOP_SEED_TAB_CHECK, offset=1):
                 break
             if self.appear_then_click(ISLAND_SHOP_CONFIRM):
                 self.device.sleep(0.5)
@@ -520,7 +520,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
         need_to_buy_seeds = any(all_plants_to_buy.values())
 
         if need_to_buy_seeds:
-            self.ui_goto(page_island_shop, get_ship=False)
+            self.ui_goto(page_island_shop, get_ship=False, offset=0)
             self.device.sleep(0.5)
             self.device.click(ISLAND_SHOP_GOTO_SEED_SHOP)
             while 1:
