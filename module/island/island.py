@@ -10,6 +10,8 @@ from module.handler.login import LoginHandler
 from module.ui.ui import *
 from module.logger import logger
 
+ISLAND_MAP_CONFIRM_WAIT = 3
+
 # 岗位产品选择滑动惯性消除安全区域
 SELECT_PRODUCT_INERTIA_STOP = Button(
     area=(), color=(),
@@ -207,15 +209,42 @@ class Island(SelectCharacter):
 
         destination_button, check_button = get_destination_buttons(destination)
         self.goto_island_map()
-        while True:
-            self.device.screenshot()
-            if self.appear(check_button):
+        destination_clicked = False
+        confirmed = False
+        for _ in self.loop(timeout=20, skip_first=False):
+            if not destination_clicked:
+                if self.appear_then_click(destination_button, interval=1):
+                    destination_clicked = True
+                continue
+
+            if self.appear(check_button, offset=(20, 20)):
                 self.device.click(ISLAND_MAP_CONFIRM)
+                confirmed = True
                 break
             if self.appear_then_click(destination_button, interval=1):
-                pass
-        self.goto_management()
-        self.ui_goto(page_island)
+                continue
+
+        if not confirmed:
+            logger.warning(f"岛屿地图目的地选择超时: {destination}")
+            return False
+
+        confirm_wait = Timer(ISLAND_MAP_CONFIRM_WAIT).start()
+        for _ in self.loop(timeout=20, skip_first=False):
+            if self.ui_additional():
+                continue
+
+            if self.appear_then_click(ISLAND_MAP_CONFIRM, interval=2):
+                confirm_wait.reset()
+                continue
+
+            if self.ui_page_appear(page_island_map):
+                continue
+
+            if confirm_wait.reached() and self.appear(ISLAND_CHECK, offset=(20, 20)):
+                return True
+
+        logger.warning(f"岛屿地图进入目的地超时: {destination}")
+        return False
     def post_manage_mode(self, post_manage_mode):
         post_manage_button = POST_MANAGE_BUSINESS if post_manage_mode == POST_MANAGE_PRODUCTION else POST_MANAGE_PRODUCTION
         while True:
@@ -459,7 +488,8 @@ class Island(SelectCharacter):
     def goto_mill(self, max_attempts=3):
         for attempt in range(max_attempts):
             logger.info(f"尝试前往磨坊，第{attempt + 1}次尝试")
-            self.island_map_goto('farm')
+            if not self.island_map_goto('farm'):
+                continue
             self.island_up(800)
             self.island_left(1300)
             self.island_down(1000)

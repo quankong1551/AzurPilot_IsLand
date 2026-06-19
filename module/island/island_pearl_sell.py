@@ -287,7 +287,8 @@ class IslandPearlSell(Island):
     def _goto_pearl_shop_at(self, destination, use_map=True):
         """前往地图目的地并移动到珍珠商店 NPC 身旁。"""
         if use_map:
-            self.island_map_goto(destination)
+            if not self.island_map_goto(destination):
+                return False
         if destination == "assembly":
             self.move_to_assembly_role_a()
         elif destination == "port":
