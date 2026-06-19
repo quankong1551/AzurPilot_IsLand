@@ -315,24 +315,35 @@ class IslandDailyGather(Island):
             bool: 是否成功选择角色
         """
         screenshot = self.device.screenshot()
-        characters = self.recognize_all_characters(screenshot)
+        detected = False
+        available = []
 
-        if not characters:
+        for row, col, button in self.select_character_grid.generate():
+            character_status = self._recognize_character_status(screenshot, button)
+            if not character_status:
+                continue
+
+            detected = True
+            char_info = {
+                "grid_position": (row, col),
+                "button_area": button.area,
+                **character_status,
+            }
+            if char_info["is_working"] or char_info["is_selected"]:
+                continue
+
+            if char_info.get("stamina", 0) >= GATHER_STAMINA_THRESHOLD:
+                return self._click_character(char_info, f"体力达标 >= {GATHER_STAMINA_THRESHOLD}")
+
+            available.append(char_info)
+
+        if not detected:
             logger.warning("未检测到任何角色")
             return False
 
-        available = [
-            char_info
-            for char_info in characters
-            if not char_info["is_working"] and not char_info["is_selected"]
-        ]
         if not available:
             logger.warning("所有角色均在工作中或已被选中，无法选择空闲角色")
             return False
-
-        for char_info in available:
-            if char_info.get("stamina", 0) >= GATHER_STAMINA_THRESHOLD:
-                return self._click_character(char_info, f"体力达标 >= {GATHER_STAMINA_THRESHOLD}")
 
         best_char = max(available, key=lambda item: item.get("stamina", 0))
         logger.warning(

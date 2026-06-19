@@ -97,16 +97,20 @@ class SelectCharacter(UI):
         if not target_templates:
             return results
 
+        remaining_templates = target_templates.copy()
         for row, col, button in self.select_character_grid.generate():
             character_status = self._recognize_character_status(
-                screenshot, button, character_targets=target_templates
+                screenshot, button, character_targets=remaining_templates
             )
             if character_status:
+                remaining_templates.pop(character_status["character_name"], None)
                 results.append({
                     "grid_position": (row, col),
                     "button_area": button.area,
                     **character_status
                 })
+                if not remaining_templates:
+                    break
 
         return results
 
@@ -196,6 +200,7 @@ class SelectCharacter(UI):
             threshold=128,
             name='OCR_CHARACTER_STAMINA',
         )
+        ocr.SHOW_LOG = False
         current, _, total = ocr.ocr(screenshot)
         if total:
             return current
