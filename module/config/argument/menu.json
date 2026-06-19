@@ -132,6 +132,7 @@
     "tasks": [
       "Daemon",
       "OpsiDaemon",
+      "CoordinatePicker",
       "EventStory",
       "BoxDisassemble",
       "Benchmark",

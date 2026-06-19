@@ -16647,6 +16647,16 @@
       }
     }
   },
+  "CoordinatePicker": {
+    "Storage": {
+      "Storage": {
+        "type": "storage",
+        "value": {},
+        "valuetype": "ignore",
+        "display": "disabled"
+      }
+    }
+  },
   "EventStory": {
     "EventStory": {
       "SkipBattle": {

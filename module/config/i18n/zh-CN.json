@@ -362,6 +362,10 @@
       "name": "大世界半自动",
       "help": ""
     },
+    "CoordinatePicker": {
+      "name": "实时取点",
+      "help": ""
+    },
     "EventStory": {
       "name": "活动剧情",
       "help": ""

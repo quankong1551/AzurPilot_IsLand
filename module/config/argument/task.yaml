@@ -441,6 +441,8 @@ Tool:
       - Daemon
     OpsiDaemon:
       - OpsiDaemon
+    CoordinatePicker:
+      - CoordinatePicker
     EventStory:
       - EventStory
     BoxDisassemble:

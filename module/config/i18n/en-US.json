@@ -362,6 +362,10 @@
       "name": "OpSi Semi-Auto",
       "help": ""
     },
+    "CoordinatePicker": {
+      "name": "Coordinate Picker",
+      "help": ""
+    },
     "EventStory": {
       "name": "Event Story",
       "help": ""

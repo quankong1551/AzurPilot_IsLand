@@ -10,6 +10,7 @@ import threading
 import time
 import re
 import base64
+import cv2
 from datetime import datetime, timedelta
 from pathlib import Path
 from functools import partial
@@ -46,7 +47,7 @@ from pywebio.output import (
     toast,
     use_scope,
 )
-from pywebio.pin import pin, pin_on_change
+from pywebio.pin import pin, pin_on_change, pin_update
 from pywebio.session import (
     download,
     go_app,
@@ -3577,8 +3578,486 @@ class AlasGUI(Frame):
             elif self._log.display_dashboard:
                 self._update_dashboard()
 
+    def _coordinate_picker_scope_id(self) -> str:
+        name = self.alas_name or DEFAULT_CONFIG_NAME
+        return re.sub(r"[^0-9A-Za-z_]", "_", name)
+
+    def _coordinate_picker_workbench_storage_key(self) -> str:
+        return f"coordinate_picker_workbench_{self._coordinate_picker_scope_id()}"
+
+    def _coordinate_picker_product_mapping_storage_key(self) -> str:
+        return f"coordinate_picker_product_mapping_{self._coordinate_picker_scope_id()}"
+
+    def _coordinate_picker_latest_points_storage_key(self) -> str:
+        return f"coordinate_picker_latest_points_{self._coordinate_picker_scope_id()}"
+
+    def _coordinate_picker_workbench_reference_items(self) -> List[Dict[str, Any]]:
+        return [
+            {"name": "Shop1", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+            {"name": "Shop2", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+            {"name": "Shop3", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+            {"name": "Shop4", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+            {"name": "Shop5", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+            {"name": "Custom1", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+            {"name": "Custom2", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+            {"name": "Custom3", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
+        ]
+
+    def _coordinate_picker_product_mapping_reference_items(self) -> List[Dict[str, Any]]:
+        return [
+            {"product": "Product1", "target": "Shop1", "button": "", "note": ""},
+            {"product": "Product2", "target": "Shop1", "button": "", "note": ""},
+            {"product": "Product3", "target": "Shop1", "button": "", "note": ""},
+            {"product": "Product4", "target": "Shop1", "button": "", "note": ""},
+            {"product": "Product5", "target": "Shop1", "button": "", "note": ""},
+            {"product": "Product6", "target": "Shop2", "button": "", "note": ""},
+            {"product": "Product7", "target": "Shop2", "button": "", "note": ""},
+            {"product": "Product8", "target": "Shop2", "button": "", "note": ""},
+        ]
+
+    def _default_coordinate_picker_workbench_items(self) -> List[Dict[str, Any]]:
+        return [item.copy() for item in self._coordinate_picker_workbench_reference_items()]
+
+    def _coordinate_picker_workbench_pin_names(self, index: int) -> Dict[str, str]:
+        prefix = f"CoordinatePicker_Workbench_{index}"
+        return {
+            "name": f"{prefix}_Name",
+            "center_x": f"{prefix}_CenterX",
+            "center_y": f"{prefix}_CenterY",
+            "x1": f"{prefix}_X1",
+            "y1": f"{prefix}_Y1",
+            "x2": f"{prefix}_X2",
+            "y2": f"{prefix}_Y2",
+            "note": f"{prefix}_Note",
+        }
+
+    def _coordinate_picker_product_mapping_pin_name(self, index: int, field: str) -> str:
+        return f"CoordinatePicker_ProductMapping_{index}_{field}"
+
+    def _load_coordinate_picker_workbench_items(self) -> List[Dict[str, Any]]:
+        raw = get_localstorage(self._coordinate_picker_workbench_storage_key())
+        defaults = self._default_coordinate_picker_workbench_items()
+        if raw:
+            try:
+                items = json.loads(raw)
+                if isinstance(items, list):
+                    loaded = []
+                    for index, item in enumerate(items):
+                        if isinstance(item, dict):
+                            base = defaults[index].copy() if index < len(defaults) else {}
+                            base.update(item)
+                            loaded.append(base)
+                    return (loaded + defaults[len(loaded):])[:len(defaults)]
+            except (TypeError, ValueError):
+                logger.warning("Coordinate picker workbench localStorage is invalid")
+        return defaults
+
+    @staticmethod
+    def _coordinate_picker_pin_value(name: str, default: Any = "") -> Any:
+        try:
+            value = pin[name]
+        except Exception:
+            return default
+        return default if value is None else value
+
+    def _collect_coordinate_picker_workbench_items(self) -> List[Dict[str, Any]]:
+        items = []
+        total = len(self._coordinate_picker_workbench_reference_items())
+        for index in range(total):
+            names = self._coordinate_picker_workbench_pin_names(index)
+            item = {
+                field: self._coordinate_picker_pin_value(pin_name, "")
+                for field, pin_name in names.items()
+            }
+            items.append(item)
+        return items
+
+    def _load_coordinate_picker_product_mapping_items(self) -> List[Dict[str, Any]]:
+        raw = get_localstorage(self._coordinate_picker_product_mapping_storage_key())
+        defaults = [item.copy() for item in self._coordinate_picker_product_mapping_reference_items()]
+        if raw:
+            try:
+                items = json.loads(raw)
+                if isinstance(items, list):
+                    loaded = []
+                    for index, item in enumerate(items):
+                        if isinstance(item, dict):
+                            base = defaults[index].copy() if index < len(defaults) else {}
+                            base.update(item)
+                            loaded.append(base)
+                    return (loaded + defaults[len(loaded):])[:len(defaults)]
+            except (TypeError, ValueError):
+                logger.warning("Coordinate picker product mapping localStorage is invalid")
+        return defaults
+
+    def _collect_coordinate_picker_product_mapping_items(self) -> List[Dict[str, Any]]:
+        items = []
+        total = len(self._coordinate_picker_product_mapping_reference_items())
+        for index in range(total):
+            items.append({
+                "product": self._coordinate_picker_pin_value(self._coordinate_picker_product_mapping_pin_name(index, "Product"), ""),
+                "target": self._coordinate_picker_pin_value(self._coordinate_picker_product_mapping_pin_name(index, "Target"), ""),
+                "button": self._coordinate_picker_pin_value(self._coordinate_picker_product_mapping_pin_name(index, "Button"), ""),
+                "note": self._coordinate_picker_pin_value(self._coordinate_picker_product_mapping_pin_name(index, "Note"), ""),
+            })
+        return items
+
+    def _save_coordinate_picker_workbench_items(self) -> None:
+        items = self._collect_coordinate_picker_workbench_items()
+        mappings = self._collect_coordinate_picker_product_mapping_items()
+        set_localstorage(
+            self._coordinate_picker_workbench_storage_key(),
+            json.dumps(items, ensure_ascii=False),
+        )
+        set_localstorage(
+            self._coordinate_picker_product_mapping_storage_key(),
+            json.dumps(mappings, ensure_ascii=False),
+        )
+        toast("坐标取点表已保存到当前浏览器", color="success")
+        self._render_coordinate_picker_frame(items)
+
+    def _reset_coordinate_picker_workbench_items(self) -> None:
+        items = self._default_coordinate_picker_workbench_items()
+        mappings = [item.copy() for item in self._coordinate_picker_product_mapping_reference_items()]
+        set_localstorage(
+            self._coordinate_picker_workbench_storage_key(),
+            json.dumps(items, ensure_ascii=False),
+        )
+        set_localstorage(
+            self._coordinate_picker_product_mapping_storage_key(),
+            json.dumps(mappings, ensure_ascii=False),
+        )
+        self.alas_coordinate_picker("CoordinatePicker")
+
+    def _get_coordinate_picker_latest_points(self) -> List[Dict[str, int]]:
+        raw = get_localstorage(self._coordinate_picker_latest_points_storage_key())
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+        except (TypeError, ValueError):
+            return []
+        points = []
+        if isinstance(data, list):
+            for item in data:
+                try:
+                    if isinstance(item, dict):
+                        x, y = int(item["x"]), int(item["y"])
+                    else:
+                        x, y = int(item[0]), int(item[1])
+                except (KeyError, TypeError, ValueError, IndexError):
+                    continue
+                points.append({"x": x, "y": y})
+        return points
+
+    def _coordinate_picker_fill_center_from_last_point(self, index: int) -> None:
+        points = self._get_coordinate_picker_latest_points()
+        if not points:
+            toast("请先点击预览图记录点位", color="warning")
+            return
+        names = self._coordinate_picker_workbench_pin_names(index)
+        point = points[0]
+        pin_update(names["center_x"], value=point["x"])
+        pin_update(names["center_y"], value=point["y"])
+        toast(f"已填入中心点 ({point['x']}, {point['y']})", color="success")
+
+    def _coordinate_picker_fill_rect_from_last_points(self, index: int) -> None:
+        points = self._get_coordinate_picker_latest_points()
+        if len(points) < 2:
+            toast("请先在预览图上点击左上和右下两个点", color="warning")
+            return
+        p1, p2 = points[0], points[1]
+        names = self._coordinate_picker_workbench_pin_names(index)
+        x1, x2 = sorted([p1["x"], p2["x"]])
+        y1, y2 = sorted([p1["y"], p2["y"]])
+        pin_update(names["x1"], value=x1)
+        pin_update(names["y1"], value=y1)
+        pin_update(names["x2"], value=x2)
+        pin_update(names["y2"], value=y2)
+        toast(f"已填入矩形 ({x1}, {y1}, {x2}, {y2})", color="success")
+
+    def _coordinate_picker_fill_center_from_rect(self, index: int) -> None:
+        names = self._coordinate_picker_workbench_pin_names(index)
+        try:
+            x1 = int(self._coordinate_picker_pin_value(names["x1"], ""))
+            y1 = int(self._coordinate_picker_pin_value(names["y1"], ""))
+            x2 = int(self._coordinate_picker_pin_value(names["x2"], ""))
+            y2 = int(self._coordinate_picker_pin_value(names["y2"], ""))
+        except (TypeError, ValueError):
+            toast("请先填写有效矩形", color="warning")
+            return
+        pin_update(names["center_x"], value=(x1 + x2) // 2)
+        pin_update(names["center_y"], value=(y1 + y2) // 2)
+
+    def _coordinate_picker_test_workbench_center(self, index: int) -> None:
+        names = self._coordinate_picker_workbench_pin_names(index)
+        try:
+            x = int(self._coordinate_picker_pin_value(names["center_x"], ""))
+            y = int(self._coordinate_picker_pin_value(names["center_y"], ""))
+        except (TypeError, ValueError):
+            toast("中心点坐标无效", color="warning")
+            return
+        self._coordinate_picker_test_center_click(x, y)
+
+    def _coordinate_picker_test_workbench_rect(self, index: int) -> None:
+        names = self._coordinate_picker_workbench_pin_names(index)
+        try:
+            area = (
+                int(self._coordinate_picker_pin_value(names["x1"], "")),
+                int(self._coordinate_picker_pin_value(names["y1"], "")),
+                int(self._coordinate_picker_pin_value(names["x2"], "")),
+                int(self._coordinate_picker_pin_value(names["y2"], "")),
+            )
+        except (TypeError, ValueError):
+            toast("矩形坐标无效", color="warning")
+            return
+        self._coordinate_picker_test_rect_click(area)
+
+    def _get_coordinate_picker_click_device(self):
+        return self._get_coordinate_picker_device()
+
+    def _coordinate_picker_run_test_click(self, area) -> None:
+        x1, y1, x2, y2 = area
+        if not (0 <= x1 < x2 <= 1280 and 0 <= y1 < y2 <= 720):
+            toast("点击区域必须位于 1280x720 画面内", color="warning")
+            return
+        try:
+            from module.base.button import Button
+
+            device = self._get_coordinate_picker_click_device()
+            button = Button(area=area, color=(0, 0, 0), button=area, name="COORDINATE_PICKER_TEST")
+            device.click(button)
+            toast(f"已发送测试点击 {area}", color="success")
+        except Exception as e:
+            logger.exception("Coordinate picker test click failed")
+            toast(f"测试点击失败：{e}", color="error")
+
+    def _coordinate_picker_test_center_click(self, x: int, y: int) -> None:
+        self._coordinate_picker_run_test_click((x - 2, y - 2, x + 3, y + 3))
+
+    def _coordinate_picker_test_rect_click(self, area) -> None:
+        self._coordinate_picker_run_test_click(area)
+
+    def _get_coordinate_picker_device(self):
+        cache_name = getattr(self, "_coordinate_picker_device_name", None)
+        cache_device = getattr(self, "_coordinate_picker_device", None)
+        if cache_name == self.alas_name and cache_device is not None:
+            return cache_device
+
+        from module.webui.fake_pil_module import remove_fake_pil_module
+
+        remove_fake_pil_module()
+        from module.device.device import Device
+
+        config = load_config(self.alas_name or DEFAULT_CONFIG_NAME)
+        device = Device(config)
+        self._coordinate_picker_device_name = self.alas_name
+        self._coordinate_picker_device = device
+        return device
+
+    @use_scope("coordinate_picker_frame", clear=True)
+    def _render_coordinate_picker_frame(self, items: Optional[List[Dict[str, Any]]] = None) -> None:
+        if items is None:
+            items = self._collect_coordinate_picker_workbench_items()
+        latest_key = self._coordinate_picker_latest_points_storage_key()
+        scope_id = self._coordinate_picker_scope_id()
+        try:
+            device = self._get_coordinate_picker_device()
+            image = device.screenshot()
+            ok, png = cv2.imencode(".png", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            if not ok:
+                raise RuntimeError("encode screenshot failed")
+            image_b64 = base64.b64encode(png.tobytes()).decode("ascii")
+        except Exception as e:
+            logger.warning(f"Coordinate picker screenshot failed: {e}")
+            put_warning(f"截图失败：{e}", closable=True)
+            return
+
+        overlay = []
+        for index, item in enumerate(items, start=1):
+            try:
+                cx = int(item.get("center_x") or "")
+                cy = int(item.get("center_y") or "")
+                overlay.append(
+                    f'<circle cx="{cx}" cy="{cy}" r="7" fill="#ff4757" stroke="#fff" stroke-width="2"></circle>'
+                    f'<text x="{cx + 9}" y="{cy - 9}" fill="#ff4757" stroke="#fff" stroke-width="3" paint-order="stroke" font-size="18">{index}</text>'
+                )
+            except (TypeError, ValueError):
+                pass
+            try:
+                x1 = int(item.get("x1") or "")
+                y1 = int(item.get("y1") or "")
+                x2 = int(item.get("x2") or "")
+                y2 = int(item.get("y2") or "")
+                if x1 < x2 and y1 < y2:
+                    overlay.append(
+                        f'<rect x="{x1}" y="{y1}" width="{x2 - x1}" height="{y2 - y1}" '
+                        'fill="rgba(30,144,255,.08)" stroke="#1e90ff" stroke-width="1.5"></rect>'
+                    )
+            except (TypeError, ValueError):
+                pass
+
+        put_html(
+            f"""
+            <div style="display:grid;gap:8px;">
+              <div id="coordinate-picker-frame-{scope_id}" style="position:relative;max-width:100%;width:960px;border:1px solid rgba(128,128,128,.25);">
+                <img id="coordinate-picker-image-{scope_id}" src="data:image/png;base64,{image_b64}" style="display:block;width:100%;height:auto;cursor:crosshair;">
+                <svg viewBox="0 0 1280 720" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
+                  {''.join(overlay)}
+                  <g id="coordinate-picker-live-overlay-{scope_id}"></g>
+                </svg>
+              </div>
+              <div id="coordinate-picker-latest-{scope_id}" style="font-size:12px;opacity:.72;">点击预览图记录坐标。</div>
+            </div>
+            """
+        )
+        run_js(
+            """
+            (function(){
+                const img = document.getElementById(imageId);
+                const label = document.getElementById(labelId);
+                const liveOverlay = document.getElementById(liveOverlayId);
+                if (!img || img.dataset.coordinatePickerReady === "1") return;
+                img.dataset.coordinatePickerReady = "1";
+                function render(points) {
+                    if (!label) return;
+                    if (liveOverlay) {
+                        const safePoints = points.filter(function(p){
+                            return Number.isFinite(p.x) && Number.isFinite(p.y);
+                        });
+                        let html = "";
+                        if (safePoints.length >= 1) {
+                            const p = safePoints[0];
+                            html += '<circle cx="' + p.x + '" cy="' + p.y + '" r="4" fill="#ffb020" stroke="#fff" stroke-width="1"></circle>';
+                        }
+                        if (safePoints.length >= 2) {
+                            const p1 = safePoints[0];
+                            const p2 = safePoints[1];
+                            const x1 = Math.min(p1.x, p2.x);
+                            const y1 = Math.min(p1.y, p2.y);
+                            const x2 = Math.max(p1.x, p2.x);
+                            const y2 = Math.max(p1.y, p2.y);
+                            html += '<rect x="' + x1 + '" y="' + y1 + '" width="' + (x2 - x1) + '" height="' + (y2 - y1) + '" fill="rgba(255,176,32,.06)" stroke="#ffb020" stroke-width="1.25"></rect>';
+                            html += '<circle cx="' + p2.x + '" cy="' + p2.y + '" r="4" fill="#ffb020" stroke="#fff" stroke-width="1"></circle>';
+                        }
+                        liveOverlay.innerHTML = html;
+                    }
+                    if (!points.length) {
+                        label.textContent = "点击预览图记录坐标。";
+                        return;
+                    }
+                    label.textContent = "最近点位：" + points.slice(0, 4).map(function(p){
+                        return "(" + p.x + ", " + p.y + ")";
+                    }).join("  ");
+                }
+                let initial = [];
+                try { initial = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch(e) {}
+                render(initial);
+                img.addEventListener("click", function(e){
+                    const rect = img.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(1279, Math.round((e.clientX - rect.left) * 1280 / rect.width)));
+                    const y = Math.max(0, Math.min(719, Math.round((e.clientY - rect.top) * 720 / rect.height)));
+                    let points = [];
+                    try { points = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch(e) {}
+                    points.unshift({x: x, y: y, time: new Date().toISOString()});
+                    points = points.slice(0, 8);
+                    localStorage.setItem(storageKey, JSON.stringify(points));
+                    render(points);
+                });
+            })();
+            """,
+            imageId=f"coordinate-picker-image-{scope_id}",
+            labelId=f"coordinate-picker-latest-{scope_id}",
+            liveOverlayId=f"coordinate-picker-live-overlay-{scope_id}",
+            storageKey=latest_key,
+        )
+
+    @use_scope("content", clear=True)
+    def alas_coordinate_picker(self, task: str) -> None:
+        self.init_menu(name=task)
+        self.set_title(t(f"Task.{task}.name"))
+        workbench_items = self._load_coordinate_picker_workbench_items()
+        mapping_items = self._load_coordinate_picker_product_mapping_items()
+
+        put_html(
+            '<div style="display:grid;gap:12px;max-width:1180px;">'
+            '<div style="font-size:13px;opacity:.75;">点击截图预览记录坐标，使用每行按钮把最近点位填入坐标表。数据保存在当前浏览器 localStorage。</div>'
+            '</div>'
+        )
+        put_row(
+            [
+                put_button("刷新截图", onclick=lambda: self._render_coordinate_picker_frame(), color="primary"),
+                put_button("保存表格", onclick=self._save_coordinate_picker_workbench_items, color="success"),
+                put_button("重置表格", onclick=self._reset_coordinate_picker_workbench_items, color="warning"),
+            ],
+            size="auto auto auto",
+        )
+        put_scope("coordinate_picker_frame")
+        self._render_coordinate_picker_frame(workbench_items)
+
+        put_markdown("### 坐标表")
+        for index, item in enumerate(workbench_items):
+            names = self._coordinate_picker_workbench_pin_names(index)
+            put_row(
+                [
+                    put_text(str(index + 1)).style("padding-top:34px;"),
+                    put_input(names["name"], label="名称", value=item.get("name", "")),
+                    put_input(names["center_x"], type="number", label="中心X", value=item.get("center_x", "")),
+                    put_input(names["center_y"], type="number", label="中心Y", value=item.get("center_y", "")),
+                    put_input(names["x1"], type="number", label="左", value=item.get("x1", "")),
+                    put_input(names["y1"], type="number", label="上", value=item.get("y1", "")),
+                    put_input(names["x2"], type="number", label="右", value=item.get("x2", "")),
+                    put_input(names["y2"], type="number", label="下", value=item.get("y2", "")),
+                    put_input(names["note"], label="备注", value=item.get("note", "")),
+                ],
+                size="36px 1.1fr .8fr .8fr .7fr .7fr .7fr .7fr 1.2fr",
+            )
+            put_row(
+                [
+                    put_button("填中心", onclick=partial(self._coordinate_picker_fill_center_from_last_point, index), color="secondary"),
+                    put_button("填矩形", onclick=partial(self._coordinate_picker_fill_rect_from_last_points, index), color="secondary"),
+                    put_button("中心<-矩形", onclick=partial(self._coordinate_picker_fill_center_from_rect, index), color="secondary"),
+                    put_button("测试中心", onclick=partial(self._coordinate_picker_test_workbench_center, index), color="info"),
+                    put_button("测试矩形", onclick=partial(self._coordinate_picker_test_workbench_rect, index), color="info"),
+                ],
+                size="auto auto auto auto auto",
+            ).style("margin: -6px 0 10px 36px;")
+
+        put_markdown("### 商品映射")
+        for index, item in enumerate(mapping_items):
+            put_row(
+                [
+                    put_text(str(index + 1)).style("padding-top:34px;"),
+                    put_input(
+                        self._coordinate_picker_product_mapping_pin_name(index, "Product"),
+                        label="商品",
+                        value=item.get("product", ""),
+                    ),
+                    put_input(
+                        self._coordinate_picker_product_mapping_pin_name(index, "Target"),
+                        label="坐标项",
+                        value=item.get("target", ""),
+                    ),
+                    put_input(
+                        self._coordinate_picker_product_mapping_pin_name(index, "Button"),
+                        label="Button名",
+                        value=item.get("button", ""),
+                    ),
+                    put_input(
+                        self._coordinate_picker_product_mapping_pin_name(index, "Note"),
+                        label="备注",
+                        value=item.get("note", ""),
+                    ),
+                ],
+                size="36px 1fr 1fr 1fr 1.4fr",
+            )
+
     @use_scope("content", clear=True)
     def alas_daemon_overview(self, task: str) -> None:
+        if task == "CoordinatePicker":
+            self.alas_coordinate_picker(task)
+            return
+
         self.init_menu(name=task)
         self.set_title(t(f"Task.{task}.name"))
 
@@ -5147,4 +5626,3 @@ def app():
     app.mount("/mcp", mcp_app)
 
     return app
-

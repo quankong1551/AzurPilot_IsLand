@@ -362,6 +362,10 @@
       "name": "セイレーン作戦半自動",
       "help": ""
     },
+    "CoordinatePicker": {
+      "name": "座標取得",
+      "help": ""
+    },
     "EventStory": {
       "name": "イベントストーリー",
       "help": ""
