@@ -1000,7 +1000,8 @@ class IslandBusiness(Island):
                 self._switch_to_business_tab()
                 self._handle_food_review()
 
-            self._run_batch(batch1_shops)
+            batch1_started_shop_names = self._run_batch(batch1_shops)
+            self._trigger_shop_refill(batch1_started_shop_names)
 
         # 检查第二批是否需要执行
         if not batch2_shops:
@@ -1013,7 +1014,8 @@ class IslandBusiness(Island):
             return
 
         logger.info(f"=== 第二批经营: {[s['name'] for s in batch2_shops]} ===")
-        self._run_batch(batch2_shops)
+        batch2_started_shop_names = self._run_batch(batch2_shops)
+        self._trigger_shop_refill(batch2_started_shop_names)
 
     # ===================================================================
     # 分批模式：逐商店扫描 → 检测按钮状态 → 按状态处理
@@ -1238,6 +1240,7 @@ class IslandBusiness(Island):
         self._has_seen_blue = False
         total_darkblue_count = 0  # 本批次内深蓝商店计数
         processed_shop_names = set()  # 已处理过的商店（进入或领取过）
+        started_shop_names = set()  # 本批次实际开始经营的商店
         seen_shop_names = set()  # 跨滚动位置累积看到过的商店（用于判断是否已遍历全部）
         max_scrolls = 8  # 最大滑动次数
 
@@ -1293,6 +1296,7 @@ class IslandBusiness(Island):
                     if current_shop and current_shop['name'] == shop_name:
                         self._process_shop_entry(current_shop)
                         processed_shop_names.add(shop_name)
+                        started_shop_names.add(shop_name)
                     else:
                         logger.warning(f"进入商店后识别到的不是 {shop_name}，返回后跳过")
                         self.device.click(ISLAND_BACK)
@@ -1364,15 +1368,14 @@ class IslandBusiness(Island):
                 shop_info=running_shop,
                 ocr_name='OCR_BUSINESS_REMAIN_BATCH'
             )
-            return
+            return started_shop_names
 
         if self._has_seen_blue:
             # 处理过蓝色按钮（部分或全部商店已启动）
             logger.info(f"批次经营已启动，正常退出")
             if batch_shops == self._get_batch2_shops() or not self._get_batch2_shops():
-                self._trigger_shop_refill()
                 self._set_task_delay()
-            return
+            return started_shop_names
 
         # 所有商店都是灰色不可经营
         # 只有当前是第二批，或没有第二批时，才设置延后到明天0点
@@ -1381,6 +1384,8 @@ class IslandBusiness(Island):
             logger.info("批次内所有商店不可经营，延后至明天0点")
             tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
             self.config.task_delay(target=tomorrow)
+
+        return started_shop_names
 
     def _batch_is_still_running(self, batch_shops):
         """
@@ -1487,6 +1492,14 @@ class IslandBusiness(Island):
         '啾啾简餐': TEMPLATE_BUSINESS_LIST_SHOP_JUU_EATERY,
         '乌鱼烤肉': TEMPLATE_BUSINESS_LIST_SHOP_GRILL,
         '啾咖啡': TEMPLATE_BUSINESS_LIST_SHOP_JUU_COFFEE,
+    }
+
+    SHOP_REFILL_TASK_MAP = {
+        '有鱼餐馆': 'IslandRestaurant',
+        '白熊饮品': 'IslandTeahouse',
+        '乌鱼烤肉': 'IslandGrill',
+        '啾啾简餐': 'IslandJuuEatery',
+        '啾咖啡': 'IslandJuuCoffee',
     }
 
     def _detect_current_shop(self):
@@ -1868,8 +1881,23 @@ class IslandBusiness(Island):
                 self.post_manage_mode(POST_MANAGE_BUSINESS)
                 self.device.sleep(1)
 
-    def _trigger_shop_refill(self):
-        for t in ['IslandRestaurant', 'IslandTeahouse', 'IslandGrill', 'IslandJuuEatery', 'IslandJuuCoffee']:
+    def _trigger_shop_refill(self, shop_names=None):
+        if shop_names is None:
+            tasks = list(self.SHOP_REFILL_TASK_MAP.values())
+        else:
+            shop_name_set = set(shop_names)
+            tasks = [
+                self.SHOP_REFILL_TASK_MAP[shop['name']]
+                for shop in self.shops
+                if shop['name'] in shop_name_set and shop['name'] in self.SHOP_REFILL_TASK_MAP
+            ]
+
+        if not tasks:
+            logger.info("本轮没有实际开始经营的商店，跳过餐馆补充任务")
+            return
+
+        logger.info(f"触发经营后餐馆补充任务: {tasks}")
+        for t in tasks:
             self.config.task_delay(minute=0, task=t)
 
     def _set_task_delay(self):
