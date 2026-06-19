@@ -323,10 +323,8 @@ class IslandMineForest(Island,LoginHandler):
                     self.device.click(POST_MAX)
                     self.device.sleep(0.3)
                 elif runs > 1:
-                    # 默认1次，用 POST_ADD_ONE 增加次数
-                    for _ in range(runs - 1):
-                        self.device.click(POST_ADD_ONE)
-                        self.device.sleep(0.1)
+                    # 默认1次，用 POST_ADD_ONE_A/B/C 轮转增加次数
+                    self.post_add_one(runs - 1, interval=0.1)
                 # runs == 1 时默认就是1次，不用操作
                 self.device.click(POST_ADD_ORDER)
                 self.device.sleep(0.5)

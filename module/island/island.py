@@ -45,6 +45,15 @@ class Island(SelectCharacter):
             name="WAREHOUSE_FILTER_FROM"
         )
         self.warehouse_area_relative = (116, 4, 133, 39)
+
+    def post_add_one(self, count, interval=0):
+        """按 A/B/C 轮转点击生产数量 +1 按钮。"""
+        buttons = (POST_ADD_ONE_A, POST_ADD_ONE_B, POST_ADD_ONE_C)
+        for index in range(max(0, count)):
+            self.device.click(buttons[index % len(buttons)])
+            if interval:
+                self.device.sleep(interval)
+
     def warehouse_absolute_area(self, button, relative_area):
         """将相对坐标转换为绝对坐标"""
         x1 = button.area[0] + relative_area[0]

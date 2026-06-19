@@ -257,8 +257,7 @@ class IslandTeahouse(IslandShopBase):
                 self.device.sleep(0.5)
                 return 0
             else:
-                for _ in range(number - 1):
-                    self.device.click(POST_ADD_ONE)
+                self.post_add_one(number - 1)
                 self.device.sleep(0.5)
                 self.device.click(POST_ADD_ORDER)
                 self.device.sleep(0.5)
