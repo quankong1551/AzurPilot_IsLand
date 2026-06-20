@@ -348,11 +348,11 @@
     },
     "IslandDailyInteract": {
       "name": "Daily/Weekly Tasks",
-      "help": "Handles island petting, JUU Express, Business Delivery, and weekly photo tasks. Enable after related button assets are generated."
+      "help": "Only supports minitouch. Handles island petting, JUU Express, Business Delivery, and weekly photo tasks. Enable after related button assets are generated."
     },
     "IslandPearlSell": {
       "name": "Weekly Pearl Trade",
-      "help": "Process pearls every Tuesday at 01:00."
+      "help": "Only supports minitouch. Process pearls every Tuesday at 01:00."
     },
     "Daemon": {
       "name": "Semi-Auto Click",
@@ -4662,7 +4662,7 @@
   "IslandDailyInteract": {
     "_info": {
       "name": "Daily/Weekly Tasks",
-      "help": "Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, and weekly photo tasks in Development Plan."
+      "help": "Only supports minitouch. Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, and weekly photo tasks in Development Plan."
     },
     "WeeklyPhoto": {
       "name": "Weekly Photo Task",
@@ -4674,7 +4674,7 @@
   "IslandPearlSell": {
     "_info": {
       "name": "Weekly Pearl Trade",
-      "help": "Every Tuesday at 01:00, automatically handle pearls: first purchase this week's pearls at the highest purchase price, then sell existing pearls at the lowest selling price. Other incomplete processes will be delayed to 01:00 the next day for retry. Only supports minitouch. Make sure you have enough coins to purchase 200x220 units, which is the minimum requirement to buy out all pearls for the week, otherwise errors may occur."
+      "help": "Only supports minitouch. Every Tuesday at 01:00, automatically handle pearls: first purchase this week's pearls at the highest purchase price, then sell existing pearls at the lowest selling price. Other incomplete processes will be delayed to 01:00 the next day for retry. Make sure you have enough coins to purchase 200x220 units, which is the minimum requirement to buy out all pearls for the week, otherwise errors may occur."
     },
     "BuyPrice": {
       "name": "Max Purchase Price",
