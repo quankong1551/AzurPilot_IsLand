@@ -433,7 +433,7 @@ class Island(SelectCharacter):
             if self.appear(ERROR1, offset=30):
                 self.device.click(POST_CLOSE)
                 self.island_error = True
-                return False
+                continue
             if self.appear(ISLAND_GET, offset=30):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 self.device.sleep(0.5)

@@ -306,6 +306,13 @@ class SelectCharacter(UI):
                     return char_info["grid_position"]
             return None
 
+        if character_list == ["WorkerJuu"]:
+            logger.info("仅选择 WorkerJuu，先应用体力排序")
+            if not self.select_character_filter():
+                return None
+            screenshot = self.device.screenshot()
+            return self.find_specific_character(screenshot, "WorkerJuu")
+
         # 计算需要识别的角色集合（包含列表角色+最终回退的WorkerJuu）
         target_names = list(character_list)
         if "WorkerJuu" not in target_names:
@@ -431,7 +438,7 @@ class SelectCharacter(UI):
         """
         # 解析角色列表
         characters = self.parse_character_filter(character_list)
-        if not characters and isinstance(character_list, str):
+        if not characters:
             characters = ["WorkerJuu"]
 
         position = self._select_first_available_character(characters)
