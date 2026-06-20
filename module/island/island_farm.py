@@ -474,9 +474,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
             self.device.sleep(1)
 
             # 先处理农田和果园的播种，种子不足时在产品选择页即时补买。
-            for category in ['farm', 'orchard', 'nursery']:
-                if category == 'nursery':
-                    break
+            for category in ['farm', 'orchard']:
                 if not idle_posts[category]:
                     continue
 

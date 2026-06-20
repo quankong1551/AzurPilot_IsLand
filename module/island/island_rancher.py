@@ -82,18 +82,19 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         target = mill_config['number'] if quantity is None else max(1, int(quantity))
 
         logger.info(f"加工 {mill_item} x{target}")
-        while 1:
-            self.device.screenshot()
+        for _ in self.loop(timeout=10, skip_first=False):
             if self.appear(ISLAND_SHOPPING_CHECK):
                 break
             if self.appear_then_click(mill_button, interval=0.3):
                 continue
+        else:
+            logger.warning(f"打开磨坊加工弹窗超时: {mill_item}")
+            return False
 
         if self.appear(ISLAND_SHOPPING_CHECK):
             self.set_buy_number(target)
 
-        while 1:
-            self.device.screenshot()
+        for _ in self.loop(timeout=15, skip_first=False):
             if self.appear(ISLAND_MILL_CHECK, offset=1):
                 break
             if self.appear_then_click(ISLAND_SHOP_CONFIRM):
@@ -104,6 +105,9 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             if self.appear(ISLAND_SHOP_GET):
                 self.device.click(ISLAND_SHOP_CONFIRM)
                 continue
+        else:
+            logger.warning(f"确认磨坊加工超时: {mill_item}")
+            return False
 
         if self.appear(ISLAND_SHOP_GET):
             self.device.click(ISLAND_SHOP_CONFIRM)
@@ -188,7 +192,8 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             )
             return False
 
-        self.process_mill_item(mill_item, quantity=quantity)
+        if not self.process_mill_item(mill_item, quantity=quantity):
+            return False
         if required_material in self.inventory_counts['farm']:
             self.inventory_counts['farm'][required_material] = max(
                 0,
@@ -259,8 +264,7 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
             logger.info(f"牧场岗位{post_id}未开放，无法通过派遣详情进入磨坊")
             return False
         add_opened = False
-        while 1:
-            self.device.screenshot()
+        for _ in self.loop(timeout=30, skip_first=False):
             if self.appear(ERROR1, offset=30):
                 self.device.click(POST_CLOSE)
                 self.island_error = True
@@ -305,12 +309,13 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 return self.goto_shop_from_select_product(shop_check=ISLAND_MILL_CHECK)
+        logger.warning(f"通过牧场岗位{post_id}进入磨坊超时")
+        return False
 
     def ranch_post_get_and_add(self, post_id, character='WorkerJuu'):
         add_opened = False
         self.ranch_last_finish_time = None
-        while 1:
-            self.device.screenshot()
+        for _ in self.loop(timeout=40, skip_first=False):
             if self.appear(ERROR1, offset=30):
                 self.device.click(POST_CLOSE)
                 self.island_error = True
@@ -373,6 +378,8 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
                     and not self.appear(ISLAND_POST_CHECK)
             ):
                 return True
+        logger.warning(f"牧场岗位{post_id}收取并追加派遣超时")
+        return False
 
     def ranch_ocr_finish_time(self, post_id):
         """读取当前牧场岗位详情页的剩余时间并换算为完成时间。"""
