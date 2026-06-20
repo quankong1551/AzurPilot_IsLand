@@ -3356,6 +3356,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "农田使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
+    },
     "MinFarm": {
       "name": "农田作物底线",
       "help": "建议660及以上"
@@ -3382,6 +3386,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "果园使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "MinOrchard": {
       "name": "水果底线",
@@ -3415,6 +3423,10 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "WorkerFilter": {
+      "name": "苗圃使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "MinNursery": {
       "name": "苗圃作物底线",
@@ -3451,11 +3463,15 @@
     },
     "RancherFilter": {
       "name": "使用角色",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Wool": {
       "name": "养羊",
       "help": ""
+    },
+    "WoolWorkerFilter": {
+      "name": "养羊使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     }
   },
   "IslandFishery": {
@@ -3512,7 +3528,7 @@
     },
     "RancherFilter": {
       "name": "使用角色",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     }
   },
   "IslandMine": {
@@ -3536,6 +3552,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "矿山使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "MinCopper": {
       "name": "铜矿最低库存",
@@ -3580,6 +3600,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "林场使用角色",
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
+    },
     "MinElegant": {
       "name": "优雅木材最低库存",
       "help": "仓库中优雅木材数量低于此值时，林场岗位才会生产"
@@ -3591,6 +3615,16 @@
     "MinSelected": {
       "name": "精选木材最低库存",
       "help": "仓库中精选木材数量低于此值时，林场岗位才会生产"
+    }
+  },
+  "IslandDailyGather": {
+    "_info": {
+      "name": "每日采集",
+      "help": "通过管理界面采集页签，UI模拟点击完成每日采集。执行时间：凌晨3:10、下午6:00。流程：选择采集目标→切换开关→分配角色→出发"
+    },
+    "WorkerFilter": {
+      "name": "采集角色",
+      "help": "以>连接，最多填写3个角色，分别对应第1~3个采集槽位。\n以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n每日采集不能选择 WorkerJuu，填写后会自动忽略。\n仅识别默认排序前两排；指定角色不可用时该槽位回退现有采集逻辑。"
     }
   },
   "IslandRestaurant": {
@@ -3606,7 +3640,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "DoubleBambooShoots": {
       "name": "凉拌双笋",
@@ -3817,7 +3851,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Seasonal": {
       "name": "迎春花茶",
@@ -4010,7 +4044,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4181,7 +4215,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4370,7 +4404,7 @@
     },
     "ChefFilter": {
       "name": "厨师",
-      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao"
+      "help": "以>连接，例如肇和 新泽西 小天城：ChaoHo > NewJersey > Amagi_chan\n小加加：Saratoga > 明石：Akashi > 塔什干：Tashkent > 应瑞：YingSwei\n恶毒：LeMalin > 独角兽：Unicorn > 岛风：Shimakaze > 柴郡：Cheshire\n镇海：ChenHai > 威廉D波特：WilliamDPorter\n海伦娜：Helena > 大帝：Friedrich > 愛宕：Atago\n逸仙：Yixian > 奥古斯特：August > 欧根亲王：Eugen > 胡德：Hood > 标枪：Javelin > 拉菲：Laffey > 探索者：Explorer > 领航员：Navigator > 领洋者：OceanCrosser > 飞云：FeiYun > 高雄：Takao\n仅识别默认排序前两排；指定舰娘不可用时回退 WorkerJuu。"
     },
     "Friedrich": {
       "name": "大帝",

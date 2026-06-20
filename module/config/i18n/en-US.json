@@ -3356,6 +3356,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "Farm Worker Filter",
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+    },
     "MinFarm": {
       "name": "Crop Stock Threshold",
       "help": "Recommended 660 or above."
@@ -3382,6 +3386,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "Orchard Worker Filter",
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinOrchard": {
       "name": "Fruit Stock Threshold",
@@ -3415,6 +3423,10 @@
       "help": "",
       "1": "1",
       "2": "2"
+    },
+    "WorkerFilter": {
+      "name": "Nursery Worker Filter",
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinNursery": {
       "name": "Nursery Crop Stock Threshold",
@@ -3451,11 +3463,15 @@
     },
     "RancherFilter": {
       "name": "Character Filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao"
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Wool": {
       "name": "Raise Sheep",
       "help": ""
+    },
+    "WoolWorkerFilter": {
+      "name": "Sheep Worker Filter",
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     }
   },
   "IslandFishery": {
@@ -3512,7 +3528,7 @@
     },
     "RancherFilter": {
       "name": "Character Filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao"
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     }
   },
   "IslandMine": {
@@ -3536,6 +3552,10 @@
       "2": "2",
       "3": "3",
       "4": "4"
+    },
+    "WorkerFilter": {
+      "name": "Mine Worker Filter",
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "MinCopper": {
       "name": "Copper Ore Min Stock",
@@ -3580,6 +3600,10 @@
       "3": "3",
       "4": "4"
     },
+    "WorkerFilter": {
+      "name": "Forest Worker Filter",
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
+    },
     "MinElegant": {
       "name": "Elegant Wood Min Stock",
       "help": "Forest positions only produce when elegant wood in warehouse falls below this value."
@@ -3591,6 +3615,16 @@
     "MinSelected": {
       "name": "Selected Wood Min Stock",
       "help": "Forest positions only produce when selected wood in warehouse falls below this value."
+    }
+  },
+  "IslandDailyGather": {
+    "_info": {
+      "name": "Daily Gathering",
+      "help": "Gather resources from the management interface gathering tab. Runs at 03:10 and 18:00. Flow: select targets, toggle switches, assign characters, and depart."
+    },
+    "WorkerFilter": {
+      "name": "Gathering Worker Filter",
+      "help": "Connect with >. Up to 3 characters, mapped to gathering slots 1-3.\nConnect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nDaily gathering cannot use WorkerJuu; it will be ignored if entered.\nOnly recognizes the first two rows in default order. If the specified character is unavailable, that slot falls back to the existing gathering logic."
     }
   },
   "IslandRestaurant": {
@@ -3606,7 +3640,7 @@
     },
     "ChefFilter": {
       "name": "Chef Filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao"
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "DoubleBambooShoots": {
       "name": "Cold Bamboo Shoots",
@@ -3817,7 +3851,7 @@
     },
     "ChefFilter": {
       "name": "Chef Filter",
-      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao"
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Seasonal": {
       "name": "Spring Flower Tea",
@@ -4010,7 +4044,7 @@
     },
     "ChefFilter": {
       "name": "Chef Filter",
-      "help": "Connect with >"
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Meal1": {
       "name": "Meal 1",
@@ -4181,7 +4215,7 @@
     },
     "ChefFilter": {
       "name": "Chef Filter",
-      "help": "Connect with >"
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Meal1": {
       "name": "Meal 1",
@@ -4370,7 +4404,7 @@
     },
     "ChefFilter": {
       "name": "Chef Filter",
-      "help": "Connect with >"
+      "help": "Connect with >, e.g. ChaoHo > NewJersey > Amagi_chan\nSaratoga > Akashi > Tashkent > YingSwei\nLeMalin > Unicorn > Shimakaze > Cheshire\nChenHai > WilliamDPorter\nHelena > Friedrich > Atago\nYixian > August > Eugen > Hood > Javelin > Laffey > Explorer > Navigator > OceanCrosser > FeiYun > Takao\nOnly recognizes the first two rows in default order. If the specified character is unavailable, falls back to WorkerJuu."
     },
     "Friedrich": {
       "name": "Friedrich",

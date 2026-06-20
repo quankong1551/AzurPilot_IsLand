@@ -425,6 +425,29 @@ class Island(SelectCharacter):
             if (self.appear(ISLAND_POST_CHECK) or self.appear(ISLAND_POST_VACANT_CHECK)) and not self.appear(POST_GET, offset=(50, 0)):
                 self.device.click(POST_CLOSE)
                 continue
+
+    def post_get_stay(self):
+        """收取当前岗位产物并停留在岗位详情界面，供后续直接复检状态。"""
+        while 1:
+            self.device.screenshot()
+            if self.appear(ERROR1, offset=30):
+                self.device.click(POST_CLOSE)
+                self.island_error = True
+                return False
+            if self.appear(ISLAND_GET, offset=30):
+                self.device.click(ISLAND_POST_SAFE_AREA)
+                self.device.sleep(0.5)
+                continue
+            if self.appear_then_click(POST_GET, offset=(50, 0)):
+                self.device.sleep(0.5)
+                self.device.click(ISLAND_POST_SAFE_AREA)
+                self.device.sleep(0.5)
+                self.device.click(ISLAND_POST_SAFE_AREA)
+                self.device.sleep(0.5)
+                continue
+            if (self.appear(ISLAND_POST_CHECK) or self.appear(ISLAND_POST_VACANT_CHECK) or self.ui_page_appear(page_island_postmanage)):
+                return True
+
     def post_get_and_add(self,product_selection,product_selection_check):
         while 1:
             self.device.screenshot()

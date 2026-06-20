@@ -1122,6 +1122,8 @@ IslandFarm:
   Positions:
     value: 3
     option: [ 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinFarm: 660
   PlantPotatoes:
     value: 4
@@ -1130,6 +1132,8 @@ IslandOrchard:
   Positions:
     value: 4
     option: [ 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinOrchard: 300
   IgnoreAvocado: true
   PlantRubber:
@@ -1140,6 +1144,8 @@ IslandNursery:
   Positions:
     value: 2
     option: [ 1, 2 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinNursery: 0
   IgnorePineapple: true
   PlantLavender:
@@ -1152,6 +1158,8 @@ IslandRancher:
   RancherFilter: |-
     WorkerJuu
   Wool: true
+  WoolWorkerFilter: |-
+    WorkerJuu
 IslandFishery:
   Positions:
     value: 3
@@ -1176,6 +1184,8 @@ IslandMine:
   MineSilver:
     value: 1
     option: [ 0, 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinCopper:
     value: 50
   MinAluminium:
@@ -1193,12 +1203,18 @@ IslandForest:
   CutElegant:
     value: 1
     option: [ 0, 1, 2, 3, 4 ]
+  WorkerFilter: |-
+    WorkerJuu
   MinElegant:
     value: 50
   MinPractical:
     value: 50
   MinSelected:
     value: 50
+IslandDailyGather:
+  WorkerFilter:
+    value: ""
+    preserve_empty: true
 IslandRestaurant:
   PostNumber:
     value: 2

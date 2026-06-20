@@ -650,11 +650,13 @@ class GeneratedConfig:
 
     # 配置组 `IslandFarm`
     IslandFarm_Positions = 3  # 1, 2, 3, 4
+    IslandFarm_WorkerFilter = 'WorkerJuu'
     IslandFarm_MinFarm = 660
     IslandFarm_PlantPotatoes = 4  # 0, 1, 2, 3, 4
 
     # 配置组 `IslandOrchard`
     IslandOrchard_Positions = 4  # 1, 2, 3, 4
+    IslandOrchard_WorkerFilter = 'WorkerJuu'
     IslandOrchard_MinOrchard = 300
     IslandOrchard_IgnoreAvocado = True
     IslandOrchard_PlantRubber = 0  # 0, 1, 2, 3, 4
@@ -662,6 +664,7 @@ class GeneratedConfig:
 
     # 配置组 `IslandNursery`
     IslandNursery_Positions = 2  # 1, 2
+    IslandNursery_WorkerFilter = 'WorkerJuu'
     IslandNursery_MinNursery = 0
     IslandNursery_IgnorePineapple = True
     IslandNursery_PlantLavender = 2  # 0, 1, 2
@@ -672,6 +675,7 @@ class GeneratedConfig:
     IslandRancher_Milk = True
     IslandRancher_RancherFilter = 'WorkerJuu'
     IslandRancher_Wool = True
+    IslandRancher_WoolWorkerFilter = 'WorkerJuu'
 
     # 配置组 `IslandFishery`
     IslandFishery_Positions = 3  # 1, 2, 3
@@ -689,6 +693,7 @@ class GeneratedConfig:
     # 配置组 `IslandMine`
     IslandMine_Positions = 1  # 1, 2, 3, 4
     IslandMine_MineSilver = 1  # 0, 1, 2, 3, 4
+    IslandMine_WorkerFilter = 'WorkerJuu'
     IslandMine_MinCopper = 50
     IslandMine_MinAluminium = 50
     IslandMine_MinIron = 50
@@ -698,9 +703,13 @@ class GeneratedConfig:
     # 配置组 `IslandForest`
     IslandForest_Positions = 1  # 1, 2, 3, 4
     IslandForest_CutElegant = 1  # 0, 1, 2, 3, 4
+    IslandForest_WorkerFilter = 'WorkerJuu'
     IslandForest_MinElegant = 50
     IslandForest_MinPractical = 50
     IslandForest_MinSelected = 50
+
+    # 配置组 `IslandDailyGather`
+    IslandDailyGather_WorkerFilter = ''
 
     # 配置组 `IslandRestaurant`
     IslandRestaurant_PostNumber = 2  # 1, 2

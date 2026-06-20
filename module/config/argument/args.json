@@ -14514,6 +14514,10 @@
           4
         ]
       },
+      "WorkerFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
       "MinFarm": {
         "type": "input",
         "value": 660
@@ -14540,6 +14544,10 @@
           3,
           4
         ]
+      },
+      "WorkerFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
       },
       "MinOrchard": {
         "type": "input",
@@ -14573,6 +14581,10 @@
           1,
           2
         ]
+      },
+      "WorkerFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
       },
       "MinNursery": {
         "type": "input",
@@ -14673,6 +14685,10 @@
       "Wool": {
         "type": "checkbox",
         "value": true
+      },
+      "WoolWorkerFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
       }
     },
     "IslandFishery": {
@@ -14815,6 +14831,10 @@
           4
         ]
       },
+      "WorkerFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
+      },
       "MinCopper": {
         "type": "input",
         "value": 50
@@ -14857,6 +14877,10 @@
           3,
           4
         ]
+      },
+      "WorkerFilter": {
+        "type": "textarea",
+        "value": "WorkerJuu"
       },
       "MinElegant": {
         "type": "input",
@@ -16348,6 +16372,13 @@
           true,
           false
         ]
+      }
+    },
+    "IslandDailyGather": {
+      "WorkerFilter": {
+        "type": "textarea",
+        "value": "",
+        "preserve_empty": true
       }
     },
     "Storage": {

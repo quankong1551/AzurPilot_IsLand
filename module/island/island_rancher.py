@@ -191,6 +191,8 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         """检查岗位是否使用特定角色配置"""
         if post_id == 'ISLAND_RANCH_POST3':
             config_str = self.config.IslandRancher_RancherFilter
+        elif post_id == 'ISLAND_RANCH_POST4':
+            config_str = self.config.IslandRancher_WoolWorkerFilter
         elif post_id in ['ISLAND_FISHERY_POST1', 'ISLAND_FISHERY_POST2', 'ISLAND_FISHERY_POST3']:
             config_str = self.config.IslandFishery_RancherFilter
         else:
@@ -212,6 +214,8 @@ class IslandRancher(Island, WarehouseOCR, LoginHandler):
         # 获取对应的配置
         if post_id == 'ISLAND_RANCH_POST3':
             config_str = self.config.IslandRancher_RancherFilter
+        elif post_id == 'ISLAND_RANCH_POST4':
+            config_str = self.config.IslandRancher_WoolWorkerFilter
         elif is_fish:
             config_str = self.config.IslandFishery_RancherFilter
         else:

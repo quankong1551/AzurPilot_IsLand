@@ -224,7 +224,7 @@ def parse_value(value, data):
     def parse_single(value):
         if not isinstance(value, str):
             return value
-        if value == '':
+        if value == '' and not data.get('preserve_empty'):
             return None
         if value == 'true' or value == 'True':
             return True

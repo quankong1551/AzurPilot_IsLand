@@ -90,9 +90,9 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
 
         # 岗位信息
         self.posts = {
-            'ISLAND_FISHERY_POST1': {'button': ISLAND_FISHERY_POST1, 'crop': None},
-            'ISLAND_FISHERY_POST2': {'button': ISLAND_FISHERY_POST2, 'crop': None},
-            'ISLAND_FISHERY_POST3': {'button': ISLAND_FISHERY_POST3, 'crop': None},
+            'ISLAND_FISHERY_POST1': {'button': ISLAND_FISHERY_POST1, 'crop': None, 'runs': 0, 'state': 'unknown'},
+            'ISLAND_FISHERY_POST2': {'button': ISLAND_FISHERY_POST2, 'crop': None, 'runs': 0, 'state': 'unknown'},
+            'ISLAND_FISHERY_POST3': {'button': ISLAND_FISHERY_POST3, 'crop': None, 'runs': 0, 'state': 'unknown'},
         }
 
         self.to_plant_list = []
@@ -162,6 +162,22 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
 
         return products_to_plant, remaining_idle, supply_post_counts
 
+    def _remove_working_fishery_demand(self):
+        """从补养殖需求中扣除首轮岗位扫描发现的工作中鱼苗数量。"""
+        for post_id, post_info in self.posts.items():
+            product_name = post_info.get('crop')
+            if product_name not in self.name_to_config:
+                continue
+            post_number = post_info.get('runs') or 1
+            removed = self._remove_plant_demand(product_name, post_number)
+            if removed:
+                logger.info(f"已在养殖中的{product_name}扣除补种需求: {removed}/{post_number} ({post_id})")
+
+    @staticmethod
+    def _post_available_for_dispatch(post_info):
+        """只有检测后处于空闲状态的岗位才可在本轮派遣。"""
+        return post_info.get('state') == 'idle'
+
     def _planned_fry_purchase_quantity(self, product, post_count, supply_post_counts, default_post_counts):
         """计算本轮需要购买的鱼苗数量，保证每个同类岗位至少能下单。"""
         buy_max = self.name_to_config[product].get('buy_max', 4)
@@ -218,22 +234,25 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
 
     def decided_lists(self, post_button, post_id, post_index):
         """检查岗位状态并更新列表，同时记录完成时间"""
+        collected = False
+        was_complete = False
         self.post_close()
         self.post_open(post_button)
         self.device.screenshot()
-        if self.appear(ISLAND_WORK_COMPLETE, offset=1):
-            self.posts[post_id]['crop'] = None
-            if post_index < len(self.fishery_times):
-                self.fishery_times[post_index] = None
-        elif self.appear(ISLAND_WORKING):
+        was_complete = self.appear(ISLAND_WORK_COMPLETE, offset=1)
+        if was_complete or self.appear(POST_GET, offset=(50, 0)):
+            collected = True
+            self.post_get_stay()
+            self.device.screenshot()
+
+        if self.appear(ISLAND_WORKING):
             product_name = self.post_plant_check()
-            if product_name in self.to_plant_list:
-                ocr_post_number = Digit(OCR_POST_NUMBER, letter=(57, 58, 60), threshold=100,
-                                        alphabet='0123456789')
-                post_number = ocr_post_number.ocr(self.device.image) or 1
-                removed = self._remove_plant_demand(product_name, post_number)
-                logger.info(f"已在养殖中的{product_name}扣除补种需求: {removed}/{post_number}")
+            ocr_post_number = Digit(OCR_POST_NUMBER, letter=(57, 58, 60), threshold=100,
+                                    alphabet='0123456789')
+            post_number = ocr_post_number.ocr(self.device.image) or 1
             self.posts[post_id]['crop'] = product_name or 'unknown'
+            self.posts[post_id]['runs'] = post_number
+            self.posts[post_id]['state'] = 'working'
             # 记录正在工作中的岗位的完成时间
             time_work = Duration(ISLAND_WORKING_TIME)
             time_value = time_work.ocr(self.device.image)
@@ -242,9 +261,25 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                 self.fishery_times[post_index] = finish_time
         elif self.appear(ISLAND_POST_SELECT, offset=1):
             self.posts[post_id]['crop'] = None
+            self.posts[post_id]['runs'] = 0
+            self.posts[post_id]['state'] = 'idle'
             if post_index < len(self.fishery_times):
                 self.fishery_times[post_index] = None
-        self.post_get_and_close()
+        else:
+            if was_complete:
+                self.posts[post_id]['crop'] = None
+                self.posts[post_id]['runs'] = 0
+                self.posts[post_id]['state'] = 'idle'
+                if post_index < len(self.fishery_times):
+                    self.fishery_times[post_index] = None
+                logger.warning(f"{post_id}: 收取后状态未识别，按收取前完成态视为空闲")
+            else:
+                self.posts[post_id]['crop'] = 'unknown'
+                self.posts[post_id]['runs'] = 0
+                self.posts[post_id]['state'] = 'working'
+                logger.warning(f"{post_id}: 岗位状态未识别，按工作中处理")
+        self.post_close()
+        return collected
 
     def post_plant(self, post_button, product, post_index):
         """在指定岗位种植指定产品，并记录完成时间"""
@@ -259,7 +294,7 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
                 self.device.sleep(0.5)
                 continue
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
-                if self.select_character():
+                if self.select_character(character_list=self.rancher_filter):
                     self.device.sleep(0.5)
                     self.device.click(SELECT_UI_CONFIRM)
                     self.device.sleep(0.5)
@@ -292,6 +327,8 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
         for post_id, post_info in self.posts.items():
             if post_info['button'] == post_button:
                 post_info['crop'] = product
+                post_info['runs'] = post_number
+                post_info['state'] = 'working'
                 break
         if product in self.to_plant_list:
             removed = self._remove_plant_demand(product, post_number)
@@ -366,14 +403,11 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
 
     def run(self, ranch_finish_times=None):
         self.island_error = False
-        self.check_inventory_and_prepare_list()
-
-        logger.info("\n当前库存统计:")
-        logger.info(f"渔场库存: {self.inventory_counts}")
 
         # 重置渔场时间追踪列表
         self.fishery_times = [None] * self.fishery_positions
 
+        # 首轮先检查岗位并收取已完成鱼获，确保随后读取的仓库库存包含本轮收获。
         self.goto_postmanage()
         self.post_manage_mode(POST_MANAGE_PRODUCTION)
         self.post_close()
@@ -392,20 +426,33 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
             post_id_to_button[post_id] = button
 
         idle_posts = []
+        collected_posts = []
 
-        # 检查所有岗位
+        logger.info("首轮检查渔场岗位，收取已完成鱼获并记录工作中岗位")
         for i in range(self.fishery_positions):
             post_id = f'ISLAND_FISHERY_POST{i + 1}'
             button = post_id_to_button[post_id]
 
-            self.decided_lists(button, post_id, i)
+            if self.decided_lists(button, post_id, i):
+                collected_posts.append(post_id)
 
-            if self.posts[post_id]['crop'] is None:
+            if self._post_available_for_dispatch(self.posts[post_id]):
                 idle_posts.append({
                     'post_id': post_id,
                     'button': button,
                     'index': i,
                 })
+
+        if collected_posts:
+            logger.info(f"首轮渔场岗位检查已收取完成鱼获: {collected_posts}")
+        else:
+            logger.info("首轮渔场岗位检查没有发现可收取鱼获")
+
+        self.check_inventory_and_prepare_list()
+        self._remove_working_fishery_demand()
+
+        logger.info("\n当前库存统计:")
+        logger.info(f"渔场库存: {self.inventory_counts}")
 
         logger.info(f"\n空闲岗位统计: {len(idle_posts)}个空闲岗位")
 

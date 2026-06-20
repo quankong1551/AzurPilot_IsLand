@@ -24,6 +24,11 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
         self.farm_threshold = self.config.IslandFarm_MinFarm
         self.orchard_threshold = self.config.IslandOrchard_MinOrchard
         self.nursery_threshold = self.config.IslandNursery_MinNursery
+        self.worker_filters = {
+            'farm': self.config.IslandFarm_WorkerFilter,
+            'orchard': self.config.IslandOrchard_WorkerFilter,
+            'nursery': self.config.IslandNursery_WorkerFilter,
+        }
 
         self.ignore_avocado = self.config.IslandOrchard_IgnoreAvocado
         self.ignore_pineapple = self.config.IslandNursery_IgnorePineapple
@@ -292,7 +297,7 @@ class IslandFarm(Island, WarehouseOCR, LoginHandler):
                     if self.select_character(character_list="Amagi_chan"):
                         self.device.click(SELECT_UI_CONFIRM)
                 else:
-                    if self.select_character():
+                    if self.select_character(character_list=self.worker_filters.get(category, "WorkerJuu")):
                         self.device.sleep(0.5)
                         self.device.click(SELECT_UI_CONFIRM)
                         self.device.sleep(0.5)
