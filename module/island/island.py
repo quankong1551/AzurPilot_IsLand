@@ -505,7 +505,7 @@ class Island(SelectCharacter):
                     and retry_swipe_timer.reached()
             ):
                 retry_swipe_used += 1
-                logger.info(f"未识别到岗位按钮 {post}，第2次滑动定位岗位列表")
+                logger.info(f"未识别到岗位按钮 {post}，第{retry_swipe_used + 1}次滑动定位岗位列表")
                 self.post_manage_swipe(getattr(self, 'post_manage_swipe_count', 1))
                 retry_swipe_timer.reset()
                 continue
@@ -516,10 +516,12 @@ class Island(SelectCharacter):
             ):
                 if full_retry_used < getattr(self, 'post_open_full_retry_limit', 1):
                     full_retry_used += 1
-                    logger.warning(f"岗位按钮 {post} 连续两次滑动定位失败，重新进入岗位管理页重试")
+                    logger.warning(
+                        f"岗位按钮 {post} 连续{retry_swipe_used + 1}次滑动定位失败，重新进入岗位管理页重试"
+                    )
+                    self.post_close()
                     self.goto_postmanage()
                     self.post_manage_mode(POST_MANAGE_PRODUCTION)
-                    self.post_close()
                     self.post_manage_swipe(getattr(self, 'post_manage_swipe_count', 1))
                     retry_swipe_used = 0
                     retry_swipe_timer.reset()
