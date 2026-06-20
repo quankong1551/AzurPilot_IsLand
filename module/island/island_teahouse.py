@@ -25,6 +25,7 @@ class IslandTeahouse(IslandShopBase):
         self.shop_type = "teahouse"
         self.time_prefix = "time_tea"
         self.chef_config = self.config.IslandTeahouse_ChefFilter
+        self.post_open_retry_swipe = True
 
         # === 初始化全局季节配置 ===
         self._init_season_config()

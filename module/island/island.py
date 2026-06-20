@@ -45,6 +45,9 @@ class Island(SelectCharacter):
             name="WAREHOUSE_FILTER_FROM"
         )
         self.warehouse_area_relative = (116, 4, 133, 39)
+        self.post_open_retry_swipe = False
+        self.post_open_retry_swipe_limit = 1
+        self.post_open_full_retry_limit = 1
 
     def post_add_one(self, count, interval=0):
         """按 A/B/C 轮转点击生产数量 +1 按钮。"""
@@ -478,24 +481,58 @@ class Island(SelectCharacter):
 
     def post_open(self,post):
         template = TEMPLATE_POST_LOCK
+        retry_swipe_timer = Timer(3, count=3).start()
+        retry_swipe_used = 0
+        full_retry_used = 0
         while True:
             image = self.device.screenshot()
-            if self.appear(post,offset=300):
+            post_appear = self.appear(post,offset=300)
+            if post_appear:
+                retry_swipe_timer.reset()
                 cell_image = crop(image, post.button)
                 if template.match(cell_image, similarity=0.85):
                     return False
             if self.appear(ISLAND_POST_CHECK) or self.appear(ISLAND_POST_VACANT_CHECK):
                 return True
-            if self.appear_then_click(post,offset=300):
+            if post_appear:
+                self.device.sleep(0.1)
+                self.device.click(post)
                 self.device.sleep(0.5)
                 continue
+            if (
+                    getattr(self, 'post_open_retry_swipe', False)
+                    and retry_swipe_used < getattr(self, 'post_open_retry_swipe_limit', 1)
+                    and retry_swipe_timer.reached()
+            ):
+                retry_swipe_used += 1
+                logger.info(f"未识别到岗位按钮 {post}，第2次滑动定位岗位列表")
+                self.post_manage_swipe(getattr(self, 'post_manage_swipe_count', 1))
+                retry_swipe_timer.reset()
+                continue
+            if (
+                    getattr(self, 'post_open_retry_swipe', False)
+                    and retry_swipe_used >= getattr(self, 'post_open_retry_swipe_limit', 1)
+                    and retry_swipe_timer.reached()
+            ):
+                if full_retry_used < getattr(self, 'post_open_full_retry_limit', 1):
+                    full_retry_used += 1
+                    logger.warning(f"岗位按钮 {post} 连续两次滑动定位失败，重新进入岗位管理页重试")
+                    self.goto_postmanage()
+                    self.post_manage_mode(POST_MANAGE_PRODUCTION)
+                    self.post_close()
+                    self.post_manage_swipe(getattr(self, 'post_manage_swipe_count', 1))
+                    retry_swipe_used = 0
+                    retry_swipe_timer.reset()
+                    continue
+                from module.exception import GameStuckError
+                raise GameStuckError(f"岗位按钮 {post} 完整重试后仍未识别")
             self.device.sleep(0.5)
     def post_manage_up_swipe(self,distance):
         self.device.swipe_vector(vector=(0, -distance), box=(688, 69, 725, 656), name="PostUpSwipe")
-        self.device.click(POST_MANAGE_SWIPE_STOP)
+        self.device.click(POST_MANAGE_SWIPE_STOP, control_check=False)
     def post_manage_down_swipe(self,distance):
         self.device.swipe_vector(vector=(0, distance), box=(688, 69, 725, 656), name="PostDownSwipe")
-        self.device.click(POST_MANAGE_SWIPE_STOP)
+        self.device.click(POST_MANAGE_SWIPE_STOP, control_check=False)
     def post_manage_swipe(self,count):
         if count >= 2:
             for _ in range(count):
