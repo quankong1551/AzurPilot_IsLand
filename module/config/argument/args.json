@@ -14244,6 +14244,7 @@
           "roasted_skewer",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -14256,6 +14257,7 @@
           "roasted_skewer",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -14268,6 +14270,7 @@
           "roasted_skewer",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -14280,6 +14283,7 @@
           "roasted_skewer",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -14292,6 +14296,7 @@
           "roasted_skewer",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -14693,6 +14698,10 @@
         "value": 50
       },
       "MinShrimp": {
+        "type": "input",
+        "value": 50
+      },
+      "MinCrayfish": {
         "type": "input",
         "value": 50
       },
@@ -15496,6 +15505,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15514,6 +15524,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15532,6 +15543,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15550,6 +15562,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15568,6 +15581,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15586,6 +15600,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15604,6 +15619,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15622,6 +15638,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]
@@ -15642,6 +15659,7 @@
           "carrot_omelette",
           "stir_fried_chicken",
           "steak_bowl",
+          "crayfish_stir_fry",
           "carnival",
           "double_energy"
         ]

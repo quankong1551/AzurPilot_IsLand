@@ -41,6 +41,7 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
             'shell': self.config.IslandFishery_MinShell,
             'shrimp': self.config.IslandFishery_MinShrimp,
             'crab': self.config.IslandFishery_MinCrab,
+            'crayfish': self.config.IslandFishery_MinCrayfish,
             'squid': self.config.IslandFishery_MinSquid,
             'sea_cucumber': self.config.IslandFishery_MinSeaCucumber,
         }
@@ -65,6 +66,10 @@ class IslandFishery(Island, WarehouseOCR, LoginHandler):
              'selection': SELECT_SHRIMP, 'selection_check': SELECT_SHRIMP_CHECK,
              'post_action': POST_SHRIMP, 'category': 'fishery',
              'shop': SHOP_FRY_SHRIMP, 'tab': 'other', 'yield': 12, 'buy_max': 7},
+            {'name': 'crayfish', 'template': TEMPLATE_CRAYFISH, 'var_name': 'crayfish',
+             'selection': SELECT_CRAYFISH, 'selection_check': SELECT_CRAYFISH_CHECK,
+             'post_action': POST_CRAYFISH, 'category': 'fishery',
+             'shop': SHOP_FRY_CRAYFISH, 'tab': 'other', 'yield': 8, 'buy_max': 4},
             {'name': 'crab', 'template': TEMPLATE_CRAB, 'var_name': 'crab',
              'selection': SELECT_CRAB, 'selection_check': SELECT_CRAB_CHECK,
              'post_action': POST_CRAB, 'category': 'fishery',

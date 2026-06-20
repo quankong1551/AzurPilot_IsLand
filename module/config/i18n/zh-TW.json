@@ -3486,6 +3486,10 @@
       "name": "小河蝦底線",
       "help": ""
     },
+    "MinCrayfish": {
+      "name": "小龍蝦底線",
+      "help": ""
+    },
     "MinCrab": {
       "name": "螃蟹底線",
       "help": ""
@@ -4017,6 +4021,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4033,6 +4038,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4049,6 +4055,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4065,6 +4072,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4081,6 +4089,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4097,6 +4106,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4113,6 +4123,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4129,6 +4140,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -4151,6 +4163,7 @@
       "carrot_omelette": "胡蘿蔔厚蛋燒",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     }
@@ -5187,6 +5200,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -5197,6 +5211,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -5207,6 +5222,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -5217,6 +5233,7 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
@@ -5227,12 +5244,13 @@
       "roasted_skewer": "碳烤肉串",
       "stir_fried_chicken": "爆炒禽肉",
       "steak_bowl": "漢堡肉飯",
+      "crayfish_stir_fry": "爆炒小龍蝦",
       "carnival": "烤肉狂歡",
       "double_energy": "能量雙拼套餐"
     },
     "BoostReplaceFilter": {
       "name": "烏魚烤肉加成替換過濾",
-      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：roasted_skewer:碳烤肉串, stir_fried_chicken:爆炒禽肉, steak_bowl:漢堡肉飯, carnival:烤肉狂歡, double_energy:能量雙拼套餐\n示例：30 > 20 > 10"
+      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：roasted_skewer:碳烤肉串, stir_fried_chicken:爆炒禽肉, steak_bowl:漢堡肉飯, crayfish_stir_fry:爆炒小龍蝦, carnival:烤肉狂歡, double_energy:能量雙拼套餐\n示例：30 > 20 > crayfish_stir_fry > 10"
     }
   },
   "IslandBusinessShop5": {

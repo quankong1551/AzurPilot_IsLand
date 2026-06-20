@@ -1160,6 +1160,7 @@ IslandFishery:
   MinYellowfinTuna: 50
   MinShell: 50
   MinShrimp: 50
+  MinCrayfish: 50
   MinCrab: 50
   MinSquid: 50
   MinSeaCucumber: 50
@@ -1308,48 +1309,48 @@ IslandGrill:
     WorkerJuu
   Meal1:
     value: double_energy
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy  ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber1:
     value: 7
   Meal2:
     value: steak_bowl
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber2:
     value: 7
   Meal3:
     value: stir_fried_chicken
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber3:
     value: 7
   Meal4:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber4:
     value: 0
   Meal5:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber5:
     value: 0
   Meal6:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber6:
     value: 0
   Meal7:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber7:
     value: 0
   Meal8:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
   MealNumber8:
     value: 0
 IslandGrillNextTask:
   AwayCook:
     value: None
-    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, carnival, double_energy ]
+    option: [ None, roasted_skewer, chicken_potato, carrot_omelette, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy ]
 IslandJuuEatery:
   PostNumber:
     value: 1
@@ -1602,6 +1603,7 @@ _IslandBusinessProduct4: &IslandBusinessProduct4
     - roasted_skewer
     - stir_fried_chicken
     - steak_bowl
+    - crayfish_stir_fry
     - carnival
     - double_energy
 

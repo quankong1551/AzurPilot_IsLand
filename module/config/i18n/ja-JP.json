@@ -3486,6 +3486,10 @@
       "name": "エビ在庫閾値",
       "help": ""
     },
+    "MinCrayfish": {
+      "name": "ザリガニ在庫閾値",
+      "help": ""
+    },
     "MinCrab": {
       "name": "カニ在庫閾値",
       "help": ""
@@ -4017,6 +4021,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4033,6 +4038,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4049,6 +4055,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4065,6 +4072,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4081,6 +4089,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4097,6 +4106,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4113,6 +4123,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4129,6 +4140,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -4151,6 +4163,7 @@
       "carrot_omelette": "にんじん厚焼き玉子",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     }
@@ -5187,6 +5200,7 @@
       "roasted_skewer": "炭焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -5197,6 +5211,7 @@
       "roasted_skewer": "炭焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -5207,6 +5222,7 @@
       "roasted_skewer": "炭焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -5217,6 +5233,7 @@
       "roasted_skewer": "炭焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
@@ -5227,6 +5244,7 @@
       "roasted_skewer": "炭焼き串",
       "stir_fried_chicken": "鶏肉炒め",
       "steak_bowl": "ハンバーグ丼",
+      "crayfish_stir_fry": "ザリガニ炒め",
       "carnival": "バーベキュー祭り",
       "double_energy": "エネルギーダブルセット"
     },
