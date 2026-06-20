@@ -11,6 +11,7 @@ import time
 import re
 import base64
 import cv2
+import html
 from datetime import datetime, timedelta
 from pathlib import Path
 from functools import partial
@@ -3594,6 +3595,9 @@ class AlasGUI(Frame):
     def _coordinate_picker_latest_points_storage_key(self) -> str:
         return f"coordinate_picker_latest_points_{self._coordinate_picker_scope_id()}"
 
+    def _coordinate_picker_custom_image_storage_key(self) -> str:
+        return f"coordinate_picker_custom_image_{self._coordinate_picker_scope_id()}"
+
     def _coordinate_picker_workbench_reference_items(self) -> List[Dict[str, Any]]:
         return [
             {"name": "Shop1", "center_x": "", "center_y": "", "x1": "", "y1": "", "x2": "", "y2": "", "note": ""},
@@ -3732,7 +3736,7 @@ class AlasGUI(Frame):
         )
         self.alas_coordinate_picker("CoordinatePicker")
 
-    def _get_coordinate_picker_latest_points(self) -> List[Dict[str, int]]:
+    def _get_coordinate_picker_latest_points(self) -> List[Dict[str, Any]]:
         raw = get_localstorage(self._coordinate_picker_latest_points_storage_key())
         if not raw:
             return []
@@ -3750,7 +3754,12 @@ class AlasGUI(Frame):
                         x, y = int(item[0]), int(item[1])
                 except (KeyError, TypeError, ValueError, IndexError):
                     continue
-                points.append({"x": x, "y": y})
+                point = {"x": x, "y": y}
+                if isinstance(item, dict) and item.get("time"):
+                    point["time"] = str(item["time"])
+                points.append(point)
+                if len(points) >= 2:
+                    break
         return points
 
     def _coordinate_picker_fill_center_from_last_point(self, index: int) -> None:
@@ -3759,7 +3768,10 @@ class AlasGUI(Frame):
             toast("请先点击预览图记录点位", color="warning")
             return
         names = self._coordinate_picker_workbench_pin_names(index)
-        point = points[0]
+        point = max(
+            enumerate(points),
+            key=lambda item: (item[1].get("time", ""), -item[0]),
+        )[1]
         pin_update(names["center_x"], value=point["x"])
         pin_update(names["center_y"], value=point["y"])
         toast(f"已填入中心点 ({point['x']}, {point['y']})", color="success")
@@ -3767,7 +3779,7 @@ class AlasGUI(Frame):
     def _coordinate_picker_fill_rect_from_last_points(self, index: int) -> None:
         points = self._get_coordinate_picker_latest_points()
         if len(points) < 2:
-            toast("请先在预览图上点击左上和右下两个点", color="warning")
+            toast("请先在预览图上记录两个点位", color="warning")
             return
         p1, p2 = points[0], points[1]
         names = self._coordinate_picker_workbench_pin_names(index)
@@ -3858,32 +3870,140 @@ class AlasGUI(Frame):
         self._coordinate_picker_device = device
         return device
 
+    @staticmethod
+    def _coordinate_picker_placeholder_data_url(message: str) -> str:
+        safe_message = html.escape(message)
+        svg = (
+            '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">'
+            '<rect width="1280" height="720" fill="#20242b"/>'
+            '<rect x="1" y="1" width="1278" height="718" fill="none" stroke="#4d5666" stroke-width="2" stroke-dasharray="18 12"/>'
+            f'<text x="640" y="348" fill="#dce3ec" font-size="32" text-anchor="middle">{safe_message}</text>'
+            '<text x="640" y="394" fill="#9aa7b8" font-size="22" text-anchor="middle">点击选择截图文件后继续取点</text>'
+            '</svg>'
+        )
+        data = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+        return f"data:image/svg+xml;base64,{data}"
+
+    def _coordinate_picker_refresh_live_frame(self) -> None:
+        self._render_coordinate_picker_frame(clear_custom_image=True)
+
+    def _coordinate_picker_next_live_request_id(self) -> str:
+        request_id = getattr(self, "_coordinate_picker_live_request_id", 0) + 1
+        self._coordinate_picker_live_request_id = request_id
+        return str(request_id)
+
+    def _coordinate_picker_live_screenshot_data_url(self) -> str:
+        device = self._get_coordinate_picker_device()
+        image = device.screenshot()
+        ok, png = cv2.imencode(".png", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        if not ok:
+            raise RuntimeError("encode screenshot failed")
+        return f"data:image/png;base64,{base64.b64encode(png.tobytes()).decode('ascii')}"
+
+    def _coordinate_picker_start_live_screenshot_check(
+        self,
+        scope_id: str,
+        request_id: str,
+        custom_image_key: str,
+    ) -> None:
+        def worker() -> None:
+            has_live_screenshot = True
+            screenshot_error = ""
+            try:
+                image_src = self._coordinate_picker_live_screenshot_data_url()
+            except Exception as e:
+                has_live_screenshot = False
+                screenshot_error = str(e)
+                logger.warning(f"Coordinate picker screenshot failed: {e}")
+                image_src = self._coordinate_picker_placeholder_data_url("实时截图不可用")
+
+            try:
+                run_js(
+                    """
+                    (function(){
+                        const img = document.getElementById(imageId);
+                        if (!img || img.dataset.coordinatePickerRequestId !== requestId) return;
+                        const sourceLabel = document.getElementById(sourceLabelId);
+                        img.dataset.liveSrc = imageSrc;
+                        img.dataset.liveStatus = hasLiveScreenshot ? "ready" : "error";
+                        img.dataset.liveError = screenshotError || "";
+
+                        function setSourceLabel(text, type) {
+                            if (!sourceLabel) return;
+                            sourceLabel.textContent = text;
+                            if (type === "warning") {
+                                sourceLabel.style.color = "#d97706";
+                            } else if (type === "error") {
+                                sourceLabel.style.color = "#dc2626";
+                            } else {
+                                sourceLabel.style.color = "";
+                            }
+                        }
+                        function setLiveLabel() {
+                            const status = img.dataset.liveStatus || "checking";
+                            const error = img.dataset.liveError || "";
+                            if (status === "ready") {
+                                setSourceLabel("当前：实时截图", "");
+                            } else if (status === "error") {
+                                setSourceLabel("实时截图失败：" + error + "。可选择本地截图继续取点。", "error");
+                            } else {
+                                setSourceLabel("正在检查实时截图，可先选择本地截图取点。", "");
+                            }
+                        }
+
+                        let record = null;
+                        try { record = JSON.parse(sessionStorage.getItem(customImageKey) || "null"); } catch(e) {}
+                        if (record && record.src) return;
+                        img.onload = function(){
+                            if (typeof window.alasCoordinatePickerRefreshRegion === "function") {
+                                window.alasCoordinatePickerRefreshRegion(img.id);
+                            }
+                        };
+                        img.src = imageSrc;
+                        setLiveLabel();
+                    })();
+                    """,
+                    imageId=f"coordinate-picker-image-{scope_id}",
+                    sourceLabelId=f"coordinate-picker-source-{scope_id}",
+                    requestId=request_id,
+                    customImageKey=custom_image_key,
+                    imageSrc=image_src,
+                    hasLiveScreenshot=has_live_screenshot,
+                    screenshotError=screenshot_error,
+                )
+            except Exception as e:
+                logger.warning(f"Coordinate picker live screenshot update failed: {e}")
+
+        thread = threading.Thread(target=worker, daemon=True)
+        register_thread(thread)
+        thread.start()
+
     @use_scope("coordinate_picker_frame", clear=True)
-    def _render_coordinate_picker_frame(self, items: Optional[List[Dict[str, Any]]] = None) -> None:
+    def _render_coordinate_picker_frame(
+        self,
+        items: Optional[List[Dict[str, Any]]] = None,
+        clear_custom_image: bool = False,
+    ) -> None:
         if items is None:
             items = self._collect_coordinate_picker_workbench_items()
         latest_key = self._coordinate_picker_latest_points_storage_key()
+        custom_image_key = self._coordinate_picker_custom_image_storage_key()
         scope_id = self._coordinate_picker_scope_id()
-        try:
-            device = self._get_coordinate_picker_device()
-            image = device.screenshot()
-            ok, png = cv2.imencode(".png", cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-            if not ok:
-                raise RuntimeError("encode screenshot failed")
-            image_b64 = base64.b64encode(png.tobytes()).decode("ascii")
-        except Exception as e:
-            logger.warning(f"Coordinate picker screenshot failed: {e}")
-            put_warning(f"截图失败：{e}", closable=True)
-            return
+        request_id = self._coordinate_picker_next_live_request_id()
+        image_src = self._coordinate_picker_placeholder_data_url("正在检查实时截图")
 
         overlay = []
         for index, item in enumerate(items, start=1):
             try:
                 cx = int(item.get("center_x") or "")
                 cy = int(item.get("center_y") or "")
+                cx = max(0, min(1279, cx))
+                cy = max(0, min(719, cy))
+                text_x = min(1250, cx + 9)
+                text_y = max(18, cy - 9)
                 overlay.append(
                     f'<circle cx="{cx}" cy="{cy}" r="7" fill="#ff4757" stroke="#fff" stroke-width="2"></circle>'
-                    f'<text x="{cx + 9}" y="{cy - 9}" fill="#ff4757" stroke="#fff" stroke-width="3" paint-order="stroke" font-size="18">{index}</text>'
+                    f'<text x="{text_x}" y="{text_y}" fill="#ff4757" stroke="#fff" stroke-width="3" paint-order="stroke" font-size="18">{index}</text>'
                 )
             except (TypeError, ValueError):
                 pass
@@ -3902,15 +4022,29 @@ class AlasGUI(Frame):
 
         put_html(
             f"""
-            <div style="display:grid;gap:8px;">
-              <div id="coordinate-picker-frame-{scope_id}" style="position:relative;max-width:100%;width:960px;border:1px solid rgba(128,128,128,.25);">
-                <img id="coordinate-picker-image-{scope_id}" src="data:image/png;base64,{image_b64}" style="display:block;width:100%;height:auto;cursor:crosshair;">
+            <div id="coordinate-picker-panel-{scope_id}" style="display:grid;gap:8px;max-width:960px;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button type="button" id="coordinate-picker-file-button-{scope_id}" class="btn btn-sm btn-secondary">选择截图文件</button>
+                <button type="button" id="coordinate-picker-live-button-{scope_id}" class="btn btn-sm btn-outline-secondary">使用当前实时截图</button>
+                <input id="coordinate-picker-file-input-{scope_id}" type="file" accept="image/png,image/jpeg,image/webp,image/bmp" style="display:none;">
+                <span id="coordinate-picker-source-{scope_id}" style="font-size:12px;opacity:.72;"></span>
+              </div>
+              <div id="coordinate-picker-preview-{scope_id}" style="position:relative;max-width:100%;width:960px;border:1px solid rgba(128,128,128,.25);">
+                <img id="coordinate-picker-image-{scope_id}" src="{image_src}" draggable="false" data-live-src="{image_src}" data-live-status="checking" data-live-error="" data-coordinate-picker-request-id="{request_id}" style="display:block;width:100%;height:auto;cursor:crosshair;touch-action:none;user-select:none;">
                 <svg viewBox="0 0 1280 720" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
                   {''.join(overlay)}
                   <g id="coordinate-picker-live-overlay-{scope_id}"></g>
                 </svg>
+                <div id="coordinate-picker-magnifier-{scope_id}" style="display:none;position:absolute;right:8px;top:8px;width:184px;padding:6px;border:1px solid rgba(255,255,255,.72);background:rgba(17,24,39,.86);box-shadow:0 8px 20px rgba(0,0,0,.25);pointer-events:none;">
+                  <canvas id="coordinate-picker-magnifier-canvas-{scope_id}" width="170" height="170" style="display:block;width:170px;height:170px;background:#111827;image-rendering:pixelated;"></canvas>
+                  <div id="coordinate-picker-magnifier-text-{scope_id}" style="margin-top:4px;color:#fff;font-size:12px;line-height:1.2;text-align:center;"></div>
+                </div>
               </div>
-              <div id="coordinate-picker-latest-{scope_id}" style="font-size:12px;opacity:.72;">点击预览图记录坐标。</div>
+              <div id="coordinate-picker-latest-{scope_id}" style="font-size:12px;opacity:.72;">按住预览图拖动取点，松手后记录点位。</div>
+              <div id="coordinate-picker-region-preview-{scope_id}" style="height:220px;border:1px solid rgba(128,128,128,.25);background:rgba(128,128,128,.06);position:relative;overflow:auto;">
+                <span id="coordinate-picker-region-preview-empty-{scope_id}" style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:12px;opacity:.62;">选择两个点后预览框选区域</span>
+                <img id="coordinate-picker-region-preview-image-{scope_id}" style="display:none;max-width:none;max-height:none;object-fit:contain;image-rendering:pixelated;margin:0 auto;">
+              </div>
             </div>
             """
         )
@@ -3920,19 +4054,383 @@ class AlasGUI(Frame):
                 const img = document.getElementById(imageId);
                 const label = document.getElementById(labelId);
                 const liveOverlay = document.getElementById(liveOverlayId);
+                const sourceLabel = document.getElementById(sourceLabelId);
+                const fileInput = document.getElementById(fileInputId);
+                const fileButton = document.getElementById(fileButtonId);
+                const liveButton = document.getElementById(liveButtonId);
+                const magnifier = document.getElementById(magnifierId);
+                const magnifierCanvas = document.getElementById(magnifierCanvasId);
+                const magnifierText = document.getElementById(magnifierTextId);
+                const regionPreview = document.getElementById(regionPreviewId);
+                const regionPreviewImage = document.getElementById(regionPreviewImageId);
+                const regionPreviewEmpty = document.getElementById(regionPreviewEmptyId);
                 if (!img || img.dataset.coordinatePickerReady === "1") return;
                 img.dataset.coordinatePickerReady = "1";
-                function render(points) {
+                let draftPoint = null;
+                let draftPoints = null;
+                let activePointerId = null;
+                let activeDrag = null;
+                function setSourceLabel(text, type) {
+                    if (!sourceLabel) return;
+                    sourceLabel.textContent = text;
+                    if (type === "warning") {
+                        sourceLabel.style.color = "#d97706";
+                    } else if (type === "error") {
+                        sourceLabel.style.color = "#dc2626";
+                    } else {
+                        sourceLabel.style.color = "";
+                    }
+                }
+                function setRegionPreviewEmpty(text) {
+                    if (regionPreviewImage) {
+                        regionPreviewImage.removeAttribute("src");
+                        regionPreviewImage.style.display = "none";
+                        regionPreviewImage.style.width = "";
+                        regionPreviewImage.style.height = "";
+                    }
+                    if (regionPreviewEmpty) {
+                        regionPreviewEmpty.textContent = text;
+                        regionPreviewEmpty.style.display = "";
+                    }
+                }
+                function updateRegionPreview(points) {
+                    if (!regionPreview || !regionPreviewImage || !regionPreviewEmpty) return;
+                    const safePoints = normalizePoints(points);
+                    if (safePoints.length < 2) {
+                        setRegionPreviewEmpty("选择两个点后预览框选区域");
+                        return;
+                    }
+                    if (!img.complete || !img.naturalWidth || !img.naturalHeight) {
+                        setRegionPreviewEmpty("图片仍在加载，稍后更新区域预览");
+                        return;
+                    }
+                    const p1 = safePoints[0];
+                    const p2 = safePoints[1];
+                    const x1 = Math.min(p1.x, p2.x);
+                    const y1 = Math.min(p1.y, p2.y);
+                    const x2 = Math.max(p1.x, p2.x);
+                    const y2 = Math.max(p1.y, p2.y);
+                    const width = x2 - x1;
+                    const height = y2 - y1;
+                    if (width <= 0 || height <= 0) {
+                        setRegionPreviewEmpty("框选区域无效");
+                        return;
+                    }
+                    try {
+                        const previewHeight = Math.max(1, regionPreview.clientHeight || 220);
+                        const scale = Math.max(2, previewHeight / height);
+                        const displayWidth = Math.max(1, Math.round(width * scale));
+                        const displayHeight = Math.max(1, Math.round(height * scale));
+                        const canvas = document.createElement("canvas");
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.imageSmoothingEnabled = false;
+                        ctx.drawImage(
+                            img,
+                            x1 * img.naturalWidth / 1280,
+                            y1 * img.naturalHeight / 720,
+                            width * img.naturalWidth / 1280,
+                            height * img.naturalHeight / 720,
+                            0,
+                            0,
+                            width,
+                            height
+                        );
+                        regionPreviewImage.src = canvas.toDataURL("image/png");
+                        regionPreviewImage.style.display = "block";
+                        regionPreviewImage.style.width = displayWidth + "px";
+                        regionPreviewImage.style.height = displayHeight + "px";
+                        regionPreviewImage.title = "区域：" + x1 + ", " + y1 + ", " + x2 + ", " + y2 + "（" + width + "x" + height + "，预览 " + scale.toFixed(2) + "x）";
+                        regionPreviewEmpty.style.display = "none";
+                    } catch(e) {
+                        setRegionPreviewEmpty("区域预览生成失败");
+                    }
+                }
+                function normalizePoints(points) {
+                    if (!Array.isArray(points)) {
+                        return [];
+                    }
+                    return points.filter(function(p){
+                        return Number.isFinite(p.x) && Number.isFinite(p.y);
+                    }).slice(0, 2);
+                }
+                function readStoredPoints() {
+                    let points = [];
+                    try { points = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch(e) {}
+                    return normalizePoints(points);
+                }
+                function savePoints(points) {
+                    localStorage.setItem(storageKey, JSON.stringify(normalizePoints(points)));
+                }
+                function pointDistanceSquared(a, b) {
+                    const dx = a.x - b.x;
+                    const dy = a.y - b.y;
+                    return dx * dx + dy * dy;
+                }
+                function nearestPointIndex(points, point) {
+                    if (points.length < 2) {
+                        return 0;
+                    }
+                    const firstDistance = pointDistanceSquared(points[0], point);
+                    const secondDistance = pointDistanceSquared(points[1], point);
+                    return firstDistance <= secondDistance ? 0 : 1;
+                }
+                function rectFromPoints(points) {
+                    const safePoints = normalizePoints(points);
+                    if (safePoints.length < 2) {
+                        return null;
+                    }
+                    const p1 = safePoints[0];
+                    const p2 = safePoints[1];
+                    const x1 = Math.min(p1.x, p2.x);
+                    const y1 = Math.min(p1.y, p2.y);
+                    const x2 = Math.max(p1.x, p2.x);
+                    const y2 = Math.max(p1.y, p2.y);
+                    return {x1: x1, y1: y1, x2: x2, y2: y2, width: x2 - x1, height: y2 - y1};
+                }
+                function pointIndexForEdge(points, edge) {
+                    if (points.length < 2) {
+                        return 0;
+                    }
+                    if (edge === "left") return points[0].x <= points[1].x ? 0 : 1;
+                    if (edge === "right") return points[0].x >= points[1].x ? 0 : 1;
+                    if (edge === "top") return points[0].y <= points[1].y ? 0 : 1;
+                    return points[0].y >= points[1].y ? 0 : 1;
+                }
+                function edgeLabel(edge) {
+                    if (edge === "left") return "左边";
+                    if (edge === "right") return "右边";
+                    if (edge === "top") return "上边";
+                    return "下边";
+                }
+                function cursorForEdge(edge) {
+                    if (edge === "left" || edge === "right") {
+                        return "ew-resize";
+                    }
+                    if (edge === "top" || edge === "bottom") {
+                        return "ns-resize";
+                    }
+                    return "crosshair";
+                }
+                function closestEdgeByIntent(rect, point) {
+                    const width = Math.max(1, rect.width);
+                    const height = Math.max(1, rect.height);
+                    const edges = [
+                        {edge: "left", score: Math.abs(point.x - rect.x1) / width},
+                        {edge: "right", score: Math.abs(rect.x2 - point.x) / width},
+                        {edge: "top", score: Math.abs(point.y - rect.y1) / height},
+                        {edge: "bottom", score: Math.abs(rect.y2 - point.y) / height},
+                    ].sort(function(a, b){ return a.score - b.score; });
+                    if (edges[0].score > 0.35) {
+                        return null;
+                    }
+                    if (edges.length > 1 && edges[1].score - edges[0].score < 0.08) {
+                        return null;
+                    }
+                    return edges[0].edge;
+                }
+                function hitTestEdge(points, point) {
+                    const safePoints = normalizePoints(points);
+                    const rect = rectFromPoints(safePoints);
+                    if (!rect || rect.width <= 0 || rect.height <= 0) {
+                        return null;
+                    }
+                    const padding = 14;
+                    const inBand = point.x >= rect.x1 - padding && point.x <= rect.x2 + padding
+                        && point.y >= rect.y1 - padding && point.y <= rect.y2 + padding;
+                    if (!inBand) {
+                        return null;
+                    }
+                    const distances = [
+                        {edge: "left", distance: Math.abs(point.x - rect.x1)},
+                        {edge: "right", distance: Math.abs(point.x - rect.x2)},
+                        {edge: "top", distance: Math.abs(point.y - rect.y1)},
+                        {edge: "bottom", distance: Math.abs(point.y - rect.y2)},
+                    ].sort(function(a, b){ return a.distance - b.distance; });
+                    if (distances[0].distance > padding) {
+                        return null;
+                    }
+                    const edge = distances[0].edge;
+                    return {edge: edge, pointIndex: pointIndexForEdge(safePoints, edge)};
+                }
+                function chooseReplacementIndex(points, point) {
+                    const safePoints = normalizePoints(points);
+                    if (safePoints.length < 2) {
+                        return safePoints.length;
+                    }
+                    const rect = rectFromPoints(safePoints);
+                    if (!rect || rect.width <= 0 || rect.height <= 0) {
+                        return nearestPointIndex(safePoints, point);
+                    }
+                    const padding = 10;
+                    const inside = point.x >= rect.x1 - padding && point.x <= rect.x2 + padding
+                        && point.y >= rect.y1 - padding && point.y <= rect.y2 + padding;
+                    if (!inside) {
+                        return nearestPointIndex(safePoints, point);
+                    }
+                    const edge = closestEdgeByIntent(rect, point);
+                    if (!edge) {
+                        return nearestPointIndex(safePoints, point);
+                    }
+                    return pointIndexForEdge(safePoints, edge);
+                }
+                function updatePointsWithPoint(points, point) {
+                    const safePoints = normalizePoints(points);
+                    if (safePoints.length < 2) {
+                        safePoints.push(point);
+                        return safePoints;
+                    }
+                    safePoints[chooseReplacementIndex(safePoints, point)] = point;
+                    return safePoints;
+                }
+                function updatePointsWithEdge(points, drag, point) {
+                    const safePoints = normalizePoints(points).map(function(p){
+                        return {x: p.x, y: p.y, time: p.time};
+                    });
+                    if (safePoints.length < 2 || !drag) {
+                        return safePoints;
+                    }
+                    const index = Math.max(0, Math.min(1, drag.pointIndex));
+                    if (drag.edge === "left" || drag.edge === "right") {
+                        safePoints[index].x = point.x;
+                    } else {
+                        safePoints[index].y = point.y;
+                    }
+                    safePoints[index].time = new Date().toISOString();
+                    return safePoints;
+                }
+                function pointFromEvent(e) {
+                    const rect = img.getBoundingClientRect();
+                    if (!rect.width || !rect.height) {
+                        return null;
+                    }
+                    const x = Math.max(0, Math.min(1279, Math.round((e.clientX - rect.left) * 1280 / rect.width)));
+                    const y = Math.max(0, Math.min(719, Math.round((e.clientY - rect.top) * 720 / rect.height)));
+                    return {x: x, y: y};
+                }
+                function setMagnifierVisible(visible) {
+                    if (!magnifier) return;
+                    magnifier.style.display = visible ? "block" : "none";
+                }
+                function drawMagnifier(point) {
+                    if (!magnifierCanvas || !point) return;
+                    const ctx = magnifierCanvas.getContext("2d");
+                    const canvasWidth = magnifierCanvas.width;
+                    const canvasHeight = magnifierCanvas.height;
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+                    ctx.fillStyle = "#111827";
+                    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                    if (img.complete && img.naturalWidth && img.naturalHeight) {
+                        const sourceSize = 86;
+                        const sourceX = Math.max(0, Math.min(1280 - sourceSize, point.x - sourceSize / 2));
+                        const sourceY = Math.max(0, Math.min(720 - sourceSize, point.y - sourceSize / 2));
+                        ctx.imageSmoothingEnabled = false;
+                        ctx.drawImage(
+                            img,
+                            sourceX * img.naturalWidth / 1280,
+                            sourceY * img.naturalHeight / 720,
+                            sourceSize * img.naturalWidth / 1280,
+                            sourceSize * img.naturalHeight / 720,
+                            0,
+                            0,
+                            canvasWidth,
+                            canvasHeight
+                        );
+                        const crossX = (point.x - sourceX) * canvasWidth / sourceSize;
+                        const crossY = (point.y - sourceY) * canvasHeight / sourceSize;
+                        ctx.strokeStyle = "rgba(255,255,255,.92)";
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(crossX, 0);
+                        ctx.lineTo(crossX, canvasHeight);
+                        ctx.moveTo(0, crossY);
+                        ctx.lineTo(canvasWidth, crossY);
+                        ctx.stroke();
+                        ctx.strokeStyle = "#ef4444";
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(crossX, 0);
+                        ctx.lineTo(crossX, canvasHeight);
+                        ctx.moveTo(0, crossY);
+                        ctx.lineTo(canvasWidth, crossY);
+                        ctx.stroke();
+                    }
+                    if (magnifierText) {
+                        magnifierText.textContent = "(" + point.x + ", " + point.y + ")";
+                    }
+                }
+                function updateDraftPoint(e) {
+                    const point = pointFromEvent(e);
+                    if (!point) return;
+                    draftPoint = point;
+                    const points = readStoredPoints();
+                    draftPoints = activeDrag
+                        ? updatePointsWithEdge(points, activeDrag, point)
+                        : updatePointsWithPoint(points, {
+                            x: point.x,
+                            y: point.y,
+                            time: new Date().toISOString()
+                        });
+                    setMagnifierVisible(true);
+                    drawMagnifier(point);
+                    render(draftPoints, {skipRegionPreview: true});
+                }
+                function finishDraftPoint() {
+                    if (!draftPoint || !draftPoints) {
+                        setMagnifierVisible(false);
+                        render(readStoredPoints());
+                        return;
+                    }
+                    let points = normalizePoints(draftPoints);
+                    savePoints(points);
+                    draftPoint = null;
+                    draftPoints = null;
+                    activeDrag = null;
+                    img.style.cursor = "crosshair";
+                    setMagnifierVisible(false);
+                    render(points);
+                }
+                function cancelDraftPoint() {
+                    draftPoint = null;
+                    draftPoints = null;
+                    activePointerId = null;
+                    activeDrag = null;
+                    img.style.cursor = "crosshair";
+                    setMagnifierVisible(false);
+                    render(readStoredPoints(), {skipRegionPreview: true});
+                }
+                function updatePointerCursor(e) {
+                    if (activePointerId !== null || draftPoint !== null) {
+                        return;
+                    }
+                    const point = pointFromEvent(e);
+                    const drag = point ? hitTestEdge(readStoredPoints(), point) : null;
+                    img.style.cursor = drag ? cursorForEdge(drag.edge) : "crosshair";
+                }
+                function refreshRegionPreviewFromStorage() {
+                    updateRegionPreview(readStoredPoints());
+                }
+                window.alasCoordinatePickerRefreshRegion = function(targetImageId) {
+                    if (targetImageId !== img.id) return;
+                    refreshRegionPreviewFromStorage();
+                };
+                function setLiveLabel() {
+                    const status = img.dataset.liveStatus || "checking";
+                    const error = img.dataset.liveError || "";
+                    if (status === "ready") {
+                        setSourceLabel("当前：实时截图", "");
+                    } else if (status === "error") {
+                        setSourceLabel("实时截图失败：" + error + "。可选择本地截图继续取点。", "error");
+                    } else {
+                        setSourceLabel("正在检查实时截图，可先选择本地截图取点。", "");
+                    }
+                }
+                function render(points, options) {
                     if (!label) return;
                     if (liveOverlay) {
-                        const safePoints = points.filter(function(p){
-                            return Number.isFinite(p.x) && Number.isFinite(p.y);
-                        });
+                        const safePoints = normalizePoints(draftPoints || points);
                         let html = "";
-                        if (safePoints.length >= 1) {
-                            const p = safePoints[0];
-                            html += '<circle cx="' + p.x + '" cy="' + p.y + '" r="4" fill="#ffb020" stroke="#fff" stroke-width="1"></circle>';
-                        }
                         if (safePoints.length >= 2) {
                             const p1 = safePoints[0];
                             const p2 = safePoints[1];
@@ -3941,38 +4439,197 @@ class AlasGUI(Frame):
                             const x2 = Math.max(p1.x, p2.x);
                             const y2 = Math.max(p1.y, p2.y);
                             html += '<rect x="' + x1 + '" y="' + y1 + '" width="' + (x2 - x1) + '" height="' + (y2 - y1) + '" fill="rgba(255,176,32,.06)" stroke="#ffb020" stroke-width="1.25"></rect>';
-                            html += '<circle cx="' + p2.x + '" cy="' + p2.y + '" r="4" fill="#ffb020" stroke="#fff" stroke-width="1"></circle>';
+                        }
+                        safePoints.forEach(function(p, index){
+                            const label = String(index + 1);
+                            const labelX = Math.min(1250, p.x + 8);
+                            const labelY = Math.max(16, p.y - 8);
+                            html += '<circle cx="' + p.x + '" cy="' + p.y + '" r="4" fill="#ffb020" stroke="#fff" stroke-width="1"></circle>';
+                            html += '<text x="' + labelX + '" y="' + labelY + '" fill="#ffb020" stroke="#fff" stroke-width="2" paint-order="stroke" font-size="16">' + label + '</text>';
+                        });
+                        if (draftPoint) {
+                            html += '<circle cx="' + draftPoint.x + '" cy="' + draftPoint.y + '" r="6" fill="none" stroke="#22c55e" stroke-width="2"></circle>';
+                            html += '<line x1="' + (draftPoint.x - 10) + '" y1="' + draftPoint.y + '" x2="' + (draftPoint.x + 10) + '" y2="' + draftPoint.y + '" stroke="#22c55e" stroke-width="1.5"></line>';
+                            html += '<line x1="' + draftPoint.x + '" y1="' + (draftPoint.y - 10) + '" x2="' + draftPoint.x + '" y2="' + (draftPoint.y + 10) + '" stroke="#22c55e" stroke-width="1.5"></line>';
                         }
                         liveOverlay.innerHTML = html;
                     }
-                    if (!points.length) {
-                        label.textContent = "点击预览图记录坐标。";
+                    const safePoints = normalizePoints(draftPoints || points);
+                    if (!options || !options.skipRegionPreview) {
+                        updateRegionPreview(safePoints);
+                    }
+                    if (draftPoint) {
+                        const prefix = activeDrag ? "拖动" + edgeLabel(activeDrag.edge) + "：" : "待确认点位：";
+                        label.textContent = prefix + "(" + draftPoint.x + ", " + draftPoint.y + ")";
                         return;
                     }
-                    label.textContent = "最近点位：" + points.slice(0, 4).map(function(p){
-                        return "(" + p.x + ", " + p.y + ")";
+                    if (!safePoints.length) {
+                        label.textContent = "按住预览图拖动取点，松手后记录点位。";
+                        return;
+                    }
+                    label.textContent = safePoints.map(function(p, index){
+                        return "点位" + (index + 1) + "：(" + p.x + ", " + p.y + ")";
                     }).join("  ");
                 }
-                let initial = [];
-                try { initial = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch(e) {}
+                function applyCustomImage(record) {
+                    img.onload = refreshRegionPreviewFromStorage;
+                    img.src = record.src;
+                    if (img.complete) {
+                        refreshRegionPreviewFromStorage();
+                    }
+                    const sizeText = record.width + "x" + record.height;
+                    const message = "当前：自定义截图 " + (record.name || "") + " (" + sizeText + ")";
+                    setSourceLabel(message, record.width === 1280 && record.height === 720 ? "" : "warning");
+                }
+                function loadStoredImage() {
+                    let record = null;
+                    try { record = JSON.parse(sessionStorage.getItem(customImageKey) || "null"); } catch(e) {}
+                    if (record && record.src) {
+                        applyCustomImage(record);
+                    } else {
+                        setLiveLabel();
+                    }
+                }
+                function saveCustomImage(file, src, width, height) {
+                    const record = {
+                        src: src,
+                        name: file.name || "未命名图片",
+                        width: width,
+                        height: height,
+                        time: new Date().toISOString()
+                    };
+                    try {
+                        sessionStorage.setItem(customImageKey, JSON.stringify(record));
+                    } catch(e) {
+                        setSourceLabel("当前：自定义截图（浏览器缓存空间不足，刷新后需重新选择）", "warning");
+                    }
+                    applyCustomImage(record);
+                    if (width !== 1280 || height !== 720) {
+                        setSourceLabel("当前：自定义截图 " + record.name + " (" + width + "x" + height + ")，坐标仍按 1280x720 换算", "warning");
+                    }
+                }
+                function loadFile(file) {
+                    if (!file) return;
+                    if (!file.type || file.type.indexOf("image/") !== 0) {
+                        setSourceLabel("请选择图片文件。", "error");
+                        return;
+                    }
+                    if (file.size > 8 * 1024 * 1024) {
+                        setSourceLabel("图片过大，请选择 8MB 以内的截图。", "error");
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onerror = function(){
+                        setSourceLabel("读取图片失败。", "error");
+                    };
+                    reader.onload = function(){
+                        const preview = new Image();
+                        preview.onerror = function(){
+                            setSourceLabel("图片格式无法识别。", "error");
+                        };
+                        preview.onload = function(){
+                            saveCustomImage(file, reader.result, preview.naturalWidth, preview.naturalHeight);
+                        };
+                        preview.src = reader.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+                let initial = readStoredPoints();
+                savePoints(initial);
                 render(initial);
-                img.addEventListener("click", function(e){
-                    const rect = img.getBoundingClientRect();
-                    const x = Math.max(0, Math.min(1279, Math.round((e.clientX - rect.left) * 1280 / rect.width)));
-                    const y = Math.max(0, Math.min(719, Math.round((e.clientY - rect.top) * 720 / rect.height)));
-                    let points = [];
-                    try { points = JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch(e) {}
-                    points.unshift({x: x, y: y, time: new Date().toISOString()});
-                    points = points.slice(0, 8);
-                    localStorage.setItem(storageKey, JSON.stringify(points));
-                    render(points);
+                if (clearCustomImage) {
+                    sessionStorage.removeItem(customImageKey);
+                }
+                loadStoredImage();
+                img.addEventListener("dragstart", function(e){
+                    e.preventDefault();
                 });
+                img.addEventListener("pointerdown", function(e){
+                    if (e.button !== 0) return;
+                    e.preventDefault();
+                    activePointerId = e.pointerId;
+                    const startPoint = pointFromEvent(e);
+                    activeDrag = startPoint ? hitTestEdge(readStoredPoints(), startPoint) : null;
+                    img.style.cursor = activeDrag ? cursorForEdge(activeDrag.edge) : "crosshair";
+                    if (img.setPointerCapture) {
+                        try { img.setPointerCapture(e.pointerId); } catch(error) {}
+                    }
+                    updateDraftPoint(e);
+                });
+                img.addEventListener("pointermove", function(e){
+                    if (activePointerId === null && draftPoint === null) {
+                        updatePointerCursor(e);
+                        return;
+                    }
+                    if (activePointerId !== e.pointerId || draftPoint === null) return;
+                    e.preventDefault();
+                    updateDraftPoint(e);
+                });
+                img.addEventListener("pointerleave", function(){
+                    if (activePointerId === null && draftPoint === null) {
+                        img.style.cursor = "crosshair";
+                    }
+                });
+                img.addEventListener("pointerup", function(e){
+                    if (activePointerId !== e.pointerId) return;
+                    e.preventDefault();
+                    updateDraftPoint(e);
+                    if (img.releasePointerCapture) {
+                        try { img.releasePointerCapture(e.pointerId); } catch(error) {}
+                    }
+                    activePointerId = null;
+                    finishDraftPoint();
+                });
+                img.addEventListener("pointercancel", function(e){
+                    if (activePointerId !== e.pointerId) return;
+                    if (img.releasePointerCapture) {
+                        try { img.releasePointerCapture(e.pointerId); } catch(error) {}
+                    }
+                    cancelDraftPoint();
+                });
+                if (fileButton && fileInput) {
+                    fileButton.addEventListener("click", function(){
+                        fileInput.click();
+                    });
+                    fileInput.addEventListener("change", function(){
+                        loadFile(fileInput.files && fileInput.files[0]);
+                        fileInput.value = "";
+                    });
+                }
+                if (liveButton) {
+                    liveButton.addEventListener("click", function(){
+                        sessionStorage.removeItem(customImageKey);
+                        img.onload = refreshRegionPreviewFromStorage;
+                        img.src = img.dataset.liveSrc || img.src;
+                        if (img.complete) {
+                            refreshRegionPreviewFromStorage();
+                        }
+                        setLiveLabel();
+                    });
+                }
             })();
             """,
             imageId=f"coordinate-picker-image-{scope_id}",
             labelId=f"coordinate-picker-latest-{scope_id}",
             liveOverlayId=f"coordinate-picker-live-overlay-{scope_id}",
+            sourceLabelId=f"coordinate-picker-source-{scope_id}",
+            fileInputId=f"coordinate-picker-file-input-{scope_id}",
+            fileButtonId=f"coordinate-picker-file-button-{scope_id}",
+            liveButtonId=f"coordinate-picker-live-button-{scope_id}",
+            magnifierId=f"coordinate-picker-magnifier-{scope_id}",
+            magnifierCanvasId=f"coordinate-picker-magnifier-canvas-{scope_id}",
+            magnifierTextId=f"coordinate-picker-magnifier-text-{scope_id}",
+            regionPreviewId=f"coordinate-picker-region-preview-{scope_id}",
+            regionPreviewImageId=f"coordinate-picker-region-preview-image-{scope_id}",
+            regionPreviewEmptyId=f"coordinate-picker-region-preview-empty-{scope_id}",
             storageKey=latest_key,
+            customImageKey=custom_image_key,
+            clearCustomImage=clear_custom_image,
+        )
+        self._coordinate_picker_start_live_screenshot_check(
+            scope_id=scope_id,
+            request_id=request_id,
+            custom_image_key=custom_image_key,
         )
 
     @use_scope("content", clear=True)
@@ -3984,12 +4641,12 @@ class AlasGUI(Frame):
 
         put_html(
             '<div style="display:grid;gap:12px;max-width:1180px;">'
-            '<div style="font-size:13px;opacity:.75;">点击截图预览记录坐标，使用每行按钮把最近点位填入坐标表。数据保存在当前浏览器 localStorage。</div>'
+            '<div style="font-size:13px;opacity:.75;">点击截图预览记录两个点位，继续点击会更新距离新点更近的点位。使用每行按钮把点位填入坐标表。数据保存在当前浏览器 localStorage。</div>'
             '</div>'
         )
         put_row(
             [
-                put_button("刷新截图", onclick=lambda: self._render_coordinate_picker_frame(), color="primary"),
+                put_button("刷新实时截图", onclick=self._coordinate_picker_refresh_live_frame, color="primary"),
                 put_button("保存表格", onclick=self._save_coordinate_picker_workbench_items, color="success"),
                 put_button("重置表格", onclick=self._reset_coordinate_picker_workbench_items, color="warning"),
             ],
