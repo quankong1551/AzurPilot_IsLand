@@ -299,9 +299,12 @@ class IslandDailyGather(Island):
 
         # 点击确认按钮完成选择
         self.device.sleep(0.3)
-        self.appear_then_click(SELECT_UI_CONFIRM)
-        self.device.sleep(0.5)
+        if not self.confirm_selected_character_closed(f"每日采集第{index + 1}个槽位"):
+            self.device.click(SELECT_UI_BACK)
+            self.device.sleep(0.3)
+            return False
         logger.info(f"第{index + 1}个槽位角色选择完成")
+        return True
 
     def _wait_for_character_select(self):
         """
