@@ -16657,6 +16657,14 @@
       }
     },
     "IslandDailyInteract": {
+      "NurseryGreeting": {
+        "type": "checkbox",
+        "value": false,
+        "option": [
+          true,
+          false
+        ]
+      },
       "WeeklyPhoto": {
         "type": "checkbox",
         "value": true,

@@ -348,7 +348,7 @@
     },
     "IslandDailyInteract": {
       "name": "每日/週任務",
-      "help": "僅支援minitouch。處理島嶼摸貓、JUU速運、商區外送服務與每週照相任務。相關按鈕資源生成後可啟用。"
+      "help": "僅支援minitouch。處理島嶼摸貓、JUU速運、商區外送服務、苗圃打招呼與每週照相任務。"
     },
     "IslandPearlSell": {
       "name": "每週珍珠採購與售賣",
@@ -4662,7 +4662,13 @@
   "IslandDailyInteract": {
     "_info": {
       "name": "每日/週任務",
-      "help": "僅支援minitouch。控制島嶼每日與每週互動任務，包含晨露農場摸貓、開發計畫中的 JUU 速運、商區外送服務和每週照相任務。"
+      "help": "僅支援minitouch。控制島嶼每日與每週互動任務，包含晨露農場摸貓、開發計畫中的 JUU 速運、商區外送服務、苗圃打招呼和每週照相任務。"
+    },
+    "NurseryGreeting": {
+      "name": "苗圃打招呼",
+      "help": "前往苗圃依次與三個小人執行打招呼互動。需要擁有明石、海倫娜和逸仙才可使用此功能。已完成互動的小人會自動跳過。此功能隨機性很大，失敗機率較高，失敗屬於正常現象。",
+      "True": "True",
+      "False": "False"
     },
     "WeeklyPhoto": {
       "name": "每週照相任務",

@@ -348,7 +348,7 @@
     },
     "IslandDailyInteract": {
       "name": "Daily/Weekly Tasks",
-      "help": "Only supports minitouch. Handles island petting, JUU Express, Business Delivery, and weekly photo tasks. Enable after related button assets are generated."
+      "help": "Only supports minitouch. Handles island petting, JUU Express, Business Delivery, nursery greetings, and weekly photo tasks."
     },
     "IslandPearlSell": {
       "name": "Weekly Pearl Trade",
@@ -4662,7 +4662,13 @@
   "IslandDailyInteract": {
     "_info": {
       "name": "Daily/Weekly Tasks",
-      "help": "Only supports minitouch. Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, and weekly photo tasks in Development Plan."
+      "help": "Only supports minitouch. Controls island daily and weekly interactions, including Morningdew Farm petting, JUU Express, Business Delivery, nursery greetings, and weekly photo tasks in Development Plan."
+    },
+    "NurseryGreeting": {
+      "name": "Nursery greeting",
+      "help": "Go to the nursery and greet three JUU characters in sequence. This feature requires Akashi, Helena, and Yat Sen. Characters that have already been greeted will be skipped automatically. This feature is highly random and has a relatively high failure rate; occasional failures are normal.",
+      "True": "True",
+      "False": "False"
     },
     "WeeklyPhoto": {
       "name": "Weekly Photo Task",

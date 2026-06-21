@@ -851,6 +851,7 @@ class GeneratedConfig:
     IslandDailyOrder_UrgentDetectRefreshTime = datetime.datetime(2020, 1, 1, 0, 0)
 
     # 配置组 `IslandDailyInteract`
+    IslandDailyInteract_NurseryGreeting = False  # True, False
     IslandDailyInteract_WeeklyPhoto = True  # True, False
 
     # 配置组 `IslandPearlSell`

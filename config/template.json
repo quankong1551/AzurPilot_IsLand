@@ -3198,6 +3198,7 @@
       "Sensitive": false
     },
     "IslandDailyInteract": {
+      "NurseryGreeting": false,
       "WeeklyPhoto": true
     },
     "Storage": {

@@ -1497,6 +1497,10 @@ IslandDailyOrder:
     value: "2020-01-01 00:00:00"
 
 IslandDailyInteract:
+  NurseryGreeting:
+    type: checkbox
+    value: false
+    option: [ true, false ]
   WeeklyPhoto:
     type: checkbox
     value: true
