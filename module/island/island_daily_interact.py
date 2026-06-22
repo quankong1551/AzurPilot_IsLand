@@ -19,6 +19,15 @@ INTERACT_BLUE_RING_HSV_LOWER = np.array([85, 45, 95])
 INTERACT_BLUE_RING_HSV_UPPER = np.array([145, 190, 255])
 INTERACT_WHITE_ICON_HSV_LOWER = np.array([0, 0, 155])
 INTERACT_WHITE_ICON_HSV_UPPER = np.array([179, 100, 255])
+INTERACT_BLUE_RING_RADIUS = 30
+INTERACT_BLUE_RING_SIZE = INTERACT_BLUE_RING_RADIUS * 2
+INTERACT_BLUE_RING_HOUGH_MIN_RADIUS = 28
+INTERACT_BLUE_RING_HOUGH_MAX_RADIUS = 38
+INTERACT_BLUE_RING_CONTOUR_MIN_SIZE = 52
+INTERACT_BLUE_RING_CONTOUR_MAX_SIZE = 78
+INTERACT_BLUE_RING_BLUE_RATIO_THRESHOLD = 0.64
+INTERACT_BLUE_RING_WHITE_RATIO_MIN = 0.12
+INTERACT_BLUE_RING_WHITE_RATIO_MAX = 0.85
 NURSERY_GREETING_ACTION_MATCH_THRESHOLD = 0.58
 NURSERY_GREETING_ACTION_MATCH_MARGIN = 0.08
 NURSERY_GREETING_ACTION_MAX_SCROLL = 5
@@ -679,7 +688,7 @@ class IslandDailyInteract(Island):
         """检测苗圃小人头顶打招呼互动气泡。"""
         return self._find_interact_blue_ring(bubble_area, show_log=True) is not None
 
-    def _find_interact_blue_ring(self, area, show_log=False):
+    def _find_interact_blue_ring_legacy(self, area, show_log=False):
         """在指定区域内寻找最可信的蓝色互动圈。"""
         button_area = area.area if isinstance(area, Button) else area
         image = crop(self.device.image, button_area, copy=False)
@@ -758,6 +767,228 @@ class IslandDailyInteract(Island):
                 ),
             )
         return best_rect
+
+    def _find_interact_blue_ring(self, area, show_log=False):
+        """在指定区域内寻找固定大小的蓝色互动气泡。"""
+        button_area = area.area if isinstance(area, Button) else area
+        image = crop(self.device.image, button_area, copy=False)
+        if image.size <= 0:
+            return None
+
+        blue_mask, white_mask = self._interact_blue_ring_masks(image)
+        contour_rect, contour = self._find_interact_blue_ring_by_contour(blue_mask, white_mask)
+        best_rect = None
+        best = contour or {
+            'method': 'none',
+            'area': 0,
+            'width': 0,
+            'height': 0,
+            'aspect': 0,
+            'extent': 0,
+            'blue': 0,
+            'white': 0,
+            'tail': 0,
+            'score': 0,
+        }
+
+        if self._is_normal_interact_blue_ring_contour(contour):
+            best_rect = contour_rect
+            best = contour
+        else:
+            hough_rect, hough = self._find_interact_blue_ring_by_hough(blue_mask, white_mask)
+            if hough_rect is not None:
+                best_rect = hough_rect
+                best = hough
+
+        if show_log:
+            logger.attr(
+                'InteractBlueRing',
+                (
+                    f"method={best.get('method', 'none')}, score={best.get('score', 0):.2f}, "
+                    f"area={best.get('area', 0):.1f}, size={best.get('width', 0)}x{best.get('height', 0)}, "
+                    f"aspect={best.get('aspect', 0):.2f}, extent={best.get('extent', 0):.2f}, "
+                    f"blue={best.get('blue', 0):.2f}, white={best.get('white', 0):.2f}, "
+                    f"tail={best.get('tail', 0):.2f}, appear={best_rect is not None}"
+                ),
+            )
+        return best_rect
+
+    def _interact_blue_ring_masks(self, image):
+        hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+        blue_mask = cv2.inRange(hsv, INTERACT_BLUE_RING_HSV_LOWER, INTERACT_BLUE_RING_HSV_UPPER)
+        white_mask = cv2.inRange(hsv, INTERACT_WHITE_ICON_HSV_LOWER, INTERACT_WHITE_ICON_HSV_UPPER)
+        blue_mask = cv2.morphologyEx(
+            blue_mask,
+            cv2.MORPH_CLOSE,
+            np.ones((3, 3), dtype=np.uint8),
+            iterations=1,
+        )
+        return blue_mask, white_mask
+
+    def _find_interact_blue_ring_by_contour(self, blue_mask, white_mask):
+        best_rect = None
+        best = None
+        contours, _ = cv2.findContours(blue_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for contour in contours:
+            contour_area = cv2.contourArea(contour)
+            if contour_area < 300:
+                continue
+
+            x, y, width, height = cv2.boundingRect(contour)
+            if width < 24 or height < 24:
+                continue
+            aspect = width / max(height, 1)
+            if not 0.7 <= aspect <= 1.45:
+                continue
+
+            extent = contour_area / max(width * height, 1)
+            if extent < 0.35:
+                continue
+
+            white_ratio = self._interact_blue_ring_center_white_ratio(white_mask, x, y, width, height)
+            if white_ratio < INTERACT_BLUE_RING_WHITE_RATIO_MIN:
+                continue
+
+            center_x = x + width // 2
+            center_y = y + height // 2
+            fixed_rect = self._fixed_interact_blue_ring_rect(center_x, center_y, blue_mask.shape)
+            if fixed_rect is None:
+                continue
+
+            blue_ratio, fixed_white_ratio, tail_ratio = self._interact_blue_ring_fixed_metrics(
+                blue_mask,
+                white_mask,
+                center_x,
+                center_y,
+            )
+            score = self._interact_blue_ring_score(blue_ratio, fixed_white_ratio, tail_ratio)
+            if best is None or contour_area > best['area']:
+                best = {
+                    'method': 'contour',
+                    'rect': (x, y, width, height),
+                    'area': contour_area,
+                    'width': width,
+                    'height': height,
+                    'aspect': aspect,
+                    'extent': extent,
+                    'blue': blue_ratio,
+                    'white': fixed_white_ratio,
+                    'tail': tail_ratio,
+                    'score': score,
+                }
+                best_rect = fixed_rect
+
+        return best_rect, best
+
+    def _find_interact_blue_ring_by_hough(self, blue_mask, white_mask):
+        work = cv2.medianBlur(blue_mask, 5)
+        circles = cv2.HoughCircles(
+            work,
+            cv2.HOUGH_GRADIENT,
+            dp=1.2,
+            minDist=28,
+            param1=80,
+            param2=8,
+            minRadius=INTERACT_BLUE_RING_HOUGH_MIN_RADIUS,
+            maxRadius=INTERACT_BLUE_RING_HOUGH_MAX_RADIUS,
+        )
+        if circles is None:
+            return None, None
+
+        best_rect = None
+        best = None
+        for center_x, center_y, _ in np.round(circles[0]).astype(int):
+            fixed_rect = self._fixed_interact_blue_ring_rect(center_x, center_y, blue_mask.shape)
+            if fixed_rect is None:
+                continue
+
+            blue_ratio, white_ratio, tail_ratio = self._interact_blue_ring_fixed_metrics(
+                blue_mask,
+                white_mask,
+                center_x,
+                center_y,
+            )
+            if blue_ratio < INTERACT_BLUE_RING_BLUE_RATIO_THRESHOLD:
+                continue
+            if not INTERACT_BLUE_RING_WHITE_RATIO_MIN <= white_ratio <= INTERACT_BLUE_RING_WHITE_RATIO_MAX:
+                continue
+
+            score = self._interact_blue_ring_score(blue_ratio, white_ratio, tail_ratio)
+            if best is None or score > best['score']:
+                best = {
+                    'method': 'hough',
+                    'area': 0,
+                    'width': INTERACT_BLUE_RING_SIZE,
+                    'height': INTERACT_BLUE_RING_SIZE,
+                    'aspect': 1,
+                    'extent': 0,
+                    'blue': blue_ratio,
+                    'white': white_ratio,
+                    'tail': tail_ratio,
+                    'score': score,
+                }
+                best_rect = fixed_rect
+
+        return best_rect, best
+
+    def _fixed_interact_blue_ring_rect(self, center_x, center_y, shape):
+        height, width = shape[:2]
+        radius = INTERACT_BLUE_RING_RADIUS
+        x = int(round(center_x - radius))
+        y = int(round(center_y - radius))
+        if x < 0 or y < 0 or x + INTERACT_BLUE_RING_SIZE > width or y + INTERACT_BLUE_RING_SIZE > height:
+            return None
+        return (x, y, INTERACT_BLUE_RING_SIZE, INTERACT_BLUE_RING_SIZE)
+
+    def _is_normal_interact_blue_ring_contour(self, contour):
+        if not contour:
+            return False
+        width = contour['width']
+        height = contour['height']
+        return (
+                INTERACT_BLUE_RING_CONTOUR_MIN_SIZE <= width <= INTERACT_BLUE_RING_CONTOUR_MAX_SIZE
+                and INTERACT_BLUE_RING_CONTOUR_MIN_SIZE <= height <= INTERACT_BLUE_RING_CONTOUR_MAX_SIZE
+                and contour['blue'] >= INTERACT_BLUE_RING_BLUE_RATIO_THRESHOLD
+                and contour['white'] >= INTERACT_BLUE_RING_WHITE_RATIO_MIN
+        )
+
+    def _interact_blue_ring_center_white_ratio(self, white_mask, x, y, width, height):
+        center_white = white_mask[y:y + height, x:x + width]
+        yy, xx = np.ogrid[:height, :width]
+        cx = (width - 1) / 2
+        cy = (height - 1) / 2
+        rx = max(width / 2, 1)
+        ry = max(height / 2, 1)
+        center_mask = (((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 <= 0.55 ** 2).astype('uint8') * 255
+        white_total = cv2.countNonZero(center_mask)
+        return (
+            cv2.countNonZero(cv2.bitwise_and(center_white, center_mask)) / white_total
+            if white_total
+            else 0
+        )
+
+    def _interact_blue_ring_fixed_metrics(self, blue_mask, white_mask, center_x, center_y):
+        radius = INTERACT_BLUE_RING_RADIUS
+        height, width = blue_mask.shape[:2]
+        yy, xx = np.ogrid[:height, :width]
+        distance = np.sqrt((xx - center_x) ** 2 + (yy - center_y) ** 2)
+        angle = (np.degrees(np.arctan2(yy - center_y, xx - center_x)) + 360) % 360
+        ring_mask = ((distance >= radius * 0.62) & (distance <= radius * 1.08)).astype('uint8') * 255
+        inner_mask = (distance <= radius * 0.55).astype('uint8') * 255
+        tail_mask = (
+                (distance >= radius * 1.02)
+                & (distance <= radius * 1.55)
+                & (angle >= 30)
+                & (angle <= 85)
+        ).astype('uint8') * 255
+
+        blue_ratio = cv2.countNonZero(cv2.bitwise_and(blue_mask, ring_mask)) / max(cv2.countNonZero(ring_mask), 1)
+        white_ratio = cv2.countNonZero(cv2.bitwise_and(white_mask, inner_mask)) / max(cv2.countNonZero(inner_mask), 1)
+        tail_ratio = cv2.countNonZero(cv2.bitwise_and(blue_mask, tail_mask)) / max(cv2.countNonZero(tail_mask), 1)
+        return blue_ratio, white_ratio, tail_ratio
+
+    def _interact_blue_ring_score(self, blue_ratio, white_ratio, tail_ratio):
+        return blue_ratio * 0.55 + white_ratio * 0.30 + tail_ratio * 0.15
 
     def _extract_nursery_greeting_action_icon(self, bubble_area):
         """从互动气泡中心提取白色动作图标 mask。"""
