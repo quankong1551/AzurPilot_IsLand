@@ -6,6 +6,7 @@ import numpy as np
 from module.island.island import Island
 from module.island.assets import *
 from module.base.button import Button
+from module.base.decorator import cached_property
 from module.base.timer import Timer
 from module.base.utils import crop
 from module.handler.assets import STORY_SKIP_3
@@ -28,12 +29,25 @@ INTERACT_BLUE_RING_CONTOUR_MAX_SIZE = 78
 INTERACT_BLUE_RING_BLUE_RATIO_THRESHOLD = 0.64
 INTERACT_BLUE_RING_WHITE_RATIO_MIN = 0.12
 INTERACT_BLUE_RING_WHITE_RATIO_MAX = 0.85
-NURSERY_GREETING_ACTION_MATCH_THRESHOLD = 0.58
-NURSERY_GREETING_ACTION_MATCH_MARGIN = 0.08
+NURSERY_GREETING_ACTION_MATCH_THRESHOLD = 0.86
+NURSERY_GREETING_ACTION_MATCH_MARGIN = 0.06
+NURSERY_GREETING_BUBBLE_CLASSIFY_THRESHOLD = 0.68
+NURSERY_GREETING_BUBBLE_CLASSIFY_MARGIN = 0.045
+NURSERY_GREETING_BUBBLE_BLUE_SCORE_MIN = 0.45
+NURSERY_GREETING_BUBBLE_BLUE_WEIGHT = 0.12
 NURSERY_GREETING_ACTION_MAX_SCROLL = 5
 NURSERY_GREETING_ICON_SIZE = 64
 NURSERY_GREETING_OPTION_ICON_WIDTH = 90
 NURSERY_GREETING_OPTION_ICON_HEIGHT = 92
+NURSERY_GREETING_ACTION_TEMPLATE_COMMON_RATIO = 0.42
+NURSERY_GREETING_ACTION_TEMPLATE_DETAIL_WEIGHT = 0.65
+NURSERY_GREETING_ACTION_TEMPLATE_MIN_DETAIL_PIXELS = 12
+NURSERY_GREETING_ACTION_TEMPLATE_LABELS = (
+    '害怕', '伸懒腰', '打坐', '踩脚', '英雄登场', '羞躬',
+    '展示肌肉', '胜利起跳', '挠头', '擦汗', '打哈欠', '拒绝',
+    '飞吻', '投篮', '自夸', '抱拳', '叉腰', '跳舞',
+    '赞美太阳', '打招呼', '道别', '点头', '摇头', '拍手',
+)
 GREET_NURSERY_JUU_1_BUBBLE_AREA = Button(
     area=(620, 176, 1182, 325),
     color=(),
@@ -83,12 +97,11 @@ class IslandDailyInteract(Island):
         if self.config.IslandDailyInteract_WeeklyPhoto:
             all_done = self.weekly_photo() and all_done
 
+        self._delay_to_next_day()
         if all_done:
-            self._delay_to_next_day()
             logger.info('岛屿每日互动执行完成')
         else:
-            logger.warning('岛屿每日互动部分任务失败，60分钟后重试')
-            self.config.task_delay(minute=60)
+            logger.info('岛屿每日互动部分任务未完成，本轮不再重试')
 
     def pet_cat(self):
         """
@@ -256,10 +269,20 @@ class IslandDailyInteract(Island):
         logger.hr('Nursery Greeting', level=2)
         completed = True
         for index, move_method, bubble_area in self._nursery_greeting_steps():
-            if not self.greet_nursery_juu(index, move_method, bubble_area):
-                logger.warning(f'苗圃第{index}个小人打招呼失败，终止后续流程')
+            max_attempt = 6 if index == 3 else 3
+            for attempt in range(max_attempt):
+                logger.info(f'苗圃第{index}个小人打招呼尝试: {attempt + 1}/{max_attempt}')
+                if self.greet_nursery_juu(index, move_method, bubble_area):
+                    break
+                if attempt < max_attempt - 1:
+                    logger.warning(f'苗圃第{index}个小人打招呼失败，准备重试')
+                    self._close_nursery_greeting_action_menu_before_retry()
+                    continue
+            else:
+                logger.warning(f'苗圃第{index}个小人打招呼失败，继续尝试后续小人')
+                self._close_nursery_greeting_action_menu_before_retry()
                 completed = False
-                break
+                continue
 
         self._clear_island_reward_popups()
         self.ui_goto(page_island, get_ship=False)
@@ -278,45 +301,46 @@ class IslandDailyInteract(Island):
             bool: 是否完成或跳过该小人的打招呼流程。
         """
         logger.hr(f'Nursery Greeting - JUU {index}', level=3)
-        max_attempt = 2 if index == 3 else 1
         target_icon = None
-        for attempt in range(max_attempt):
-            if max_attempt > 1:
-                logger.info(f'苗圃第{index}个小人打招呼路线尝试: {attempt + 1}/{max_attempt}')
+        if not self.island_map_goto('nursery'):
+            logger.warning(f'前往苗圃失败，无法执行第{index}个小人打招呼')
+            return False
 
-            if not self.island_map_goto('nursery'):
-                logger.warning(f'前往苗圃失败，无法执行第{index}个小人打招呼')
-                return False
-
-            move_method()
-            bubble_found = False
-            for _ in self.loop(timeout=8, skip_first=False):
-                if self._appear_nursery_greeting_bubble(bubble_area):
-                    bubble_found = True
-                    target_icon = self._extract_nursery_greeting_action_icon(bubble_area)
-                    break
-                if self._handle_island_reward_once():
-                    continue
-            if bubble_found:
+        move_method()
+        bubble_found = False
+        for _ in self.loop(timeout=8, skip_first=False):
+            if self._appear_nursery_greeting_bubble(bubble_area):
+                bubble_found = True
+                target_icon = self._extract_nursery_greeting_action_icon(bubble_area)
                 break
-            if attempt < max_attempt - 1:
-                logger.info(f'苗圃第{index}个小人未检测到打招呼气泡，重新尝试一次')
+            if self._handle_island_reward_once():
                 continue
-
-            logger.info(f'苗圃第{index}个小人未检测到打招呼气泡，视为已完成')
-            return True
+        if not bubble_found:
+            logger.warning(f'苗圃第{index}个小人未匹配到打招呼蓝圈')
+            return False
 
         if target_icon is None:
             logger.warning(f'苗圃第{index}个小人动作图标提取失败')
             return False
+        target_index = self._classify_nursery_greeting_action_icon(target_icon)
+        if target_index is None:
+            logger.warning(f'苗圃第{index}个小人动作图标未能可靠归类')
+            return False
         if not self._open_nursery_greeting_action_menu():
             return False
-        if not self._select_nursery_greeting_action(target_icon):
+        if not self._select_nursery_greeting_action(target_index):
             return False
 
         self.device.sleep(6)
-        self._handle_island_reward_optional()
+        if not self._handle_island_reward_optional():
+            logger.warning(f'苗圃第{index}个小人打招呼后未检测到奖励')
+            return False
         return self._exit_nursery_greeting_action_menu()
+
+    def _close_nursery_greeting_action_menu_before_retry(self):
+        """重试前点击安全区域，关闭可能残留的动作界面。"""
+        logger.info('苗圃打招呼重试前点击安全区域关闭动作界面')
+        self.device.click(ISLAND_CLICK_SAFE_AREA)
 
     def delivery_location_flow(self, task_label, name, destination, move_method, interact_button, complete_button):
         """
@@ -428,11 +452,7 @@ class IslandDailyInteract(Island):
     def move_for_nursery_greet_3(self):
         """苗圃打招呼：第三个小人移动路线。"""
         self.island_down(1500)
-        self.island_left(1500)
-        self.island_down(1000)
-        self.island_left(1000)
-        self.island_down(800)
-        self.island_left(1800)
+        self.island_left(6000)
 
     def handle_island_story_skip_safely(self):
         """
@@ -765,7 +785,7 @@ class IslandDailyInteract(Island):
                     f"aspect={best['aspect']:.2f}, extent={best['extent']:.2f}, "
                     f"white={best.get('white', 0):.2f}, appear={best_rect is not None}"
                 ),
-            )
+        )
         return best_rect
 
     def _find_interact_blue_ring(self, area, show_log=False):
@@ -975,23 +995,31 @@ class IslandDailyInteract(Island):
         angle = (np.degrees(np.arctan2(yy - center_y, xx - center_x)) + 360) % 360
         ring_mask = ((distance >= radius * 0.62) & (distance <= radius * 1.08)).astype('uint8') * 255
         inner_mask = (distance <= radius * 0.55).astype('uint8') * 255
-        tail_mask = (
+        right_tail_mask = (
                 (distance >= radius * 1.02)
                 & (distance <= radius * 1.55)
                 & (angle >= 30)
                 & (angle <= 85)
         ).astype('uint8') * 255
+        left_tail_mask = (
+                (distance >= radius * 1.02)
+                & (distance <= radius * 1.55)
+                & (angle >= 95)
+                & (angle <= 150)
+        ).astype('uint8') * 255
 
         blue_ratio = cv2.countNonZero(cv2.bitwise_and(blue_mask, ring_mask)) / max(cv2.countNonZero(ring_mask), 1)
         white_ratio = cv2.countNonZero(cv2.bitwise_and(white_mask, inner_mask)) / max(cv2.countNonZero(inner_mask), 1)
-        tail_ratio = cv2.countNonZero(cv2.bitwise_and(blue_mask, tail_mask)) / max(cv2.countNonZero(tail_mask), 1)
+        right_tail_ratio = cv2.countNonZero(cv2.bitwise_and(blue_mask, right_tail_mask)) / max(cv2.countNonZero(right_tail_mask), 1)
+        left_tail_ratio = cv2.countNonZero(cv2.bitwise_and(blue_mask, left_tail_mask)) / max(cv2.countNonZero(left_tail_mask), 1)
+        tail_ratio = max(right_tail_ratio, left_tail_ratio)
         return blue_ratio, white_ratio, tail_ratio
 
     def _interact_blue_ring_score(self, blue_ratio, white_ratio, tail_ratio):
         return blue_ratio * 0.55 + white_ratio * 0.30 + tail_ratio * 0.15
 
     def _extract_nursery_greeting_action_icon(self, bubble_area):
-        """从互动气泡中心提取白色动作图标 mask。"""
+        """从互动气泡中心提取动作图标和蓝圈特征，用于归类目标动作。"""
         button_area = bubble_area.area if isinstance(bubble_area, Button) else bubble_area
         ring_rect = self._find_interact_blue_ring(bubble_area)
         if ring_rect is None:
@@ -999,19 +1027,33 @@ class IslandDailyInteract(Island):
 
         image = crop(self.device.image, button_area, copy=False)
         x, y, width, height = ring_rect
-        icon_image = self._crop_blue_ring_inner_icon(image, x, y, width, height)
-        icon_mask = self._white_icon_mask(icon_image)
-        if cv2.countNonZero(icon_mask) < 20:
+        bubble_image = image[y:y + height, x:x + width]
+        white_mask, blue_mask = self._nursery_greeting_bubble_features(bubble_image)
+        if cv2.countNonZero(white_mask) < 20:
             logger.warning('互动气泡内白色动作图标像素过少')
             return None
-        return self._normalize_icon_mask(icon_mask)
+        if cv2.countNonZero(blue_mask) < 20:
+            logger.warning('互动气泡蓝圈像素过少')
+            return None
+        return white_mask, blue_mask
 
-    def _crop_blue_ring_inner_icon(self, image, x, y, width, height):
-        """裁剪蓝色互动圈，并用椭圆遮罩保留内侧动作图标。"""
-        icon_image = image[y:y + height, x:x + width]
+    def _nursery_greeting_bubble_features(self, bubble_image):
+        """从带蓝圈的气泡图中提取动作白色 mask 和蓝圈 mask。"""
+        if bubble_image.size <= 0:
+            empty = np.zeros((NURSERY_GREETING_ICON_SIZE, NURSERY_GREETING_ICON_SIZE), dtype=np.uint8)
+            return empty, empty
+
+        inner_image = self._mask_blue_ring_inner_icon(bubble_image)
+        white_mask = self._normalize_icon_mask(self._white_icon_mask(inner_image))
+        blue_mask = self._fixed_size_icon_mask(self._blue_ring_mask(bubble_image))
+        return white_mask, blue_mask
+
+    def _mask_blue_ring_inner_icon(self, icon_image):
+        """用椭圆遮罩保留蓝色互动圈内侧动作图标。"""
         if icon_image.size <= 0:
             return icon_image
 
+        height, width = icon_image.shape[:2]
         yy, xx = np.ogrid[:height, :width]
         cx = (width - 1) / 2
         cy = (height - 1) / 2
@@ -1019,6 +1061,59 @@ class IslandDailyInteract(Island):
         ry = max(height / 2, 1)
         ellipse_mask = (((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 <= 0.78 ** 2)
         return np.where(ellipse_mask[..., None], icon_image, 0).astype(icon_image.dtype)
+
+    def _blue_ring_mask(self, image):
+        hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+        mask = cv2.inRange(hsv, INTERACT_BLUE_RING_HSV_LOWER, INTERACT_BLUE_RING_HSV_UPPER)
+        mask = cv2.morphologyEx(
+            mask,
+            cv2.MORPH_CLOSE,
+            np.ones((3, 3), dtype=np.uint8),
+            iterations=1,
+        )
+        return cv2.bitwise_and(mask, self._blue_ring_circle_mask(mask.shape))
+
+    def _blue_ring_circle_mask(self, shape):
+        """只保留蓝圈圆环区域，忽略气泡尖角方向。"""
+        height, width = shape[:2]
+        yy, xx = np.ogrid[:height, :width]
+        cx = (width - 1) / 2
+        cy = (height - 1) / 2
+        radius = min(width, height) / 2
+        distance = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+        angle = (np.degrees(np.arctan2(yy - cy, xx - cx)) + 360) % 360
+        ring_mask = (
+                (distance >= radius * 0.62)
+                & (distance <= radius * 1.08)
+        )
+        bubble_tail_gap = (
+                ((angle >= 30) & (angle <= 85))
+                | ((angle >= 95) & (angle <= 150))
+        )
+        ring_mask &= ~bubble_tail_gap
+        return np.where(ring_mask, 255, 0).astype(np.uint8)
+
+    def _nursery_greeting_bubble_template_features(self, template_image):
+        """从黑底白气泡模板中拆分动作图标和稳定蓝圈区域。"""
+        if len(template_image.shape) == 3:
+            gray = cv2.cvtColor(template_image, cv2.COLOR_RGB2GRAY)
+        else:
+            gray = template_image
+        _, mask = cv2.threshold(gray, 80, 255, cv2.THRESH_BINARY)
+
+        height, width = mask.shape[:2]
+        if width == height * 2:
+            half_width = width // 2
+            white_mask = mask[:, :half_width].copy()
+            blue_mask = mask[:, half_width:].copy()
+            return self._normalize_icon_mask(white_mask), self._fixed_size_icon_mask(blue_mask)
+
+        mask = self._fixed_size_icon_mask(mask)
+        ring_mask = self._blue_ring_circle_mask(mask.shape)
+        blue_mask = cv2.bitwise_and(mask, ring_mask)
+        icon_mask = cv2.bitwise_and(mask, cv2.bitwise_not(ring_mask))
+        white_mask = self._normalize_icon_mask(icon_mask)
+        return white_mask, blue_mask
 
     def _white_icon_mask(self, image):
         """将动作图标裁剪图转换为白色像素 mask。"""
@@ -1031,6 +1126,17 @@ class IslandDailyInteract(Island):
             iterations=1,
         )
         return mask
+
+    def _fixed_size_icon_mask(self, mask):
+        """将固定外框 mask 缩放到统一尺寸，不重新裁剪中心位置。"""
+        if mask.shape[:2] != (NURSERY_GREETING_ICON_SIZE, NURSERY_GREETING_ICON_SIZE):
+            mask = cv2.resize(
+                mask,
+                (NURSERY_GREETING_ICON_SIZE, NURSERY_GREETING_ICON_SIZE),
+                interpolation=cv2.INTER_AREA,
+            )
+            _, mask = cv2.threshold(mask, 80, 255, cv2.THRESH_BINARY)
+        return mask.astype(np.uint8)
 
     def _normalize_icon_mask(self, mask):
         """将不同大小的动作图标 mask 居中归一化，便于相似度比较。"""
@@ -1083,15 +1189,19 @@ class IslandDailyInteract(Island):
         logger.warning('苗圃打招呼动作列表打开超时')
         return False
 
-    def _select_nursery_greeting_action(self, target_icon):
+    def _select_nursery_greeting_action(self, target_index):
         """在动作列表中匹配目标动作图标并点击对应选项。"""
+        target_label = NURSERY_GREETING_ACTION_TEMPLATE_LABELS[target_index]
         for scroll_index in range(NURSERY_GREETING_ACTION_MAX_SCROLL + 1):
             match_state = 'empty'
             for _ in self.loop(timeout=4, skip_first=False):
-                match_button, match_state = self._match_nursery_greeting_action(target_icon, GREET_NURSERY_ACTION_LIST_AREA)
+                match_button, match_state = self._match_nursery_greeting_action(
+                    target_index,
+                    GREET_NURSERY_ACTION_LIST_AREA,
+                )
                 if match_button is not None:
                     self.device.click(match_button)
-                    logger.info('点击苗圃打招呼动作选项')
+                    logger.info(f'点击苗圃动作选项: {target_label}')
                     return True
                 if match_state == 'empty':
                     continue
@@ -1100,7 +1210,7 @@ class IslandDailyInteract(Island):
             if scroll_index >= NURSERY_GREETING_ACTION_MAX_SCROLL:
                 break
 
-            logger.info(f'当前动作列表未命中目标动作，向上滑动列表: {scroll_index + 1}')
+            logger.info(f'当前动作列表未命中{target_label}动作，向上滑动列表: {scroll_index + 1}')
             self.device.swipe_vector(
                 vector=(0, -240),
                 box=GREET_NURSERY_ACTION_OPTION_SCROLL.button,
@@ -1109,37 +1219,35 @@ class IslandDailyInteract(Island):
             self.device.sleep(0.3)
             self.device.long_click(GREET_NURSERY_ACTION_SCROLL_SAFE_AREA)
 
-        logger.warning('苗圃打招呼动作列表未匹配到目标动作')
+        logger.warning(f'苗圃动作列表未匹配到目标动作: {target_label}')
         return False
 
-    def _match_nursery_greeting_action(self, target_icon, list_area):
-        """在当前动作列表可见区域内寻找最相似的动作图标。"""
+    def _match_nursery_greeting_action(self, target_index, list_area):
+        """在当前动作列表可见区域内寻找指定静态动作模板。"""
         candidates = self._detect_nursery_greeting_action_candidates(list_area)
         if not candidates:
             return None, 'empty'
 
-        target_symbol = self._nursery_greeting_symbol_mask(target_icon)
-        target_symbol_pixels = cv2.countNonZero(target_symbol)
-        use_symbol = 20 <= target_symbol_pixels <= 220
+        target_mask = self._nursery_greeting_action_template_masks[target_index]
+        target_detail = self._nursery_greeting_action_template_detail_masks[target_index]
         scored = []
-        for center, icon_mask, symbol_mask in candidates:
-            full_score = self._icon_mask_similarity(target_icon, icon_mask)
-            if use_symbol:
-                symbol_score = self._icon_mask_similarity(target_symbol, symbol_mask)
-                score = full_score * 0.55 + symbol_score * 0.45
-            else:
-                symbol_score = 0
-                score = full_score
-            scored.append((score, center, full_score, symbol_score))
+        for center, icon_mask in candidates:
+            score, full_score, detail_score = self._nursery_greeting_action_template_score(
+                target_mask=target_mask,
+                target_detail=target_detail,
+                candidate_mask=icon_mask,
+            )
+            scored.append((score, center, full_score, detail_score))
         scored.sort(key=lambda item: item[0], reverse=True)
 
-        best_score, best_center, best_full, best_symbol = scored[0]
+        best_score, best_center, best_full, best_detail = scored[0]
         second_score = scored[1][0] if len(scored) > 1 else 0
+        target_label = NURSERY_GREETING_ACTION_TEMPLATE_LABELS[target_index]
         logger.attr(
             'NurseryGreetingActionMatch',
             (
-                f'best={best_score:.3f}, second={second_score:.3f}, '
-                f'full={best_full:.3f}, symbol={best_symbol:.3f}, count={len(scored)}'
+                f'target={target_label}, best={best_score:.3f}, second={second_score:.3f}, '
+                f'full={best_full:.3f}, detail={best_detail:.3f}, count={len(scored)}'
             ),
         )
         if (
@@ -1155,6 +1263,39 @@ class IslandDailyInteract(Island):
             )
             return button, 'matched'
         return None, 'ambiguous'
+
+    def _classify_nursery_greeting_action_icon(self, target_icon):
+        """将气泡动作图标归类到 24 个气泡动作模板之一。"""
+        target_white, target_blue = target_icon
+        scored = []
+        for index, template_features in enumerate(self._nursery_greeting_bubble_action_template_features):
+            score, white_score, detail_score, blue_score = self._nursery_greeting_bubble_template_score(
+                target_white=target_white,
+                target_blue=target_blue,
+                template_white=template_features[0],
+                template_detail=self._nursery_greeting_bubble_action_template_detail_masks[index],
+                template_blue=template_features[1],
+            )
+            scored.append((score, index, white_score, detail_score, blue_score))
+        scored.sort(key=lambda item: item[0], reverse=True)
+
+        best_score, best_index, best_white, best_detail, best_blue = scored[0]
+        second_score = scored[1][0] if len(scored) > 1 else 0
+        best_label = NURSERY_GREETING_ACTION_TEMPLATE_LABELS[best_index]
+        logger.attr(
+            'NurseryGreetingActionClassify',
+            (
+                f'target={best_label}, best={best_score:.3f}, second={second_score:.3f}, '
+                f'white={best_white:.3f}, detail={best_detail:.3f}, blue={best_blue:.3f}'
+            ),
+        )
+        if (
+                best_score >= NURSERY_GREETING_BUBBLE_CLASSIFY_THRESHOLD
+                and best_score - second_score >= NURSERY_GREETING_BUBBLE_CLASSIFY_MARGIN
+                and best_blue >= NURSERY_GREETING_BUBBLE_BLUE_SCORE_MIN
+        ):
+            return best_index
+        return None
 
     def _detect_nursery_greeting_action_candidates(self, list_area):
         """检测动作列表当前可见的白色动作图标候选。"""
@@ -1192,37 +1333,238 @@ class IslandDailyInteract(Island):
 
             icon_mask = raw_white_mask[y1:y2, x1:x2]
             icon_mask = self._normalize_icon_mask(icon_mask)
-            symbol_mask = self._nursery_greeting_symbol_mask(icon_mask)
             center = (
                 button_area[0] + center_x,
                 button_area[1] + center_y,
             )
-            candidates.append((center, icon_mask, symbol_mask))
+            candidates.append((center, icon_mask))
 
         candidates.sort(key=lambda item: (item[0][1], item[0][0]))
         return candidates
 
-    def _nursery_greeting_symbol_mask(self, icon_mask):
-        """提取动作图标中区别于小人主体的小符号、手势和道具。"""
-        count, labels, stats, centroids = cv2.connectedComponentsWithStats(icon_mask, connectivity=8)
-        symbol_mask = np.zeros_like(icon_mask)
-        if count <= 1:
-            return symbol_mask
+    @cached_property
+    def _nursery_greeting_bubble_action_templates(self):
+        from module.island_daily_interact.assets import (
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_AFRAID,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_STRETCH,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_MEDITATE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_STOMP,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_HERO,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_BOW_SHY,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_FLEX,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_VICTORY_JUMP,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SCRATCH_HEAD,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_WIPE_SWEAT,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_YAWN,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_REFUSE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_BLOW_KISS,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SHOOT_BALL,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SELF_PRAISE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_FIST_SALUTE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_AKIMBO,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_DANCE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_PRAISE_SUN,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_GREETING,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_FAREWELL,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_NOD,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SHAKE_HEAD,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_CLAP,
+        )
 
-        largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-        height, _ = icon_mask.shape
-        for index in range(1, count):
-            if index == largest:
-                continue
+        return (
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_AFRAID,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_STRETCH,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_MEDITATE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_STOMP,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_HERO,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_BOW_SHY,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_FLEX,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_VICTORY_JUMP,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SCRATCH_HEAD,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_WIPE_SWEAT,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_YAWN,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_REFUSE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_BLOW_KISS,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SHOOT_BALL,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SELF_PRAISE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_FIST_SALUTE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_AKIMBO,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_DANCE,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_PRAISE_SUN,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_GREETING,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_FAREWELL,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_NOD,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_SHAKE_HEAD,
+            TEMPLATE_GREET_NURSERY_BUBBLE_ACTION_CLAP,
+        )
 
-            area = stats[index, cv2.CC_STAT_AREA]
-            if area < 6 or area > 350:
-                continue
-            if centroids[index][1] > height * 0.72:
-                continue
+    @cached_property
+    def _nursery_greeting_bubble_action_template_features(self):
+        features = []
+        for index, template in enumerate(self._nursery_greeting_bubble_action_templates):
+            white_mask, blue_mask = self._nursery_greeting_bubble_template_features(template.image)
+            if cv2.countNonZero(white_mask) < 20:
+                logger.warning(f'苗圃气泡动作模板白色像素过少: {NURSERY_GREETING_ACTION_TEMPLATE_LABELS[index]}')
+            if cv2.countNonZero(blue_mask) < 20:
+                logger.warning(f'苗圃气泡动作模板蓝圈像素过少: {NURSERY_GREETING_ACTION_TEMPLATE_LABELS[index]}')
+            features.append((white_mask, blue_mask))
+        return tuple(features)
 
-            symbol_mask[labels == index] = 255
-        return symbol_mask
+    @cached_property
+    def _nursery_greeting_bubble_action_detail_keep_mask(self):
+        templates = np.stack([
+            features[0] > 0
+            for features in self._nursery_greeting_bubble_action_template_features
+        ])
+        frequency = templates.mean(axis=0)
+        return frequency <= NURSERY_GREETING_ACTION_TEMPLATE_COMMON_RATIO
+
+    @cached_property
+    def _nursery_greeting_bubble_action_template_detail_masks(self):
+        return tuple(
+            self._nursery_greeting_bubble_action_detail_mask(features[0])
+            for features in self._nursery_greeting_bubble_action_template_features
+        )
+
+    def _nursery_greeting_bubble_action_detail_mask(self, icon_mask):
+        detail = (icon_mask > 0) & self._nursery_greeting_bubble_action_detail_keep_mask
+        return np.where(detail, 255, 0).astype(np.uint8)
+
+    def _nursery_greeting_bubble_template_score(
+            self,
+            target_white,
+            target_blue,
+            template_white,
+            template_detail,
+            template_blue,
+    ):
+        white_full = self._icon_mask_similarity(template_white, target_white)
+        target_detail = self._nursery_greeting_bubble_action_detail_mask(target_white)
+        if (
+                cv2.countNonZero(template_detail) < NURSERY_GREETING_ACTION_TEMPLATE_MIN_DETAIL_PIXELS
+                or cv2.countNonZero(target_detail) < NURSERY_GREETING_ACTION_TEMPLATE_MIN_DETAIL_PIXELS
+        ):
+            white_score = white_full
+            detail_score = 0
+        else:
+            detail_score = self._icon_mask_similarity(template_detail, target_detail)
+            white_score = (
+                white_full * (1 - NURSERY_GREETING_ACTION_TEMPLATE_DETAIL_WEIGHT)
+                + detail_score * NURSERY_GREETING_ACTION_TEMPLATE_DETAIL_WEIGHT
+            )
+
+        blue_score = self._icon_mask_similarity(template_blue, target_blue)
+        score = (
+            white_score * (1 - NURSERY_GREETING_BUBBLE_BLUE_WEIGHT)
+            + blue_score * NURSERY_GREETING_BUBBLE_BLUE_WEIGHT
+        )
+        return score, white_score, detail_score, blue_score
+
+    @cached_property
+    def _nursery_greeting_action_templates(self):
+        from module.island_daily_interact.assets import (
+            TEMPLATE_GREET_NURSERY_ACTION_AFRAID,
+            TEMPLATE_GREET_NURSERY_ACTION_STRETCH,
+            TEMPLATE_GREET_NURSERY_ACTION_MEDITATE,
+            TEMPLATE_GREET_NURSERY_ACTION_STOMP,
+            TEMPLATE_GREET_NURSERY_ACTION_HERO,
+            TEMPLATE_GREET_NURSERY_ACTION_BOW_SHY,
+            TEMPLATE_GREET_NURSERY_ACTION_FLEX,
+            TEMPLATE_GREET_NURSERY_ACTION_VICTORY_JUMP,
+            TEMPLATE_GREET_NURSERY_ACTION_SCRATCH_HEAD,
+            TEMPLATE_GREET_NURSERY_ACTION_WIPE_SWEAT,
+            TEMPLATE_GREET_NURSERY_ACTION_YAWN,
+            TEMPLATE_GREET_NURSERY_ACTION_REFUSE,
+            TEMPLATE_GREET_NURSERY_ACTION_BLOW_KISS,
+            TEMPLATE_GREET_NURSERY_ACTION_SHOOT_BALL,
+            TEMPLATE_GREET_NURSERY_ACTION_SELF_PRAISE,
+            TEMPLATE_GREET_NURSERY_ACTION_FIST_SALUTE,
+            TEMPLATE_GREET_NURSERY_ACTION_AKIMBO,
+            TEMPLATE_GREET_NURSERY_ACTION_DANCE,
+            TEMPLATE_GREET_NURSERY_ACTION_PRAISE_SUN,
+            TEMPLATE_GREET_NURSERY_ACTION_GREETING,
+            TEMPLATE_GREET_NURSERY_ACTION_FAREWELL,
+            TEMPLATE_GREET_NURSERY_ACTION_NOD,
+            TEMPLATE_GREET_NURSERY_ACTION_SHAKE_HEAD,
+            TEMPLATE_GREET_NURSERY_ACTION_CLAP,
+        )
+
+        return (
+            TEMPLATE_GREET_NURSERY_ACTION_AFRAID,
+            TEMPLATE_GREET_NURSERY_ACTION_STRETCH,
+            TEMPLATE_GREET_NURSERY_ACTION_MEDITATE,
+            TEMPLATE_GREET_NURSERY_ACTION_STOMP,
+            TEMPLATE_GREET_NURSERY_ACTION_HERO,
+            TEMPLATE_GREET_NURSERY_ACTION_BOW_SHY,
+            TEMPLATE_GREET_NURSERY_ACTION_FLEX,
+            TEMPLATE_GREET_NURSERY_ACTION_VICTORY_JUMP,
+            TEMPLATE_GREET_NURSERY_ACTION_SCRATCH_HEAD,
+            TEMPLATE_GREET_NURSERY_ACTION_WIPE_SWEAT,
+            TEMPLATE_GREET_NURSERY_ACTION_YAWN,
+            TEMPLATE_GREET_NURSERY_ACTION_REFUSE,
+            TEMPLATE_GREET_NURSERY_ACTION_BLOW_KISS,
+            TEMPLATE_GREET_NURSERY_ACTION_SHOOT_BALL,
+            TEMPLATE_GREET_NURSERY_ACTION_SELF_PRAISE,
+            TEMPLATE_GREET_NURSERY_ACTION_FIST_SALUTE,
+            TEMPLATE_GREET_NURSERY_ACTION_AKIMBO,
+            TEMPLATE_GREET_NURSERY_ACTION_DANCE,
+            TEMPLATE_GREET_NURSERY_ACTION_PRAISE_SUN,
+            TEMPLATE_GREET_NURSERY_ACTION_GREETING,
+            TEMPLATE_GREET_NURSERY_ACTION_FAREWELL,
+            TEMPLATE_GREET_NURSERY_ACTION_NOD,
+            TEMPLATE_GREET_NURSERY_ACTION_SHAKE_HEAD,
+            TEMPLATE_GREET_NURSERY_ACTION_CLAP,
+        )
+
+    @cached_property
+    def _nursery_greeting_action_template_masks(self):
+        """读取 24 个右侧动作面板模板，并转换为归一化动作 mask。"""
+        masks = []
+        for index, template in enumerate(self._nursery_greeting_action_templates):
+            image = template.image
+            if len(image.shape) == 3:
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            _, mask = cv2.threshold(image, 80, 255, cv2.THRESH_BINARY)
+            mask = mask.astype(np.uint8)
+            if mask.shape[:2] != (NURSERY_GREETING_ICON_SIZE, NURSERY_GREETING_ICON_SIZE):
+                logger.warning(f'苗圃动作模板尺寸异常: {NURSERY_GREETING_ACTION_TEMPLATE_LABELS[index]}')
+                mask = self._normalize_icon_mask(mask)
+            masks.append(mask)
+        return tuple(masks)
+
+    @cached_property
+    def _nursery_greeting_action_template_detail_keep_mask(self):
+        """去掉 24 个动作中反复出现的小人主体公共像素，只保留区分动作的细节区域。"""
+        templates = np.stack([mask > 0 for mask in self._nursery_greeting_action_template_masks])
+        frequency = templates.mean(axis=0)
+        return frequency <= NURSERY_GREETING_ACTION_TEMPLATE_COMMON_RATIO
+
+    @cached_property
+    def _nursery_greeting_action_template_detail_masks(self):
+        return tuple(
+            self._nursery_greeting_action_detail_mask(mask)
+            for mask in self._nursery_greeting_action_template_masks
+        )
+
+    def _nursery_greeting_action_detail_mask(self, icon_mask):
+        detail = (icon_mask > 0) & self._nursery_greeting_action_template_detail_keep_mask
+        return np.where(detail, 255, 0).astype(np.uint8)
+
+    def _nursery_greeting_action_template_score(self, target_mask, target_detail, candidate_mask):
+        full_score = self._icon_mask_similarity(target_mask, candidate_mask)
+        candidate_detail = self._nursery_greeting_action_detail_mask(candidate_mask)
+        if (
+                cv2.countNonZero(target_detail) < NURSERY_GREETING_ACTION_TEMPLATE_MIN_DETAIL_PIXELS
+                or cv2.countNonZero(candidate_detail) < NURSERY_GREETING_ACTION_TEMPLATE_MIN_DETAIL_PIXELS
+        ):
+            return full_score, full_score, 0
+
+        detail_score = self._icon_mask_similarity(target_detail, candidate_detail)
+        score = (
+            full_score * (1 - NURSERY_GREETING_ACTION_TEMPLATE_DETAIL_WEIGHT)
+            + detail_score * NURSERY_GREETING_ACTION_TEMPLATE_DETAIL_WEIGHT
+        )
+        return score, full_score, detail_score
 
     def _icon_mask_similarity(self, target_icon, candidate_icon):
         """计算两个白色动作图标 mask 的 Dice 相似度。"""
