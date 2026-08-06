@@ -4,7 +4,9 @@ import os
 import re
 import shutil
 import subprocess
+import time
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Generic, TypeVar
 
 import requests
@@ -46,32 +48,44 @@ class PrintLogger:
 class GitOverCdnClient:
     logger = PrintLogger()
 
-    def __init__(self, url, folder, source='origin', branch='master', git='git'):
+    def __init__(self, url, folder, source='origin', branch='master', git='git', fallback_urls=None):
         """初始化 Git over CDN 客户端。
 
         Args:
-            url (str | list[str]): CDN 服务地址，如 'http://127.0.0.1:22251/pack/...'。
+            url (str | list[str]): 优先 CDN 服务地址，如 'http://127.0.0.1:22251/pack/...'。
             folder: 本地仓库路径，如 'D:/AzurLaneAutoScript'。
             source: 远程源名称，默认 'origin'。
             branch: 分支名称，默认 'master'。
             git: git 可执行文件路径。
+            fallback_urls (str | list[str] | None): 所有优先地址不可用时使用的回退地址。
         """
-        if isinstance(url, str):
-            self.urls = [url.strip('/')]
-        else:
-            self.urls = [u.strip('/') for u in url]
-        self.url = self.urls[0]
+        self.urls = self._normalize_urls(url)
+        self.fallback_urls = self._normalize_urls(fallback_urls)
+        all_urls = self.urls + self.fallback_urls
+        if not all_urls:
+            raise ValueError('至少需要一个 CDN 地址')
+        self.url = all_urls[0]
         self.folder = folder.replace('\\', '/')
         self.source = source
         self.branch = branch
         self.git = git
 
+    @staticmethod
+    def _normalize_urls(urls):
+        if urls is None:
+            return []
+        if isinstance(urls, str):
+            return [urls.strip('/')]
+        return [url.strip('/') for url in urls]
+
     def filepath(self, path):
         path = os.path.join(self.folder, '.git', path)
         return os.path.abspath(path).replace('\\', '/')
 
-    def urlpath(self, path):
-        return f'{self.url}{path}'
+    def urlpath(self, path, base=None):
+        if base is None:
+            base = self.url
+        return f'{base}{path}'
 
     @cached_property
     def current_commit(self) -> str:
@@ -95,17 +109,89 @@ class GitOverCdnClient:
                 self.logger.error(f'Failed to get local commit: {e}')
         return ''
 
-    @property
-    def session(self):
+    @staticmethod
+    def _create_session(max_retries=3):
         session = requests.Session()
         session.trust_env = False
-        session.mount('http://', HTTPAdapter(max_retries=3))
-        session.mount('https://', HTTPAdapter(max_retries=3))
+        session.mount('http://', HTTPAdapter(max_retries=max_retries))
+        session.mount('https://', HTTPAdapter(max_retries=max_retries))
         return session
 
     @cached_property
+    def session(self):
+        return self._create_session()
+
+    def probe_url(self, url_base, timeout=3):
+        """在给定总时限内探测候选地址的可用性与延迟。"""
+        url = self.urlpath('/latest.json', base=url_base)
+        started = time.perf_counter()
+        session = self._create_session(max_retries=0)
+        try:
+            with session.get(url, timeout=timeout, allow_redirects=False) as resp:
+                elapsed = time.perf_counter() - started
+                if elapsed > timeout:
+                    self.logger.info(f'Probe GET {url} exceeded {timeout}s')
+                    return None
+                if resp.status_code != 200:
+                    self.logger.info(f'Probe GET {url} failed, status={resp.status_code}')
+                    return None
+                try:
+                    commit = json.loads(resp.text)['commit']
+                except (json.JSONDecodeError, KeyError, TypeError):
+                    self.logger.info(f'Probe GET {url} failed, invalid latest.json')
+                    return None
+                if not isinstance(commit, str) or not re.fullmatch(r'[0-9a-f]{40}', commit):
+                    self.logger.info(f'Probe GET {url} failed, invalid commit')
+                    return None
+                self.logger.info(f'Probe GET {url} -> {elapsed:.3f}s')
+                return elapsed
+        except Exception as e:
+            self.logger.info(f'Probe GET {url} failed: {e}')
+        finally:
+            session.close()
+        return None
+
+    def _probe_urls(self, urls, timeout):
+        """并发测速并返回在时限内可用的地址，按延迟排序。"""
+        scored = []
+        if not urls:
+            return scored
+
+        with ThreadPoolExecutor(max_workers=len(urls), thread_name_prefix='cdn-probe') as executor:
+            futures = {
+                executor.submit(self.probe_url, url_base, timeout): (index, url_base)
+                for index, url_base in enumerate(urls)
+            }
+            for future in as_completed(futures):
+                index, url_base = futures[future]
+                try:
+                    latency = future.result()
+                except Exception as e:
+                    self.logger.info(f'Probe {url_base} failed: {e}')
+                    continue
+                if latency is not None and latency <= timeout:
+                    scored.append((latency, index, url_base))
+
+        scored.sort(key=lambda item: (item[0], item[1]))
+        return [url_base for _, _, url_base in scored]
+
+    @cached_property
+    def preferred_urls(self):
+        ordered = self._probe_urls(self.urls, timeout=5)
+        if ordered:
+            self.logger.attr('PreferredUrl', ordered[0])
+            return ordered
+
+        if self.fallback_urls:
+            self.logger.warning('No primary CDN url passed probe within 5s, using fallback urls')
+            return self.fallback_urls
+
+        self.logger.warning('No CDN url passed probe within 5s, fall back to configured order')
+        return self.urls
+
+    @cached_property
     def latest_commit(self) -> str:
-        for url_base in self.urls:
+        for url_base in self.preferred_urls:
             self.url = url_base
             url = self.urlpath('/latest.json')
             self.logger.info(f'Fetch url: {url}')
@@ -128,22 +214,29 @@ class GitOverCdnClient:
             else:
                 self.logger.error(f'Failed to get remote commit, status={resp.status_code}, text={resp.text}')
 
-        self.url = self.urls[0]
+        self.url = (self.urls + self.fallback_urls)[0]
         return ''
 
     def download_pack(self):
-        try:
-            url = self.urlpath(f'/{self.latest_commit}/{self.current_commit}.zip')
+        latest = self.latest_commit
+        current = self.current_commit
+        for url_base in self.preferred_urls:
+            self.url = url_base
+            url = self.urlpath(f'/{latest}/{current}.zip')
             self.logger.info(f'Fetch url: {url}')
-            resp = self.session.get(url, timeout=20)
-        except Exception as e:
-            self.logger.error(f'Failed to download pack: {e}')
-            return False
+            try:
+                resp = self.session.get(url, timeout=20)
+            except Exception as e:
+                self.logger.error(f'Failed to download pack: {e}')
+                continue
 
-        if resp.status_code == 200:
+            if resp.status_code != 200:
+                self.logger.error(f'Failed to download pack, status={resp.status_code}, text={resp.text}')
+                continue
+
             try:
                 zipped = zipfile.ZipFile(io.BytesIO(resp.content))
-                for file in [f'pack-{self.latest_commit}.pack', f'pack-{self.latest_commit}.idx']:
+                for file in [f'pack-{latest}.pack', f'pack-{latest}.idx']:
                     self.logger.info(f'Unzip {file}')
                     member = zipped.getinfo(file)
                     tmp = self.filepath(f'./objects/pack/{file}.tmp')
@@ -155,20 +248,13 @@ class GitOverCdnClient:
             except zipfile.BadZipFile as e:
                 # 文件不是有效的 zip 文件
                 self.logger.error(e)
-                return False
             except KeyError as e:
                 # 归档中不存在该文件
                 self.logger.error(e)
-                return False
             except Exception as e:
                 self.logger.error(e)
-                return False
-        elif resp.status_code == 404:
-            self.logger.error(f'Failed to download pack, status={resp.status_code}, no such pack files provided')
-            return False
-        else:
-            self.logger.error(f'Failed to download pack, status={resp.status_code}, text={resp.text}')
-            return False
+
+        return False
 
     def update_refs(self):
         file = self.filepath(f'./refs/remotes/{self.source}/{self.branch}')

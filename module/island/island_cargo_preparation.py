@@ -1,4 +1,11 @@
-from datetime import datetime, timedelta
+"""岛屿货物筹备与运输模块。
+
+处理岛屿货物筹备界面的检测、刷新与运输启动流程。
+包含运输状态识别（待处理/运行中）、运输时间 OCR、物品满意度模板匹配等核心功能。
+"""
+from datetime import timedelta
+
+from module.config.time_source import now as current_time
 
 import numpy as np
 from cached_property import cached_property
@@ -34,7 +41,7 @@ from module.island.ui import IslandUI
 from module.logger import logger
 from module.map.map_grids import SelectedGrids
 from module.ocr.ocr import Duration
-from module.ui.page import page_island_phone
+from module.ui.page import page_island, page_island_phone
 from module.ui_white.assets import POPUP_CANCEL_WHITE
 
 
@@ -54,7 +61,7 @@ class CargoPreparationTransport:
         self.parse_transport(main)
         if not self.valid:
             self.start = False
-        self.create_time = datetime.now()
+        self.create_time = current_time()
 
     def parse_transport(self, main):
         offset = (-20, -20, 20, 20)
@@ -141,7 +148,7 @@ class CargoPreparationTransport:
             self.status = 'running'
             self.start = False
             self.refresh = False
-            self.create_time = datetime.now()
+            self.create_time = current_time()
 
     @property
     def finish_time(self):
@@ -236,8 +243,9 @@ class IslandCargoPreparation(IslandUI):
         return blacklist
 
     def run(self):
-        logger.hr('Island Cargo Preparation Run', level=1)
+        logger.hr('岛屿货物准备运行', level=1)
 
+        self.ui_ensure(page_island)
         self.ui_goto(page_island_phone, get_ship=False)
         self.island_transport_enter()
 
@@ -277,9 +285,9 @@ class IslandCargoPreparation(IslandUI):
             if self.transport_start(comm):
                 comm.convert_to_running()
 
-        logger.hr('Cargo preparation status', level=2)
+        logger.hr('货物准备状态', level=2)
         for comm in commissions:
-            logger.attr('Cargo Preparation', comm)
+            logger.attr('货运委托', comm)
 
         return commissions
 
@@ -290,7 +298,7 @@ class IslandCargoPreparation(IslandUI):
         更换页面默认选中第一个可替换委托，因此只需要确认列表不为空，
         再点击确定按钮。
         """
-        logger.info('Cargo preparation replace commission')
+        logger.info('货物准备替换委托')
         self.interval_clear([TRANSPORT_REFRESH, CARGO_PREPARATION_REPLACE_CONFIRM])
 
         if not self._open_replace_page(comm):
@@ -304,7 +312,7 @@ class IslandCargoPreparation(IslandUI):
                 continue
             return False
 
-        logger.warning('更换列表刷新后仍为空，返回货运界面')
+        logger.warning('[岛屿-货物筹备] 更换列表刷新后仍为空，返回货运界面')
         self._back_to_transport()
         return False
 
@@ -324,11 +332,11 @@ class IslandCargoPreparation(IslandUI):
 
     def _transport_detect(self):
         """从当前截图中检测所有货运委托。"""
-        logger.hr('Transport Commission detect')
+        logger.hr('运输委托检测')
         commissions = []
         for index in range(3):
             comm = CargoPreparationTransport(main=self, index=index, blacklist=self.blacklist)
-            logger.attr('Transport Commission', comm)
+            logger.attr('运输委托', comm)
             for item in comm.items:
                 logger.attr(item.button, item)
             commissions.append(comm)
@@ -345,19 +353,19 @@ class IslandCargoPreparation(IslandUI):
 
             commissions = self._transport_detect()
             if not commissions.count:
-                logger.warning('No commission detected, retry commission detect')
+                logger.warning('[岛屿-货运] 未检测到委托，重试检测')
                 continue
             if commissions.select(valid=False).count:
-                logger.warning('Found 1 invalid commission at least, retry commission detect')
+                logger.warning('[岛屿-货运] 检测到无效委托，重试检测')
                 continue
             return commissions.select(valid=True)
 
-        logger.info('trials of transport commission detect exhausted, stop')
+        logger.info('[岛屿-货运] 委托检测重试耗尽，停止')
         return commissions.select(valid=True)
 
     def transport_receive(self):
         """领取运输页面上所有已完成的货运委托。"""
-        logger.hr('Island Transport', level=2)
+        logger.hr('岛屿运输', level=2)
         self.device.click_record_clear()
         self.interval_clear([GET_ITEMS_ISLAND, TRANSPORT_RECEIVE, POPUP_CANCEL_WHITE])
         success = True
@@ -405,7 +413,7 @@ class IslandCargoPreparation(IslandUI):
 
     def transport_start(self, comm):
         """启动指定的货运委托。"""
-        logger.info('Transport commission start')
+        logger.info('[岛屿-货运] 运输委托开始')
         self.interval_clear([GET_ITEMS_ISLAND, TRANSPORT_START, POPUP_CANCEL_WHITE])
         success = True
         confirm_timer = Timer(1, count=2).start()
@@ -448,7 +456,7 @@ class IslandCargoPreparation(IslandUI):
             if self.ui_additional():
                 continue
 
-        logger.warning('进入更换委托页面超时')
+        logger.warning('[岛屿-货物筹备] 进入更换委托页面超时')
         return False
 
     def _confirm_first_replacement(self):
@@ -463,24 +471,24 @@ class IslandCargoPreparation(IslandUI):
                 continue
 
             if self.appear(EMPTY_LIST_CHECK, offset=(20, 20)):
-                logger.info('更换委托列表为空')
+                logger.info('[岛屿-货物筹备] 更换委托列表为空')
                 if self.appear_then_click(REFRESH_BUTTON_BLUE, offset=(20, 20), interval=2):
-                    logger.info('刷新更换委托列表')
+                    logger.info('[岛屿-货物筹备] 刷新更换委托列表')
                     self._wait_replace_refresh()
                     return 'empty_refreshed'
                 if self.appear(REFRESH_BUTTON_GREY, offset=(20, 20)):
-                    logger.info('更换委托列表为空且刷新不可用')
+                    logger.info('[岛屿-货物筹备] 更换委托列表为空且刷新不可用')
                     self._back_to_transport()
                     return 'empty_unavailable'
                 continue
 
             if self.appear_then_click(CARGO_PREPARATION_REPLACE_CONFIRM, offset=(20, 20), interval=2):
-                logger.info('确认更换默认选中的货运委托')
+                logger.info('[岛屿-货物筹备] 确认更换默认选中的货运委托')
                 if self._wait_transport_after_replace():
                     return 'success'
                 return 'failed'
 
-        logger.warning('确认更换委托超时')
+        logger.warning('[岛屿-货物筹备] 确认更换委托超时')
         self._back_to_transport()
         return 'failed'
 
@@ -504,7 +512,7 @@ class IslandCargoPreparation(IslandUI):
             else:
                 confirm_timer.reset()
 
-        logger.warning('更换委托后未回到货运界面')
+        logger.warning('[岛屿-货物筹备] 更换委托后未回到货运界面')
         self._back_to_transport()
         return False
 
@@ -523,27 +531,27 @@ class IslandCargoPreparation(IslandUI):
         """根据委托状态设置下次运行时间。"""
         if self._all_slots_inactive(commissions):
             target = self._next_grey_retry_time()
-            logger.info(f'所有货运栏位暂无可操作委托，下次检测: {target}')
+            logger.info(f'[岛屿-货物筹备] 所有货运栏位暂无可操作委托，下次检测: {target}')
             self.config.task_delay(target=target)
             return
 
         future_finish = [
             finish for finish in commissions.get('finish_time') or []
-            if finish is not None and finish > datetime.now()
+            if finish is not None and finish > current_time()
         ]
         if future_finish:
             target = max(future_finish)
-            logger.info(f'下次货物筹备检测（最晚完成）: {target}')
+            logger.info(f'[岛屿-货物筹备] 下次货物筹备检测（最晚完成）: {target}')
             self.config.task_delay(target=target)
             return
 
         if commissions.count and commissions.select(status='locked').count == commissions.count:
             target = self._next_grey_retry_time()
-            logger.info(f'所有货运栏位不可委托，下次检测: {target}')
+            logger.info(f'[岛屿-货物筹备] 所有货运栏位不可委托，下次检测: {target}')
             self.config.task_delay(target=target)
             return
 
-        logger.info('暂无可确认完成时间，2 小时后重新检测货物筹备')
+        logger.info('[岛屿-货物筹备] 暂无可确认完成时间，2 小时后重新检测货物筹备')
         self.config.task_delay(minute=self.DEFAULT_DELAY.total_seconds() / 60)
 
     def _all_slots_inactive(self, commissions):
@@ -556,7 +564,7 @@ class IslandCargoPreparation(IslandUI):
         )
 
     def _next_grey_retry_time(self):
-        now = datetime.now().replace(microsecond=0)
+        now = current_time().replace(microsecond=0)
         today_morning = now.replace(hour=self.EARLY_MORNING_DELAY_HOUR, minute=0, second=0)
         today_evening = now.replace(hour=self.EVENING_DELAY_HOUR, minute=0, second=0)
         tomorrow_morning = (now + timedelta(days=1)).replace(
@@ -569,7 +577,7 @@ class IslandCargoPreparation(IslandUI):
         return tomorrow_morning
 
     def _back_to_island_phone(self):
-        logger.info('返回岛屿手机页面')
+        logger.info('[岛屿-货物筹备] 返回岛屿手机页面')
         for _ in self.loop():
             if self.ui_page_appear(page_island_phone):
                 break

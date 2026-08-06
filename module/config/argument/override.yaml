@@ -49,6 +49,8 @@ GemsFarming:
     Fleet1Control: prevent_red_face
     Fleet1Recover: not_in_dormitory
     Fleet1Oath: false
+    Fleet2Value: 119
+    Fleet2Record: 2020-01-01 00:00:00
     Fleet2Control: prevent_red_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
@@ -344,9 +346,9 @@ Coalition:
     UseAutoSearch: false
     Use2xBook: false
     AmbushEvade: true
-#  Coalition:
-#    Mode:
-#      option: [ easy, normal, hard, ex ]
+  Coalition:
+    Mode:
+      option: [ easy, normal, hard, ex ]
   StopCondition:
     MapAchievement: non_stop
     StageIncrease: false
@@ -358,6 +360,30 @@ Coalition:
     Fleet2Control: prevent_yellow_face
     Fleet2Recover: not_in_dormitory
     Fleet2Oath: false
+
+CoalitionScuttle:
+  Scheduler:
+    SuccessInterval: 30
+    FailureInterval: 30
+    ServerUpdate: 00:00
+  Campaign:
+    Name: dynamic
+    Event:
+      type: state
+    Mode: normal
+    UseClearMode: true
+    UseFleetLock: true
+    UseAutoSearch: false
+    Use2xBook: false
+    AmbushEvade: true
+  Coalition:
+    Mode:
+      option: [ easy, normal, hard, ex, sp ]
+  StopCondition:
+    MapAchievement: non_stop
+    StageIncrease: false
+    GetNewShip: false
+    ReachLevel: 0
 
 CoalitionSp:
   Scheduler:
@@ -451,12 +477,12 @@ Guild:
   Scheduler:
     SuccessInterval: 30
     FailureInterval: 30
-    ServerUpdate: 00:00, 06:00, 12:00, 18:00, 21:00
+    ServerUpdate: 00:00, 06:00, 12:00, 18:00
 Reward:
   Scheduler:
     SuccessInterval: 120-240
     FailureInterval: 120-240
-    ServerUpdate: 00:00
+    ServerUpdate: 00:00, 06:00, 12:00, 18:00
 ShopFrequent:
   Scheduler:
     SuccessInterval: 30
@@ -580,14 +606,9 @@ OpsiHazard1Leveling:
     Submarine: false
 OpsiScheduling:
   Scheduler:
-    NextRun:
-      display: hide
-    SuccessInterval:
-      display: hide
-    FailureInterval:
-      display: hide
-    ServerUpdate:
-      display: hide
+    SuccessInterval: 30
+    FailureInterval: 30
+    ServerUpdate: 00:00
 
 # ==================== Tool ====================
 

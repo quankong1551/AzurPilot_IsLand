@@ -1,3 +1,31 @@
+"""配置系统更新器。
+
+配置系统的核心引擎，负责：
+- 读取 YAML 配置定义文件（task.yaml、argument.yaml、override.yaml、default.yaml）
+- 生成 Python 配置类（config_generated.py）
+- 生成参数定义文件（args.json、menu.json）
+- 生成国际化文件（i18n/*.json）
+- 生成配置模板（template.json）
+- 处理配置版本迁移和重定向
+- 管理活动/关卡数据的更新
+
+配置生成管道：
+    task.yaml + argument.yaml + override.yaml + default.yaml + gui.yaml
+    → args.json（合并后的完整参数定义）
+    → menu.json（菜单结构）
+    → config_generated.py（Python 配置类）
+    → template.json（配置模板）
+    → i18n/*.json（五种语言翻译文件）
+
+通过命令行调用：
+    uv run -m module.config.config_updater
+
+主要类：
+- ConfigUpdater: 配置更新和生成的基类
+- Event: 活动数据解析类
+- CampaignEvent: 战役活动配置管理
+"""
+
 import re
 import typing as t
 from copy import deepcopy
@@ -9,9 +37,11 @@ from module.base.timer import timer
 from module.config.deep import deep_default, deep_get, deep_iter, deep_set
 from module.config.env import IS_ON_PHONE_CLOUD
 from module.config.server import VALID_CHANNEL_PACKAGE, VALID_PACKAGE, VALID_SERVER_LIST, to_package, to_server
+from module.config.task_priority import get_scheduler_tasks, merge_task_priority
 from module.config.utils import *
 from module.config.redirect_utils.utils import *
 
+# config_generated.py 的头部模板
 CONFIG_IMPORT = '''
 # 此文件是配置系统的更新器。
 # 负责读取配置定义、生成 config_generated.py 以及处理配置的版本迁移、i18n 生成等核心管理任务。
@@ -37,12 +67,26 @@ EVENTS = ['Event', 'Event2', 'Event3', 'EventA', 'EventB', 'EventC', 'EventD', '
 GEMS_FARMINGS = ['GemsFarming', 'ThreeOilLowCost']
 RAIDS = ['Raid', 'RaidDaily', 'RaidScuttle']
 WAR_ARCHIVES = ['WarArchives']
-COALITIONS = ['Coalition', 'CoalitionSp']
+COALITIONS = ['Coalition', 'CoalitionSp', 'CoalitionScuttle']
 MARITIME_ESCORTS = ['MaritimeEscort']
 HOSPITAL = ['Hospital', 'HospitalEvent']
 
 
 class Event:
+    """活动数据解析类。
+
+    从 campaign/Readme.md 中解析活动信息，包含：
+    - date: 活动日期
+    - directory: 活动目录名（如 'event_20230101_cn'）
+    - name: 活动英文名
+    - cn/en/jp/tw: 各服务器的活动名称
+
+    属性：
+        is_war_archives (bool): 是否为作战档案活动
+        is_raid (bool): 是否为突袭活动
+        is_coalition (bool): 是否为联动活动
+    """
+
     def __init__(self, text):
         self.date, self.directory, self.name, self.cn, self.en, self.jp, self.tw \
             = [x.strip() for x in text.strip('| \n').split('|')]
@@ -314,13 +358,16 @@ class ConfigGenerator:
                 v = deep_get(old, keys=k, default=d)
                 deep_set(new, keys=k, value=v)
 
-        # 菜单翻译
+        # 菜单翻译。空菜单分组也需要翻译，用于预留尚未实现内容的入口。
+        for task_group in self.task:
+            if task_group != 'Dashboard':
+                deep_load(['Menu', task_group])
+
         for path, data in deep_iter(self.task, depth=3):
             if 'tasks' not in path:
                 continue
             task_group, _, task = path
             if task_group != 'Dashboard':
-                deep_load(['Menu', task_group])
                 deep_load(['Task', task])
         # 参数翻译
         visited_group = set()
@@ -634,6 +681,14 @@ class ConfigUpdater:
         # 2025.06.26
         # ('Coalition.Coalition.Mode', 'Coalition.Coalition.Mode', coalition_to_little_academy),
     ]
+    redirection += [
+        (f'{task}.GemsFarming.ALLowHighFlagshipLevel', f'{task}.GemsFarming.AllowHighFlagshipLevel')
+        for task in [*GEMS_FARMINGS, 'Ambush11']
+    ]
+    redirection += [
+        (f'{task}.GemsFarming.ALLowLowVanguardLevel', f'{task}.GemsFarming.AllowLowVanguardLevel')
+        for task in [*GEMS_FARMINGS, 'Ambush11']
+    ]
 
     # redirection += [
     #     (
@@ -715,8 +770,39 @@ class ConfigUpdater:
         for task in COALITIONS:
             default_stage(task, 'TC-3')
 
+        # 联动任务统一使用简单、普通、困难的关卡命名。
+        # 旧配置中的 TC-1/2/3 在加载时迁移，霜落活动会在运行时转换回内部编号。
+        if not is_template:
+            for task in COALITIONS:
+                stage_key = f'{task}.Coalition.Mode'
+                stage = deep_get(new, keys=stage_key)
+                stage = coalition_to_little_academy(stage)
+                deep_set(new, keys=stage_key, value=stage)
+
         if not is_template:
             new = self.config_redirect(old, new)
+            old_priority = deep_get(old, 'General.YukikazeTaskManager.TaskPriorityAdjustment')
+            new_priority = deep_get(new, 'General.YukikazeTaskManager.TaskPriorityAdjustment')
+            template_priority = deep_get(
+                self.args, 'General.YukikazeTaskManager.TaskPriorityAdjustment.value'
+            )
+            if (
+                    isinstance(old_priority, str)
+                    and 'OpsiScheduling' not in old_priority
+                    and isinstance(new_priority, str)
+                    and new_priority == old_priority
+                    and old_priority.replace(
+                        '> OpsiCrossMonth\n> Commission > Tactical > Research',
+                        '> OpsiCrossMonth\n> OpsiScheduling\n> Commission > Tactical > Research',
+                    ) == template_priority
+            ):
+                deep_set(new, 'General.YukikazeTaskManager.TaskPriorityAdjustment', template_priority)
+            else:
+                deep_set(
+                    new,
+                    'General.YukikazeTaskManager.TaskPriorityAdjustment',
+                    merge_task_priority(new_priority, template_priority, get_scheduler_tasks(self.args)),
+                )
         new = self._override(new)
 
         return new
@@ -814,21 +900,6 @@ class ConfigUpdater:
         elif key == 'OpsiHazard1Leveling.OpsiHazard1Leveling.OperationCoinsPreserve':
             yield 'OpsiScheduling.OpsiScheduling.OperationCoinsPreserve', value
         
-        # 智能调度与侵蚀1虚拟资产保留双向同步
-        if key == 'OpsiScheduling.OpsiScheduling.VirtualAssetPreserve':
-            yield 'OpsiHazard1Leveling.OpsiHazard1Leveling.PreserveVirtualAsset', value
-        elif key == 'OpsiHazard1Leveling.OpsiHazard1Leveling.PreserveVirtualAsset':
-            yield 'OpsiScheduling.OpsiScheduling.VirtualAssetPreserve', value
-        
-        # 智能调度与短猫行动力保留双向同步
-        # 只有当值 > 0 时才同步（值为0表示不覆盖，使用各任务自己的配置）
-        if key == 'OpsiScheduling.OpsiScheduling.ActionPointPreserve':
-            if value and int(value) > 0:
-                yield 'OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve', value
-        elif key == 'OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve':
-            if value and int(value) > 0:
-                yield 'OpsiScheduling.OpsiScheduling.ActionPointPreserve', value
-
         # 注意：动态下拉菜单更新仅在 pywebio > 1.8.0 时可用
         # elif key == 'Alas.Emulator.ScreenshotMethod' and value == 'nemu_ipc':
         #     yield 'Alas.Emulator.ControlMethod', 'nemu_ipc'

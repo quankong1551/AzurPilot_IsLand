@@ -81,6 +81,13 @@ Scheduler:
     type: checkbox
     value: false
     option: [true, false]
+Restart:
+  RandomDelay:
+    value: 5, 50
+  ClearCache:
+    type: checkbox
+    value: false
+    option: [true, false]
 Emulator:
   Serial:
     value: auto
@@ -109,6 +116,10 @@ Emulator:
   ControlMethod:
     value: MaaTouch
     option: [ADB, uiautomator2, minitouch, Hermit, MaaTouch]
+  GameSettings:
+    type: checkbox
+    value: false
+    option: [true, false]
   ScreenshotDedithering: false
   AdbRestart: false
 EmulatorInfo:
@@ -181,23 +192,61 @@ Error:
   LlmAnalysis: true
   LlmApiKey:
     type: textarea
-    value: "sk-O6ZQRe5T4NJVV8gdVTFHTZAI3Q8ZKtJMWdrrKeGljw3zUX4b"
+    value: ""
   LlmApiBase:
     type: textarea
-    value: "https://api.nanoda.work/v1"
+    value: "https://api.xiaomimimo.com/v1"
   LlmModel:
-    value: "Nvidia/qwen/qwen2.5-coder-32b-instruct"
+    value: "mimo-v2.5-pro"
     valuetype: str
 Optimization:
   OcrDevice:
     value: auto
-    option: [auto, cpu, gpu, ane]
+    option: [auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane]
   OcrBackend:
     value: auto
     option: [auto, onnxruntime, ncnn]
+  OcrWindowsMlVendorEp:
+    type: checkbox
+    value: true
+    option: [true, false]
+  OcrModelVersionEnglish:
+    value: auto
+    option:
+      [
+        auto,
+        alocr_en_900k,
+        azur_lane_v6_6,
+        azur_lane_v6_5,
+        ppocr_v6,
+        alocr_en_v2_6,
+        alocr_en_v2_0,
+        alocr_en_v1_0,
+      ]
+  OcrModelVersionChinese:
+    value: auto
+    option:
+      [
+        auto,
+        cn_v6_1,
+        cn_v6,
+        ppocr_v6,
+        alocr_cn_v3,
+        alocr_cn_v2_5,
+      ]
+  OcrModelVersionJapanese:
+    value: auto
+    option: [auto, azur_lane_jp_v6, ppocr_v6]
+  OcrModelVersionTraditionalChinese:
+    value: auto
+    option: [auto, ppocr_v6]
   ScreenshotInterval: 0.3
   CombatScreenshotInterval: 1.0
   TaskHoardingDuration: 0
+  CloseEmulatorDuringLongWait:
+    type: checkbox
+    value: true
+    option: [true, false]
   WhenTaskQueueEmpty:
     value: goto_main
     option: [stay_there, goto_main, close_game]
@@ -264,7 +313,7 @@ PublicEmotion:
   FleetOnsen: false
 YukikazeTaskManager:
   TaskPriorityAdjustment:
-    type: textarea
+    type: task_priority
     value: |-
       Restart
       > OpsiCrossMonth
@@ -275,6 +324,7 @@ YukikazeTaskManager:
       > ShopFrequent > ShopOnce > Shipyard > Freebies
       > PrivateQuarters
       > OpsiExplore
+      > OpsiPreventActionPointOverflow
       > Minigame > Awaken
       > OpsiAshBeacon
       > OpsiDaily > OpsiShop > OpsiVoucher > EventShop
@@ -286,6 +336,7 @@ YukikazeTaskManager:
       > IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
       > IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation
       > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
+      > OpsiScheduling
       > OpsiMeowfficerFarming
       > GemsFarming
       > Ambush11
@@ -327,7 +378,7 @@ Campaign:
   AmbushEvade: true
   UseRecommendFleet: false
   DefeatWithdraw:
-    value: withdraw_continue
+    value: withdraw_stop
     option: [ withdraw_continue, switch_fleet, withdraw_stop ]
 StopCondition:
   OilLimit: 1000
@@ -339,6 +390,20 @@ StopCondition:
   StageIncrease: false
   GetNewShip: false
   ReachLevel: 0
+WarArchives:
+  DailyRunCount: 0
+  DailyRunCountRemain:
+    type: stored
+    value: 0
+    display: hide
+  DailyRunCountRecord:
+    type: stored
+    value: 2020-01-01 00:00:00
+    display: hide
+  DailyRunCountLimit:
+    type: stored
+    value: 0
+    display: hide
 Fleet:
   Fleet1:
     value: 1
@@ -373,6 +438,8 @@ Fleet:
         fleet1_all_fleet2_standby,
         fleet1_standby_fleet2_all,
       ]
+  SkipPreparation:
+    value: false
 Submarine:
   Fleet:
     value: 0
@@ -474,8 +541,8 @@ GemsFarming:
       ranger: null
   UseEmotionFirst: false
   IgnoreEmotionWarning: false
-  ALLowHighFlagshipLevel: false
-  ALLowLowVanguardLevel: false
+  AllowHighFlagshipLevel: false
+  AllowLowVanguardLevel: false
   DelayTaskIFNoFlagship: false
   CommissionLimit: false
   VanguardLevelMin:
@@ -484,7 +551,6 @@ GemsFarming:
   VanguardLevelMax:
     value: 125
     validate: [1, 125]
-
 # ==================== Event ====================
 
 EventGeneral:
@@ -526,10 +592,14 @@ MaritimeEscort:
 Coalition:
   Mode:
     value: hard
-    option: [ easy, normal, hard, sp ]
+    option: [ easy, normal, hard, sp, ex ]
   Fleet:
     value: single
     option: [ single, multi ]
+CoalitionScuttle:
+  Sacrifice:
+    value: vanguard
+    option: [ vanguard, flagship, vanguard_flagship ]
 EventShop:
   UnlockSSRShip: true
   BuyURShip:
@@ -580,6 +650,12 @@ Commission:
     > Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00
     > shortest
   DoMajorCommission: false
+  CommissionNotifyReward:
+    type: checkbox
+    value: false
+  CommissionNotifyRewardStatistics:
+    type: checkbox
+    value: true
 Tactical:
   TacticalFilter: |-
     SameT4 > SameT3 > SameT2 > SameT1
@@ -609,9 +685,6 @@ Research:
   UseCube:
     value: only_05_hour
     option: [always_use, only_05_hour, only_no_project, do_not_use]
-  CubePreserve:
-    value: 0
-    validate: [0, 999999]
   UseCoin:
     value: always_use
     option: [always_use, only_05_hour, only_no_project, do_not_use]
@@ -619,10 +692,15 @@ Research:
     value: always_use
     option: [always_use, only_05_hour, only_no_project, do_not_use]
   AllowDelay: true
+  AllowGenreT: false
+  RemainingCommissions: -1
   PresetFilter:
-    value: series_8_blueprint_305
+    value: series_9_blueprint_ta152
     option:
       - custom
+      - series_9_blueprint_ta152
+      - series_9_blueprint_only
+      - series_9_ta152_only
       - series_8_blueprint_305
       - series_8_blueprint_only
       - series_8_305_only
@@ -646,12 +724,12 @@ Research:
       - series_2_blueprint_only
       - series_2_457_only
   CustomFilter: |-
-    S8-DR0.5 > S8-PRY0.5 > S8-Q0.5 > S8-H0.5 > Q0.5 > S8-DR2.5
-    > S8-G1.5 > S8-Q1 > S8-DR5 > 0.5 > S8-G4 > S8-Q2 > S8-PRY2.5 > reset
-    > S8-DR8 > Q1 > 1 > S8-E-315 > S8-G2.5 > G1.5 > 1.5 > S8-E-031
-    > S8-Q4 > Q2 > E2 > 2 > DR2.5 > PRY2.5 > G2.5 > 2.5 > S8-PRY5
-    > S8-PRY8 > Q4 > G4 > 4 > S8-C6 > DR5 > PRY5 > 5 > C6 > 6 > S8-C8
-    > S8-C12 > DR8 > PRY8 > C8 > 8 > C12 > 12
+    S9-DR0.5 > S9-PRY0.5 > S9-Q0.5 > S9-H0.5 > Q0.5 > S9-DR2.5
+    > S9-G1.5 > S9-Q1 > S9-DR5 > 0.5 > S9-G4 > S9-Q2 > S9-PRY2.5 > reset
+    > S9-DR8 > Q1 > 1 > S9-E-315 > S9-G2.5 > G1.5 > 1.5 > S9-E-031
+    > S9-Q4 > Q2 > E2 > 2 > DR2.5 > PRY2.5 > G2.5 > 2.5 > S9-PRY5
+    > S9-PRY8 > Q4 > G4 > 4 > S9-C6 > DR5 > PRY5 > 5 > C6 > 6 > S9-C8
+    > S9-C12 > DR8 > PRY8 > C8 > 8 > C12 > 12
 Dorm:
   Collect: true
   Feed: true
@@ -843,7 +921,7 @@ PrivateQuarters:
     TargetInteract: true
     TargetShip:
       value: anchorage
-      option: [ anchorage, noshiro, sirius, new_jersey, taihou, aegir ]
+      option: [ anchorage, noshiro, sirius, new_jersey, taihou, aegir, nakhimov ]
 # ==================== Daily ====================
 
 Daily:
@@ -936,6 +1014,9 @@ OpsiGeneral:
     type: textarea
     mode: yaml
     value: "provider: null"
+  AutoSearchTimeLimit:
+    value: 5
+    validate: [1, 240]
 OpsiAshBeacon:
   AttackMode:
     value: current
@@ -957,6 +1038,7 @@ OpsiExplore:
   SpecialRadar: false
   ForceRun: false
   LastZone: 0
+  AllowHazard1Leveling: false
   ExploreProgress:
     type: textarea
     display: disabled
@@ -1036,7 +1118,6 @@ OpsiHazard1Leveling:
   Cl1Filter: |-
     ActionPoint
   RecordNonCL1AP: true
-  PreserveVirtualAsset: 0
   RecordSeaMiles:
     type: checkbox
     value: true
@@ -1079,7 +1160,6 @@ OpsiScheduling:
     value: 40000
   ActionPointPreserve:
     value: 200
-
   OperationCoinsReturnThreshold:
     value: 20000
   EnableMeowfficerFarming:
@@ -1098,20 +1178,18 @@ OpsiScheduling:
     type: checkbox
     value: false
     option: [true, false]
-
-  # 短猫提前开始模式
-  MeowStartEarlyMode:
-    # 激进模式: 0.8倍提前时间, 均衡模式: 1.2倍, 保守模式: 1.5倍
-    value: balanced
+  TaskPriority:
+    type: textarea
+    value: OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming
+OpsiPreventActionPointOverflow:
+  Task:
+    value: OpsiScheduling
     option:
-      - aggressive
-      - balanced
-      - conservative
-  MeowStartEarlyEnable:
-    # 是否启用短猫提前开始功能
-    value: false
-    type: checkbox
-  VirtualAssetPreserve: 0
+      - OpsiScheduling
+      - OpsiHazard1Leveling
+      - OpsiMeowfficerFarming
+  ActionPointUpperbound: 200
+  ActionPointLowerbound: 10
 
 # ==================== Island ====================
 IslandPlan:
@@ -1224,48 +1302,48 @@ IslandRestaurant:
   DoubleBambooShoots: false
   Meal1:
     value: tofu_meat
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber1:
     value: 7
   Meal2:
     value: hearty_meal
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber2:
     value: 7
   Meal3:
     value: omurice
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber3:
     value: 7
   Meal4:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber4:
     value: 0
   Meal5:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber5:
     value: 0
   Meal6:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber6:
     value: 0
   Meal7:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber7:
     value: 0
   Meal8:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
   MealNumber8:
     value: 0
 IslandRestaurantNextTask:
   AwayCook:
     value: None
-    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish]
+    option: [ None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal , double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake]
 IslandTeahouse:
   PostNumber:
     value: 2
@@ -1275,48 +1353,48 @@ IslandTeahouse:
   Seasonal: false
   Meal1:
     value: floral_fruity
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber1:
     value: 7
   Meal2:
     value: lavender_tea
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber2:
     value: 7
   Meal3:
     value: strawberry_lemon
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber3:
     value: 7
   Meal4:
     value: None
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber4:
     value: 0
   Meal5:
     value: None
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber5:
     value: 0
   Meal6:
     value: None
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber6:
     value: 0
   Meal7:
     value: None
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber7:
     value: 0
   Meal8:
     value: None
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
   MealNumber8:
     value: 0
 IslandTeahouseNextTask:
   AwayCook:
     value: None
-    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea]
+    option: [ None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice]
 IslandGrill:
   PostNumber:
     value: 1
@@ -1577,6 +1655,11 @@ _IslandBusinessChar: &IslandBusinessChar
     - OceanCrosser
     - FeiYun
     - Takao
+    - Anchorage
+    - Belfast
+    - ChangFeng
+    - Mogador
+    - RoyalFortune
 
 _IslandBusinessProduct1: &IslandBusinessProduct1
   type: select
@@ -1589,6 +1672,8 @@ _IslandBusinessProduct1: &IslandBusinessProduct1
     - hearty_meal
     - fo_tiao
     - amaranth_rice_ball
+    - matsutake_chicken_soup
+    - persimmon_cake
 
 _IslandBusinessProduct2: &IslandBusinessProduct2
   type: select
@@ -1603,6 +1688,8 @@ _IslandBusinessProduct2: &IslandBusinessProduct2
     - lavender_tea
     - sunny_honey
     - watermelon_juice
+    - chrysanthemum_tea
+    - carrot_pear_juice
 
 _IslandBusinessProduct3: &IslandBusinessProduct3
   type: select
@@ -1664,6 +1751,8 @@ IslandBusinessShop1:
       - hearty_meal
       - fo_tiao
       - amaranth_rice_ball
+      - matsutake_chicken_soup
+      - persimmon_cake
   BoostReplaceFilter:
     value: |-
       30 > 20 > 10
@@ -1686,6 +1775,21 @@ IslandBusinessShop2:
   BoostReplaceFilter:
     value: |-
       30 > 20 > strawberry_honey > fruit_paradise > 10
+  SeasonalFallback:
+    type: select
+    value: sunny_honey
+    option:
+      - None
+      - spring_flower_tea
+      - strawberry_lemon
+      - strawberry_honey
+      - floral_fruity
+      - fruit_paradise
+      - lavender_tea
+      - sunny_honey
+      - watermelon_juice
+      - chrysanthemum_tea
+      - carrot_pear_juice
 
 IslandBusinessShop3:
   Char1:
@@ -1744,6 +1848,18 @@ IslandBusinessShop5:
     value: |-
       30 > 20 > cheese > 10
 
+# ==================== Fleet Management ====================
+
+FleetInfo:
+  Result:
+    type: stored
+    value: {}
+    display: hide
+  Record:
+    type: stored
+    value: 2020-01-01 00:00:00
+    display: hide
+
 # ==================== Tools ====================
 
 Daemon:
@@ -1763,6 +1879,30 @@ BoxDisassemble:
   BlueBoxLimit: 1000
   UseWhiteBox: true
   WhiteBoxLimit: 2000
+AutoEquip:
+  ShipLimit:
+    value: 0
+    validate: [0, 9999]
+  EnableSlot1:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot2:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot3:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot4:
+    type: checkbox
+    value: true
+    option: [true, false]
+  EnableSlot5:
+    type: checkbox
+    value: true
+    option: [true, false]
 Benchmark:
   DeviceType:
     value: emulator

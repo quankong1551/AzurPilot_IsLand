@@ -31,30 +31,30 @@ class ModelProxy:
         """
         import zerorpc
 
-        logger.info(f"Connecting to OCR server {address}")
+        logger.info(f"连接OCR服务器 {address}")
         cls.client = zerorpc.Client(timeout=5)
         cls.client.connect(f"tcp://{address}")
         try:
             cls.client.hello()
-            logger.info("Successfully connected to OCR server")
+            logger.info("成功连接OCR服务器")
         except Exception:
             cls.online = False
-            logger.warning("Ocr server not running")
+            logger.warning("服务器未运行")
 
     @classmethod
     def close(cls):
         """关闭 RPC 客户端连接。"""
         if cls.client is not None:
-            logger.info('Disconnect to OCR server')
+            logger.info('断开OCR服务器')
             cls.client.close()
-            logger.info('Successfully disconnected to OCR server')
+            logger.info('成功断开')
             cls.client = None
 
     def __init__(self, lang) -> None:
         """初始化模型代理。
 
         Args:
-            lang: OCR 模型语言标识，如 'azur_lane'、'cnocr'、'jp'、'tw'。
+            lang: OCR 模型语言标识，如 'azur_lane'、'ppocr_v6'、'cnocr'、'jp'、'tw'。
         """
         self.lang = lang
 
@@ -209,7 +209,7 @@ class ModelProxyFactory:
     """OCR 模型代理工厂。
 
     通过 __getattribute__ 拦截语言模型属性访问，返回对应的 ModelProxy 实例。
-    支持的语言模型：azur_lane、cnocr、jp、tw、azur_lane_jp。
+    支持的语言模型：azur_lane、ppocr_v6、cnocr、jp、tw、azur_lane_jp。
     """
 
     def __getattribute__(self, __name: str) -> ModelProxy:
@@ -221,7 +221,7 @@ class ModelProxyFactory:
         Returns:
             对应语言的 ModelProxy 实例，或父类属性。
         """
-        if __name in ["azur_lane", "cnocr", "jp", "tw", "azur_lane_jp"]:
+        if __name in ["azur_lane", "ppocr_v6", "cnocr", "jp", "tw", "azur_lane_jp"]:
             if ModelProxy.client is None:
                 ModelProxy.init(address=State.deploy_config.OcrClientAddress)
             return ModelProxy(lang=__name)
@@ -372,9 +372,9 @@ def start_ocr_server(port=22268):
     try:
         server.bind(f"tcp://*:{port}")
     except zmq.error.ZMQError:
-        logger.error(f"Ocr server cannot bind on port {port}")
+        logger.error(f"[OCR-RPC] OCR 服务器无法绑定端口 {port}")
         return
-    logger.info(f"Ocr server listen on port {port}")
+    logger.info(f"[OCR-RPC] 服务器监听端口 {port}")
     server.run()
 
 

@@ -1,3 +1,6 @@
+"""模拟器基类定义。提供 EmulatorBase、EmulatorInstanceBase、
+EmulatorManagerBase 的抽象接口，定义模拟器路径和实例管理的通用协议。"""
+
 import os
 import re
 import typing as t
@@ -108,12 +111,17 @@ class EmulatorInstanceBase:
         将 MuMu 12 实例名称转换为实例 ID。
         示例名称:
             MuMuPlayer-12.0-3
+            MuMuPlayerGlobal-12.0-0
+            MuMuPlayer-15.0-0
             YXArkNights-12.0-1
 
         Returns:
             int: 实例 ID，如果不是 MuMu 12 实例则返回 None
         """
         res = re.search(r'MuMuPlayer(?:Global)?-12.0-(\d+)', self.name)
+        if res:
+            return int(res.group(1))
+        res = re.search(r'MuMuPlayer(?:Global)?-15.0-(\d+)', self.name)
         if res:
             return int(res.group(1))
         res = re.search(r'YXArkNights-12.0-(\d+)', self.name)

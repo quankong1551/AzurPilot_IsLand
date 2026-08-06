@@ -1,7 +1,26 @@
+"""作战档案模块。
+
+自动执行碧蓝航线的作战档案战役。作战档案是过往活动的复刻入口，
+需要消耗数据密钥（Data Key）才能进入，每日上限 60 把。
+
+本模块的核心功能：
+- 通过 OCR 识别剩余数据密钥数量，控制出击节奏
+- 管理每日出击次数限制（可配置每日上限）
+- 自动在数据密钥用尽或每日额度耗尽时停止任务
+- 通关后实时扣减每日额度并持久化到配置
+
+注意：作战档案中禁用自动搜索续战功能，因为自动搜索菜单的模糊背景
+会遮挡数据密钥的 OCR 识别区域。
+
+配置路径: WarArchives.DailyRunCount (每日出击上限),
+         StopCondition.OilLimit (燃油限制)
+"""
+
 import re
 
 from campaign.campaign_war_archives.campaign_base import CampaignBase
 from module.campaign.run import CampaignRun
+from module.config.utils import get_server_last_update
 from module.logger import logger
 from module.ocr.ocr import DigitCounter
 from module.war_archives.assets import (OCR_DATA_KEY_CAMPAIGN,
@@ -36,6 +55,79 @@ DATA_KEY_CAMPAIGN = OcrDataKey(OCR_DATA_KEY_CAMPAIGN, letter=(255, 247, 247), th
 
 
 class CampaignWarArchives(CampaignRun, CampaignBase):
+    """作战档案战役执行器。
+
+    继承自 CampaignRun（战役运行）和 CampaignBase（作战档案战役基础），
+    在标准战役运行逻辑上增加作战档案特有的限制：
+    - 数据密钥消耗管理（强制启用 USE_DATA_KEY）
+    - 每日出击次数限制（跨天自动重置、配置变更实时调整）
+    - 数据密钥 OCR 检测（在档案战役界面识别剩余数量）
+    - 禁用自动搜索续战（避免遮挡 OCR 区域）
+    """
+    def daily_run_limit_reset(self):
+        """刷新作战档案每日出击额度。
+
+        DailyRunCount 是用户设置的每日上限；DailyRunCountRemain 是脚本保存的当日剩余额度。
+        记录时间早于上次服务器刷新时，说明已经进入新的一天，需要恢复完整额度。
+        """
+        limit = self.config.WarArchives_DailyRunCount
+        if limit <= 0:
+            if self.config.WarArchives_DailyRunCountLimit != 0:
+                with self.config.multi_set():
+                    self.config.WarArchives_DailyRunCountRemain = 0
+                    self.config.WarArchives_DailyRunCountLimit = 0
+            return
+
+        last_update = get_server_last_update(self.config.Scheduler_ServerUpdate)
+        record = self.config.WarArchives_DailyRunCountRecord
+        remain = self.config.WarArchives_DailyRunCountRemain
+        old_limit = self.config.WarArchives_DailyRunCountLimit
+        if record < last_update or remain > limit:
+            logger.info(f'[作战档案] 重置每日出击次数: {remain} -> {limit}')
+            with self.config.multi_set():
+                self.config.WarArchives_DailyRunCountRemain = limit
+                self.config.WarArchives_DailyRunCountRecord = last_update
+                self.config.WarArchives_DailyRunCountLimit = limit
+        elif old_limit != limit:
+            remain = max(remain + limit - old_limit, 0)
+            remain = min(remain, limit)
+            logger.info(f'[作战档案] 更新每日出击次数: {old_limit} -> {limit}，剩余: {remain}')
+            with self.config.multi_set():
+                self.config.WarArchives_DailyRunCountRemain = remain
+                self.config.WarArchives_DailyRunCountLimit = limit
+
+    def daily_run_limit_triggered(self):
+        """检查作战档案每日出击额度是否用尽。"""
+        limit = self.config.WarArchives_DailyRunCount
+        if limit <= 0:
+            return False
+
+        remain = self.config.WarArchives_DailyRunCountRemain
+        logger.info(f'[作战档案] 今日剩余出击次数: {remain} / {limit}')
+        if remain > 0:
+            return False
+
+        logger.hr('触发停止条件：每日出击次数')
+        self.config.task_delay(server_update=True)
+        return True
+
+    def daily_run_limit_consume(self):
+        """通关后扣减并保存作战档案每日出击额度。"""
+        limit = self.config.WarArchives_DailyRunCount
+        if limit <= 0:
+            return
+
+        remain = max(self.config.WarArchives_DailyRunCountRemain - 1, 0)
+        logger.info(f'[作战档案] 今日剩余出击次数: {remain} / {limit}')
+        with self.config.multi_set():
+            self.config.WarArchives_DailyRunCountRemain = remain
+            self.config.WarArchives_DailyRunCountRecord = get_server_last_update(self.config.Scheduler_ServerUpdate)
+            self.config.WarArchives_DailyRunCountLimit = limit
+
+    def after_campaign_run(self):
+        """作战档案单次通关后立即扣减每日出击额度。"""
+        self.daily_run_limit_consume()
+
     def triggered_stop_condition(self, oil_check=True):
         """检查作战档案的停止条件。
 
@@ -51,13 +143,16 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
         Returns:
             True 表示触发了停止条件，False 表示未触发。
         """
+        if self.daily_run_limit_triggered():
+            return True
+
         # 必须在档案战役界面才能进行 OCR 检查
         if self.appear(WAR_ARCHIVES_CAMPAIGN_CHECK, offset=(20, 20)):
             # 检查数据密钥是否已用尽
             current, remain, total = DATA_KEY_CAMPAIGN.ocr(self.device.image)
-            logger.info(f'Inventory: {current} / {total}, Remain: {current}')
+            logger.info(f'[作战档案] 数据密钥: {current} / {total}, 剩余: {current}')
             if remain == total:
-                logger.hr('Triggered out of data keys')
+                logger.hr('[作战档案] 数据密钥已用尽')
                 # 仅在数据密钥用尽时才能延迟任务
                 self.config.task_delay(server_update=True)
                 return True
@@ -93,4 +188,5 @@ class CampaignWarArchives(CampaignRun, CampaignBase):
             total: 总运行次数，0 表示无限。
         """
         self.config.override(USE_DATA_KEY=True)
+        self.daily_run_limit_reset()
         super().run(name, folder, mode, total)

@@ -19,7 +19,7 @@ SEASONS = {
 
 # ==================== 每季度的季节限定物品映射 ====================
 # structure: { season: { module_key: [item_names] } }
-# module_key 对应各个店铺模块的类型标识
+# module_key 对应各个店铺模块的类型标识（restaurant/teahouse/nursery/orchard/handmade）
 
 SEASONAL_ITEMS = {
     'spring': {
@@ -35,18 +35,22 @@ SEASONAL_ITEMS = {
     'summer': {
         # 鱼餐馆：夏季限定菜品
         'restaurant': ['amaranth_rice_ball', 'tomato_egg'],
-        # 白熊饮品：夏季限定饮品
-        'teahouse': ['cucumber_juice', 'watermelon_juice'],
+        # 白熊饮品：夏季限定饮品（槽位1西瓜汁、槽位2黄瓜汁）
+        'teahouse': ['watermelon_juice', 'cucumber_juice'],
         # 青芽苗圃：夏季限定作物
         'nursery': ['tomato', 'cucumber'],
         # 工厂手工：夏季限定产品
         'handmade': ['jasmine_oil', 'summer_bouquet'],
     },
     'autumn': {
-        'restaurant': [],
-        'teahouse': [],
-        'nursery': [],
-        'handmade': [],
+        # 有鱼餐馆：秋季限定菜品（槽位1柿子饼、槽位2松茸鸡汤）
+        'restaurant': ['persimmon_cake', 'matsutake_chicken_soup'],
+        # 白熊饮品：秋季限定饮品（槽位1胡萝卜秋梨汁、槽位2菊花茶）
+        'teahouse': ['carrot_pear_juice', 'chrysanthemum_tea'],
+        # 坠香果园：秋季限定作物（秋月梨、柿子改在果园种植，不在青芽苗圃）
+        'orchard': ['pear', 'persimmon'],
+        # 工厂手工：秋季限定产品
+        'handmade': ['peanut_oil', 'autumn_bouquet'],
     },
     'winter': {
         'restaurant': [],
@@ -118,7 +122,7 @@ class SeasonConfig:
         获取指定模块在当前季节的限定物品列表
 
         Args:
-            module_key: 模块标识（restaurant, teahouse, nursery, handmade 等）
+            module_key: 模块标识（restaurant, teahouse, nursery, orchard, handmade 等）
 
         Returns:
             list: 当前季节启用的物品名称列表
@@ -160,7 +164,7 @@ class SeasonConfig:
     def refresh(self):
         """刷新季节配置（从最新配置重新读取）"""
         self._update_season()
-        logger.info(f"季节配置已刷新，当前季节: {self.season_name}")
+        logger.info(f"[岛屿] 季节配置已刷新，当前季节: {self.season_name}")
 
     def __str__(self):
         return f"SeasonConfig(season={self._season}, name={self.season_name})"

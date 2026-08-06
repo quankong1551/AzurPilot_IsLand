@@ -1,3 +1,9 @@
+"""岛屿系统基类模块。
+
+提供岛屿自动化操作的核心基础功能，包括岛屿导航、岗位管理、产品选择与派遣。
+继承自 InfoHandler 和 LoginHandler，组合仓库 OCR 与角色选择能力。
+定义岛屿地图确认等待时间、产品选择安全区域及材料数量 OCR 区域等公共常量。
+"""
 from module.island.assets import *
 from module.ui.page import *
 from module.base.timer import Timer
@@ -221,6 +227,54 @@ class Island(SelectCharacter):
         access_map = self.appear(ISLAND_ACCESS_MAP, offset=(20, 20))
         return leave and access_map
 
+    def check_visit_friend_island(self, visit_button):
+        """点击好友拜访按钮并等待进入好友岛屿。
+
+        检测逻辑分为两个阶段：
+        1. 等待 ISLAND_ACCESS_MAP（右上角地图入口）出现，表示已开始加载好友岛
+        2. 等待 AIR_DROP_RUN_AWAY（顶部"离开"按钮）也出现，确认场景完全加载完毕
+        只有两者同时出现（is_in_friend_island() 为 True），才视为成功进入好友岛屿。
+        """
+        click_timer = Timer(3).start()
+        self.device.click(visit_button)
+        self.device.sleep(3)
+        for _ in self.loop(timeout=30, skip_first=False):
+            if self.is_in_friend_island():
+                logger.info("[岛屿] 二次检测拜访状态......")
+                # 在等待的过程中, 先后会出现黑底黄鸡loading、UI(一闪而过)、白底沙漏loading
+				# 因此等待1s后进行二次确认, 避免中间UI一闪而过时出现误判
+                self.device.sleep(1)
+                self.device.screenshot()
+                if self.is_in_friend_island():
+                    self._island_expect_friend = True
+                    logger.info("[岛屿] 成功进入好友岛屿")
+                    return True
+            if self.appear(CANT_ACCESS, offset=(20, 20)):
+                logger.info("[岛屿] 好友不可访问")
+                return False
+            if click_timer.reached():
+                self.device.click(visit_button)
+                click_timer.reset()
+            if self.ui_additional():
+                continue
+        logger.warning("[岛屿] 拜访好友超时")
+        return False
+
+    def exit_friend_island(self):
+        """退出好友岛屿。"""
+        logger.info("[岛屿] 退出好友岛屿")
+        self._island_expect_friend = False
+        for _ in self.loop(timeout=30):
+            if self.appear_then_click(AIR_DROP_RUN_AWAY, offset=(20, 20), interval=2):
+                continue
+            if self.appear(ISLAND_GOTO_MAP):
+                logger.info("[岛屿] 成功退出好友岛屿")
+                return True
+            if self.ui_additional():
+                continue
+        logger.warning("[岛屿] 退出好友岛屿超时")
+        return False
+
     def _wait_island_map_entry(self, timeout=3):
         last_status = None
         for _ in self.loop(timeout=timeout, skip_first=False):
@@ -249,7 +303,7 @@ class Island(SelectCharacter):
         }
 
     def goto_island_map(self):
-        logger.hr("Island goto map", level=2)
+        logger.hr("岛屿-前往地图", level=2)
         expect_friend = bool(getattr(self, "_island_expect_friend", False))
         status = self._wait_island_map_entry(timeout=10 if expect_friend else 3)
         in_map = status["in_map"]
@@ -258,23 +312,23 @@ class Island(SelectCharacter):
         access_map = status["access_map"]
         if not in_map and not in_friend and not home_map and not access_map:
             if expect_friend:
-                logger.warning("预期已进入好友岛，但暂未识别到地图入口，继续等待好友岛入口")
+                logger.warning("[岛屿] 预期已进入好友岛，但暂未识别到地图入口，继续等待好友岛入口")
             else:
-                logger.info("当前不在岛屿地图或好友岛，先导航到本岛")
+                logger.info("[岛屿] 当前不在岛屿地图或好友岛，先导航到本岛")
                 self.ui_goto(page_island,get_ship=False)
 
         for _ in self.loop(timeout=30 if expect_friend else 20, skip_first=False):
             if self.appear(ISLAND_MAP_CHECK):
-                logger.info("已进入岛屿地图")
+                logger.info("[岛屿] 已进入岛屿地图")
                 return True
             if self.appear_then_click(ISLAND_GOTO_MAP):
-                logger.info("点击本岛地图入口")
+                logger.info("[岛屿] 点击本岛地图入口")
                 continue
             if self.appear_then_click(ISLAND_ACCESS_MAP, offset=(20, 20)):
-                logger.info("点击好友岛右上角地图入口")
+                logger.info("[岛屿] 点击好友岛右上角地图入口")
                 continue
         else:
-            logger.warning("进入岛屿地图超时")
+            logger.warning("[岛屿] 进入岛屿地图超时")
             return False
 
     def island_map_goto(self,destination):
@@ -311,13 +365,13 @@ class Island(SelectCharacter):
         for _ in self.loop(timeout=20, skip_first=False):
             if not destination_clicked:
                 if self.appear_then_click(destination_button, interval=1):
-                    logger.info(f"点击岛屿地图目的地: {destination}")
+                    logger.info(f"[岛屿] 点击岛屿地图目的地: {destination}")
                     destination_clicked = True
                 continue
 
             if self.appear(check_button, offset=(20, 20)):
                 logger.info(
-                    f"岛屿地图目的地详情已识别: {destination} "
+                    f"[岛屿] 岛屿地图目的地详情已识别: {destination} "
                     f"({check_button.name})"
                 )
                 self.device.click(ISLAND_MAP_CONFIRM)
@@ -327,7 +381,7 @@ class Island(SelectCharacter):
                 continue
 
         if not confirmed:
-            logger.warning(f"岛屿地图目的地选择超时: {destination}")
+            logger.warning(f"[岛屿] 岛屿地图目的地选择超时: {destination}")
             return False
 
         confirm_wait = Timer(ISLAND_MAP_CONFIRM_WAIT).start()
@@ -346,9 +400,11 @@ class Island(SelectCharacter):
                     self.appear(ISLAND_CHECK, offset=(20, 20))
                     or (in_friend and self.is_in_friend_island())
             ):
+                self.device.sleep(1)
+                logger.info(f"[岛屿] 岛屿地图进入成功: {destination}")
                 return True
 
-        logger.warning(f"岛屿地图进入目的地超时: {destination}")
+        logger.warning(f"[岛屿] 岛屿地图进入目的地超时: {destination}")
         return False
     def post_manage_mode(self, post_manage_mode):
         post_manage_button = POST_MANAGE_BUSINESS if post_manage_mode == POST_MANAGE_PRODUCTION else POST_MANAGE_PRODUCTION
@@ -409,25 +465,37 @@ class Island(SelectCharacter):
 
     def _handle_select_product_failure(self, product):
         """select_product 失败时的统一处理：记录警告、关闭岗位面板、返回 False"""
-        logger.warning(f"select_product 失败：未能找到产品 {product} 的选择项")
+        logger.warning(f"[岛屿] select_product 失败：未能找到产品 {product} 的选择项")
         self.device.click(POST_CLOSE)
         return False
 
     def post_close(self):
         for _ in self.loop(timeout=15, skip_first=False):
-            if self.ui_page_appear(page_island_postmanage) and not self.appear(ISLAND_POST_CHECK) and not self.appear(ISLAND_POST_VACANT_CHECK):
+            if self.ui_page_appear(page_island_postmanage) and not self.is_post_detail_visible():
                 return True
             if self.appear(ISLAND_GET, offset=30):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 continue
-            if self.appear(ISLAND_POST_CHECK) or self.appear(ISLAND_POST_VACANT_CHECK):
+            if self.is_post_detail_visible():
                 self.device.click(POST_CLOSE)
                 continue
-        logger.warning("关闭岗位详情超时")
+        logger.warning("[岛屿] 关闭岗位详情超时")
         return False
+
+    def is_post_detail_visible(self):
+        """判断岗位详情弹窗是否仍覆盖在岗位管理页上。"""
+        return (
+                self.appear(ISLAND_POST_CHECK, offset=1)
+                or self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
+                or self.appear(ISLAND_POST_SELECT, offset=1)
+                or self.appear(ISLAND_WORKING, offset=1)
+                or self.appear(POST_ADD)
+                or self.appear(POST_GET, offset=(50, 0))
+        )
+
     def post_get_and_close(self):
         for _ in self.loop(timeout=20, skip_first=False):
-            if self.ui_page_appear(page_island_postmanage) and not self.appear(ISLAND_POST_CHECK) and not self.appear(ISLAND_POST_VACANT_CHECK):
+            if self.ui_page_appear(page_island_postmanage) and not self.is_post_detail_visible():
                 return True
             if self.appear(ERROR1, offset=30):
                 self.device.click(POST_CLOSE)
@@ -444,10 +512,10 @@ class Island(SelectCharacter):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 self.device.sleep(0.5)
                 continue
-            if (self.appear(ISLAND_POST_CHECK) or self.appear(ISLAND_POST_VACANT_CHECK)) and not self.appear(POST_GET, offset=(50, 0)):
+            if self.is_post_detail_visible() and not self.appear(POST_GET, offset=(50, 0)):
                 self.device.click(POST_CLOSE)
                 continue
-        logger.warning("收取并关闭岗位详情超时")
+        logger.warning("[岛屿] 收取并关闭岗位详情超时")
         return False
 
     def post_get_stay(self):
@@ -468,9 +536,9 @@ class Island(SelectCharacter):
                 self.device.click(ISLAND_POST_SAFE_AREA)
                 self.device.sleep(0.5)
                 continue
-            if (self.appear(ISLAND_POST_CHECK) or self.appear(ISLAND_POST_VACANT_CHECK) or self.ui_page_appear(page_island_postmanage)):
+            if (self.is_post_detail_visible() or self.ui_page_appear(page_island_postmanage)):
                 return True
-        logger.warning("收取当前岗位产物超时")
+        logger.warning("[岛屿] 收取当前岗位产物超时")
         return False
 
     def post_get_and_add(self,product_selection,product_selection_check):
@@ -500,7 +568,7 @@ class Island(SelectCharacter):
                         self.back_to_postmanage_from_dispatch()
                         return False
                 else:
-                    logger.warning("岗位追加派遣无可用角色")
+                    logger.warning("[岛屿] 岗位追加派遣无可用角色")
                     self.back_to_postmanage_from_dispatch()
                     return False
                 continue
@@ -524,11 +592,10 @@ class Island(SelectCharacter):
                 return True
             if (
                     self.ui_page_appear(page_island_postmanage)
-                    and not self.appear(ISLAND_POST_CHECK, offset=30)
-                    and not self.appear(ISLAND_POST_VACANT_CHECK, offset=30)
+                    and not self.is_post_detail_visible()
             ):
                 return True
-        logger.warning("收取并追加岗位派遣超时")
+        logger.warning("[岛屿] 收取并追加岗位派遣超时")
         return False
 
     def back_to_postmanage_from_dispatch(self):
@@ -539,8 +606,7 @@ class Island(SelectCharacter):
                     self.ui_page_appear(page_island_postmanage)
                     and not self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1)
                     and not self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1)
-                    and not self.appear(ISLAND_POST_CHECK, offset=1)
-                    and not self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
+                    and not self.is_post_detail_visible()
             ):
                 return True
             if self.appear(ISLAND_GET, offset=30):
@@ -552,77 +618,70 @@ class Island(SelectCharacter):
             if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
                 self.device.click(SELECT_UI_BACK)
                 continue
-            if self.appear(ISLAND_POST_CHECK, offset=1) or self.appear(ISLAND_POST_VACANT_CHECK, offset=1):
+            if self.is_post_detail_visible():
                 self.device.click(POST_CLOSE)
                 continue
 
-        logger.warning("从派遣流程返回岗位管理页超时")
+        logger.warning("[岛屿] 从派遣流程返回岗位管理页超时")
         return False
 
     def confirm_post_add_order(self, context="岗位派遣"):
         """材料确认足够后，点击最大数量并确认派遣。"""
-        if self.appear(POST_MAX):
-            self.device.click(POST_MAX)
-            self.device.sleep(0.3)
-            self.device.screenshot()
+        clicked = False
+        max_clicked = False
+        button_seen = False
+        left_product_timer = Timer(0.8, count=2).start()
+        retry_confirm_timer = Timer(2, count=4).start()
+        unavailable_timer = Timer(3, count=6).start()
 
-        if self.appear(POST_ADD_ORDER):
-            self.device.click(POST_ADD_ORDER)
-            self.device.sleep(0.5)
-            return True
-
-        current, required = self.ocr_select_product_material_counter()
-        if required and current < required:
-            logger.warning(f"{context}材料不足，确认按钮不可用: {current}/{required}")
-        else:
-            logger.warning(f"{context}材料已确认足够，但确认按钮不可用，可能角色体力不足")
-        return False
-
-    def back_to_postmanage_from_dispatch(self):
-        """从角色选择或产品选择流程退回岗位管理页。"""
-        self.interval_clear([SELECT_UI_BACK, POST_CLOSE])
-        for _ in self.loop(timeout=15, skip_first=False):
-            if (
-                    self.ui_page_appear(page_island_postmanage)
-                    and not self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1)
-                    and not self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1)
-                    and not self.appear(ISLAND_POST_CHECK, offset=1)
-                    and not self.appear(ISLAND_POST_VACANT_CHECK, offset=1)
-            ):
-                return True
-            if self.appear(ISLAND_GET, offset=30):
-                self.device.click(ISLAND_POST_SAFE_AREA)
-                continue
-            if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
-                self.device.click(SELECT_UI_BACK)
-                continue
-            if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
-                self.device.click(SELECT_UI_BACK)
-                continue
-            if self.appear(ISLAND_POST_CHECK, offset=1) or self.appear(ISLAND_POST_VACANT_CHECK, offset=1):
+        for _ in self.loop(timeout=10, skip_first=False):
+            if self.appear(ERROR1, offset=30):
                 self.device.click(POST_CLOSE)
+                self.island_error = True
+                return False
+
+            in_select_product = self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1)
+            if not in_select_product:
+                if left_product_timer.reached():
+                    return True
+                continue
+            left_product_timer.reset()
+
+            if not clicked and not max_clicked and self.appear(POST_MAX):
+                self.device.click(POST_MAX)
+                max_clicked = True
+                unavailable_timer.reset()
+                self.device.sleep(0.3)
                 continue
 
-        logger.warning("从派遣流程返回岗位管理页超时")
-        return False
+            if self.appear(POST_ADD_ORDER):
+                button_seen = True
+                unavailable_timer.reset()
+                if not clicked or retry_confirm_timer.reached():
+                    if clicked:
+                        logger.info(f"[岛屿] {context}确认后仍停留在产品选择页，重试确认")
+                    self.device.click(POST_ADD_ORDER)
+                    clicked = True
+                    retry_confirm_timer.reset()
+                continue
 
-    def confirm_post_add_order(self, context="岗位派遣"):
-        """材料确认足够后，点击最大数量并确认派遣。"""
-        if self.appear(POST_MAX):
-            self.device.click(POST_MAX)
-            self.device.sleep(0.3)
-            self.device.screenshot()
+            if not clicked and unavailable_timer.reached():
+                current, required = self.ocr_select_product_material_counter()
+                if required and current < required:
+                    logger.warning(f"[岛屿] {context}材料不足，确认按钮不可用: {current}/{required}")
+                else:
+                    logger.warning(f"[岛屿] {context}材料已确认足够，但确认按钮不可用，可能角色体力不足")
+                return False
 
-        if self.appear(POST_ADD_ORDER):
-            self.device.click(POST_ADD_ORDER)
-            self.device.sleep(0.5)
-            return True
+        if clicked or button_seen:
+            logger.warning(f"[岛屿] {context}确认后仍停留在产品选择页")
+            return False
 
         current, required = self.ocr_select_product_material_counter()
         if required and current < required:
-            logger.warning(f"{context}材料不足，确认按钮不可用: {current}/{required}")
+            logger.warning(f"[岛屿] {context}材料不足，确认按钮不可用: {current}/{required}")
         else:
-            logger.warning(f"{context}材料已确认足够，但确认按钮不可用，可能角色体力不足")
+            logger.warning(f"[岛屿] {context}材料已确认足够，但确认按钮不可用，可能角色体力不足")
         return False
 
     def confirm_selected_character(self, context="岗位派遣"):
@@ -647,7 +706,7 @@ class Island(SelectCharacter):
                 if self.appear_then_click(SELECT_UI_CONFIRM, interval=1):
                     continue
 
-        logger.warning(f"{context}确认后未进入下一步")
+        logger.warning(f"[岛屿] {context}确认后未进入下一步")
         return False
 
     def confirm_selected_character_closed(self, context="角色选择", timeout=8):
@@ -661,7 +720,7 @@ class Island(SelectCharacter):
             if self.appear_then_click(SELECT_UI_CONFIRM, interval=1):
                 continue
 
-        logger.warning(f"{context}确认后仍停留在角色选择页")
+        logger.warning(f"[岛屿] {context}确认后仍停留在角色选择页")
         return False
 
     def click_selected_character_confirm(self, context="角色选择", timeout=5):
@@ -674,7 +733,7 @@ class Island(SelectCharacter):
                 return True
 
         if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
-            logger.warning(f"{context}确认按钮未出现")
+            logger.warning(f"[岛屿] {context}确认按钮未出现")
             return False
         return True
 
@@ -705,7 +764,7 @@ class Island(SelectCharacter):
                     and retry_swipe_timer.reached()
             ):
                 retry_swipe_used += 1
-                logger.info(f"未识别到岗位按钮 {post}，第{retry_swipe_used + 1}次滑动定位岗位列表")
+                logger.info(f"[岛屿] 未识别到岗位按钮 {post}，第{retry_swipe_used + 1}次滑动定位岗位列表")
                 self.post_manage_swipe(getattr(self, 'post_manage_swipe_count', 1))
                 retry_swipe_timer.reset()
                 continue
@@ -717,7 +776,7 @@ class Island(SelectCharacter):
                 if full_retry_used < getattr(self, 'post_open_full_retry_limit', 1):
                     full_retry_used += 1
                     logger.warning(
-                        f"岗位按钮 {post} 连续{retry_swipe_used + 1}次滑动定位失败，重新进入岗位管理页重试"
+                        f"[岛屿] 岗位按钮 {post} 连续{retry_swipe_used + 1}次滑动定位失败，重新进入岗位管理页重试"
                     )
                     self.post_close()
                     self.goto_postmanage()
@@ -791,16 +850,16 @@ class Island(SelectCharacter):
         for _ in self.loop(timeout=8, skip_first=False):
             if self.appear(tab_check, offset=1, threshold=30):
                 if click_count:
-                    logger.info(f"商店页签检测成功: {tab_check}，点击 {click_count} 次")
+                    logger.info(f"[岛屿] 商店页签检测成功: {tab_check}，点击 {click_count} 次")
                 return True
             if self.appear(tab_button, threshold=30):
                 click_count += 1
-                logger.info(f"商店页签检测失败，点击页签: {tab_button} -> {tab_check}，第 {click_count} 次")
+                logger.info(f"[岛屿] 商店页签检测失败，点击页签: {tab_button} -> {tab_check}，第 {click_count} 次")
                 self.device.click(tab_button)
                 self.device.sleep(1)
                 continue
 
-        logger.warning(f"切换商店页签超时: tab={tab_button}, check={tab_check}, clicked={click_count}")
+        logger.warning(f"[岛屿] 切换商店页签超时: tab={tab_button}, check={tab_check}, clicked={click_count}")
         return False
 
     def buy_shop_item(self, item_button, quantity, shop_check, item_name=None,
@@ -812,7 +871,7 @@ class Island(SelectCharacter):
                 return False
 
         if item_name:
-            logger.info(f"购买 {item_name} x{quantity}")
+            logger.info(f"[岛屿] 购买 {item_name} x{quantity}")
 
         for _ in self.loop(timeout=10, skip_first=False):
             if self.appear(ISLAND_SHOPPING_CHECK):
@@ -820,7 +879,7 @@ class Island(SelectCharacter):
             if self.appear_then_click(item_button, interval=1.2):
                 continue
         else:
-            logger.warning(f"打开购买弹窗超时: {item_name or item_button}")
+            logger.warning(f"[岛屿] 打开购买弹窗超时: {item_name or item_button}")
             return False
 
         if self.appear(ISLAND_SHOPPING_CHECK):
@@ -840,7 +899,7 @@ class Island(SelectCharacter):
                 self.device.click(ISLAND_SHOP_CONFIRM)
                 continue
         else:
-            logger.warning(f"确认购买超时: {item_name or item_button}")
+            logger.warning(f"[岛屿] 确认购买超时: {item_name or item_button}")
             return False
 
         if self.appear(ISLAND_SHOP_GET):
@@ -859,12 +918,12 @@ class Island(SelectCharacter):
 
             if not in_select_product and tab_check is not None and in_tab:
                 if tab_click_count:
-                    logger.info(f"补货商店页签检测成功: {tab_check}，点击 {tab_click_count} 次")
+                    logger.info(f"[岛屿] 补货商店页签检测成功: {tab_check}，点击 {tab_click_count} 次")
                 return True
             if not in_select_product and tab_button is not None and in_shop:
                 tab_click_count += 1
                 logger.info(
-                    f"补货商店页签检测失败，点击页签: {tab_button} -> {tab_check}，第 {tab_click_count} 次"
+                    f"[岛屿] 补货商店页签检测失败，点击页签: {tab_button} -> {tab_check}，第 {tab_click_count} 次"
                 )
                 self.device.click(tab_button)
                 self.device.sleep(1)
@@ -887,7 +946,7 @@ class Island(SelectCharacter):
                 self.device.sleep(0.5)
                 continue
 
-        logger.warning("从岗位产品选择页进入补货商店超时")
+        logger.warning("[岛屿] 从岗位产品选择页进入补货商店超时")
         return False
 
     @staticmethod
@@ -1029,10 +1088,10 @@ class Island(SelectCharacter):
 
         current = self.parse_select_product_material_current(result)
         if current is not None:
-            logger.warning(f"岗位派遣页材料数量未识别到分隔符，使用兜底结果: {result}")
+            logger.warning(f"[岛屿] 岗位派遣页材料数量未识别到分隔符，使用兜底结果: {result}")
             return current, str(current)
 
-        logger.warning(f"岗位派遣页材料数量识别失败: {result}")
+        logger.warning(f"[岛屿] 岗位派遣页材料数量识别失败: {result}")
         return 0, '0'
 
     def ocr_select_product_material(self, expected_quantity=None):
@@ -1051,7 +1110,7 @@ class Island(SelectCharacter):
             required = sum(required_numbers)
 
         if current is None:
-            logger.warning(f"岗位派遣页材料数量识别失败: {result}")
+            logger.warning(f"[岛屿] 岗位派遣页材料数量识别失败: {result}")
         return current, required
 
     def back_to_select_product_after_shop(self, back_button=ISLAND_BACK):
@@ -1068,7 +1127,7 @@ class Island(SelectCharacter):
             if self.appear_then_click(back_button, offset=(20, 20), interval=1):
                 continue
 
-        logger.warning("从补货商店返回岗位产品选择页超时")
+        logger.warning("[岛屿] 从补货商店返回岗位产品选择页超时")
         return False
 
     def ensure_select_product_material(self, item_button, required_quantity, shop_check,
@@ -1082,13 +1141,13 @@ class Island(SelectCharacter):
         required_quantity = max(1, int(required_quantity))
         current_quantity, counter_text = self.ocr_select_product_material_detail(expected_quantity=required_quantity)
         display_name = item_name or getattr(item_button, 'name', '材料')
-        logger.info(f"{display_name}页面材料: {counter_text}，当前库存: {current_quantity}，目标库存: {required_quantity}")
+        logger.info(f"[岛屿] {display_name}页面材料: {counter_text}，当前库存: {current_quantity}，目标库存: {required_quantity}")
 
         if current_quantity >= required_quantity:
             return False
 
         buy_quantity = required_quantity - current_quantity
-        logger.info(f"{display_name}数量不足，进入商店补买 {buy_quantity} 个")
+        logger.info(f"[岛屿] {display_name}数量不足，进入商店补买 {buy_quantity} 个")
         if not self.goto_shop_from_select_product(
             shop_check=shop_check,
             tab_check=tab_check,
@@ -1109,7 +1168,7 @@ class Island(SelectCharacter):
 
     def goto_mill(self, max_attempts=3):
         for attempt in range(max_attempts):
-            logger.info(f"尝试前往磨坊，第{attempt + 1}次尝试")
+            logger.info(f"[岛屿] 尝试前往磨坊，第{attempt + 1}次尝试")
             if not self.island_map_goto('farm'):
                 continue
             self.island_up(800)
@@ -1121,8 +1180,8 @@ class Island(SelectCharacter):
                 if self.appear_then_click(ISLAND_MILL, interval=1):
                     continue
                 if self.appear(ISLAND_MILL_CHECK):
-                    logger.info("成功到达磨坊")
+                    logger.info("[岛屿] 成功到达磨坊")
                     return True
-            logger.info("超时，重新尝试")
-        logger.info(f"尝试{max_attempts}次后仍然失败")
+            logger.info("[岛屿] 超时，重新尝试")
+        logger.info(f"[岛屿] 尝试{max_attempts}次后仍然失败")
         return False

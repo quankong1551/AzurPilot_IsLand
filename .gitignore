@@ -19,6 +19,8 @@ dev_tools/debug_tools
 *.lock
 config/reloadflag
 config/reloadalas
+config/webui-dependency-sync-pending
+/password.txt
 test.py
 test/
 !test/
@@ -44,6 +46,8 @@ docs/
 .idea/**/shelf
 
 # Generated files
+.github/scripts/node_modules/
+.github/scripts/package-lock.json
 .idea/**/contentModel.xml
 
 # Sensitive or high-churn files

@@ -1,3 +1,15 @@
+"""手动配置定义模块。
+
+定义非自动生成的硬编码配置项，包括：
+- 服务器信息和资源文件路径
+- UI 按钮的服务器特定偏移量
+- 任务调度的默认优先级逻辑
+- 各功能模块的配置属性访问器
+
+此文件中的配置项需要手动维护，不随 config_updater.py 自动更新。
+配置属性通过 `@property` 装饰器暴露，供 AzurLaneConfig 通过多重继承访问。
+"""
+
 try:
     from pywebio.io_ctrl import Output
 except ImportError:
@@ -14,11 +26,23 @@ if TYPE_CHECKING:
 
 # 此文件定义了手动配置项。
 # 包含了非自动生成的硬编码设置，如资源文件路径、UI 按钮偏移量以及任务调度的默认优先级逻辑。
+from module.config.deep import deep_get
 from module.config.utils import *
+from module.config.task_priority import get_scheduler_tasks, merge_task_priority
 import module.config.server as server
 
 
 class ManualConfig:
+    """手动配置基类。
+
+    提供 AzurLaneConfig 中不通过代码生成器创建的配置属性。
+    这些属性包括：
+    - 服务器标识（SERVER）
+    - 任务调度优先级（_DEFAULT_SCHEDULER_PRIORITY）
+    - 各功能模块的配置访问器（如 Research_PresetFilter、Fleet_FleetOrder 等）
+
+    通过多重继承被 AzurLaneConfig 组合使用。
+    """
     if TYPE_CHECKING:
         def cross_get(self, keys: list[str], default: Any = None) -> Any: ...
         YukikazeTaskManager_TaskPriorityAdjustment: str | None
@@ -39,6 +63,7 @@ class ManualConfig:
     > Minigame > Awaken
     > OpsiAshBeacon
     > OpsiDaily > OpsiShop > OpsiVoucher
+    > OpsiScheduling
     > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
     > Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss
     > Sos > EventSp > EventA > EventB > EventC > EventD
@@ -46,7 +71,7 @@ class ManualConfig:
     > IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant
     > IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture
     > IslandAirDrop > IslandBusiness
-    > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3
+    > Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > CoalitionScuttle > RaidScuttle > Main > Main2 > Main3
     > OpsiMeowfficerFarming
     > GemsFarming
     > Ambush11
@@ -96,16 +121,19 @@ class ManualConfig:
         if not task_adj:
             task_adj = getattr(self, "YukikazeTaskManager_TaskPriorityAdjustment", None)
 
-        default_priority = self._normalize_scheduler_priority(
-            getattr(self, "_DEFAULT_SCHEDULER_PRIORITY", "")
-        )
-        custom_priority = self._normalize_scheduler_priority(task_adj)
+        try:
+            args = read_file(filepath_args())
+            default_priority = deep_get(
+                args,
+                "General.YukikazeTaskManager.TaskPriorityAdjustment.value",
+                getattr(self, "_DEFAULT_SCHEDULER_PRIORITY", ""),
+            )
+            available_tasks = get_scheduler_tasks(args)
+        except Exception:
+            default_priority = getattr(self, "_DEFAULT_SCHEDULER_PRIORITY", "")
+            available_tasks = None
 
-        if custom_priority and default_priority:
-            # Always insert an explicit separator so the last custom token
-            # cannot merge with the first default token.
-            return f"{custom_priority}\n>\n{default_priority}"
-        return custom_priority or default_priority
+        return merge_task_priority(task_adj, default_priority, available_tasks)
 
     """
     module.assets
@@ -200,7 +228,7 @@ class ManualConfig:
     MAP_CHAPTER_SWITCH_20260326 = False
     # Since event_20241219_cn chapter B unlocks event startup
     # which means chapter AB are continuous
-    STAGE_INCREASE_AB = False
+    STAGE_INCREASE_AB = True
     # Insert anything to STAGE_INCREASE
     STAGE_INCREASE_CUSTOM = ''
     MAP_HAS_CLEAR_PERCENTAGE = True

@@ -1,3 +1,9 @@
+"""大世界模拟器可视化模块。
+
+提供大世界模拟器的图表绘制功能，包括单样本轨迹图、
+多轮模拟的行动力/代币/完成海域数分布直方图以及
+综合报告图，使用 matplotlib 生成并保存为 PNG 图像。
+"""
 import os
 import numpy as np
 import matplotlib
@@ -26,7 +32,7 @@ class OSSimulatorPlotter:
         """
         绘制单样本轨迹图。
         """
-        self.logger.info("正在生成单样本轨迹图...")
+        self.logger.info("[大世界模拟器] 正在生成单样本轨迹图...")
         
         fig, ax1 = plt.subplots(figsize=(18, 6))
         
@@ -68,13 +74,13 @@ class OSSimulatorPlotter:
                 ax1.axvspan(start_t, times[-1], facecolor='red', alpha=0.15)
                 
         cl1_patch = mpatches.Patch(color='green', alpha=0.15, label='侵蚀1')
-        meow_patch = mpatches.Patch(color='orange', alpha=0.15, label='短猫')
+        meow_patch = mpatches.Patch(color='orange', alpha=0.15, label='耄耋相接')
         crash_patch = mpatches.Patch(color='red', alpha=0.15, label='坠机')
         
         lines1, labels1 = ax1.get_legend_handles_labels()
         lines2, labels2 = ax2.get_legend_handles_labels()
         ax1.legend(lines1 + lines2 + [cl1_patch, meow_patch, crash_patch], 
-                labels1 + labels2 + ['侵蚀1', '短猫', '坠机'], 
+                labels1 + labels2 + ['侵蚀1', '耄耋相接', '坠机'],
                 loc='upper left')
 
         plt.title('大世界模拟器: 单样本轨迹图')
@@ -86,7 +92,7 @@ class OSSimulatorPlotter:
         """
         多样本模式：绘制所有样本的平均值和标准差随时间变化的轨迹图。
         """
-        self.logger.info("正在生成多样本平均轨迹图...")
+        self.logger.info("[大世界模拟器] 正在生成多样本平均轨迹图...")
         
         fig, ax1 = plt.subplots(figsize=(18, 6))
         
@@ -132,6 +138,6 @@ class OSSimulatorPlotter:
         os.makedirs('./log/oss/figures', exist_ok=True)
         self.result_figure_path = f'./log/oss/figures/{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_{name}.png'
         plt.savefig(self.result_figure_path)
-        self.logger.info(f"图表已保存至: {self.result_figure_path}")
+        self.logger.info(f"[大世界模拟器] 图表已保存至: {self.result_figure_path}")
         plt.close()
         return self.result_figure_path

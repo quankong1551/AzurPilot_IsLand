@@ -1,3 +1,7 @@
+"""大舰队奖励任务入口，统一调度大厅、后勤和作战三个子任务。
+从主页面进入大舰队，依次执行各子任务后返回。
+"""
+
 from module.guild.lobby import GuildLobby
 from module.guild.logistics import GuildLogistics
 from module.guild.operations import GuildOperations
@@ -21,23 +25,19 @@ class RewardGuild(GuildLobby, GuildLogistics, GuildOperations):
             self.config.task_stop()
 
         self.ui_ensure(page_guild)
-        success = True
 
         # Lobby
         self.guild_lobby()
 
         # Logistics
         if self.config.GuildLogistics_Enable:
-            success &= self.guild_logistics()
+            self.guild_logistics()
 
         # Operation
         if self.config.GuildOperation_Enable:
-            success &= self.guild_operations()
+            self.guild_operations()
 
         self.ui_goto(page_main)
 
         # Scheduler
-        if success:
-            self.config.task_delay(server_update=True)
-        else:
-            self.config.task_delay(success=False, server_update=True)
+        self.config.task_delay(server_update=True)

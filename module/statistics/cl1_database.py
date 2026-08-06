@@ -1,15 +1,21 @@
+"""CL1 数据库模块。
+
+使用 SQLite 本地存储战斗统计和掉落数据，支持 AES 加密传输。
+提供设备识别、数据序列化和与 AzurStats 云端同步的功能。
+"""
+
 # -*- coding: utf-8 -*-
 import sqlite3
 import json
 import os
 from contextlib import closing, suppress
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA256
-
+from collections import defaultdict
 from module.base.device_id import get_device_id, get_old_device_id
 from module.logger import logger
 
@@ -72,7 +78,7 @@ class Cl1Database:
         Args:
             instance: 实例名称
             source: 数据来源 (cl1 / meow)
-            hazard_level: 侵蚀等级（短猫专用）
+            hazard_level: 侵蚀等级（耄耋相接专用）
         """
         month = datetime.now().strftime("%Y-%m")
         data = self.get_stats(instance, month)
@@ -129,7 +135,7 @@ class Cl1Database:
         try:
             self.db_dir.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            logger.error(f"创建数据库目录失败: {e}")
+            logger.error(f"[Statistics] 创建数据库目录失败: {e}")
 
     def _init_db(self):
         """初始化数据库表，并兼容旧版 encrypted_blob 结构。"""
@@ -198,7 +204,7 @@ class Cl1Database:
                 if not rows:
                     return
 
-                logger.info(f"开始解密旧版 CL1 数据库，条目数: {len(rows)}")
+                logger.info(f"[Statistics] 开始解密旧版 CL1 数据库，条目数: {len(rows)}")
                 updated_rows = []
                 clear_rows = []
                 failed_rows = []
@@ -236,13 +242,13 @@ class Cl1Database:
 
                 migrated = len(updated_rows) + len(clear_rows)
                 if migrated:
-                    logger.info(f"旧版 CL1 数据库解密迁移完成，条目数: {migrated}")
+                    logger.info(f"[Statistics] 旧版 CL1 数据库解密迁移完成，条目数: {migrated}")
                 if failed_rows:
                     logger.warning(
-                        f"旧版 CL1 数据库有 {len(failed_rows)} 条记录解密失败"
+                        f"[Statistics] 旧版 CL1 数据库有 {len(failed_rows)} 条记录解密失败"
                     )
         except Exception as e:
-            logger.error(f"解密旧版 CL1 数据库失败: {e}")
+            logger.error(f"[Statistics] 解密旧版 CL1 数据库失败: {e}")
 
     def _move_legacy_db(self):
         """将旧位置的 CL1 数据库移动到 config 目录后再初始化表结构。"""
@@ -259,7 +265,7 @@ class Cl1Database:
                     f"已移动旧版 CL1 数据库: {old_db_path} -> {self.db_path}"
                 )
             except Exception as e:
-                logger.error(f"移动旧版 CL1 数据库失败: {e}")
+                logger.error(f"[Statistics] 移动旧版 CL1 数据库失败: {e}")
 
     def _serialize_data(self, data: Dict[str, Any]) -> str:
         """将统计数据序列化为明文 JSON。"""
@@ -272,7 +278,7 @@ class Cl1Database:
         try:
             data = json.loads(data_json)
         except Exception as e:
-            logger.warning(f"读取 CL1 明文 JSON 失败: {e}")
+            logger.warning(f"[Statistics] 读取 CL1 明文 JSON 失败: {e}")
             return None
         return data if isinstance(data, dict) else None
 
@@ -321,7 +327,7 @@ class Cl1Database:
                         self.save_stats(instance, month, data)
                         return data
         except Exception as e:
-            logger.error(f"查询统计数据失败 {instance} {month}: {e}")
+            logger.error(f"[Statistics] 查询统计数据失败 {instance} {month}: {e}")
 
         return self._empty_data(month)
 
@@ -333,11 +339,11 @@ class Cl1Database:
             "akashi_ap_entries": [],
             "yellow_coin_snapshots": [],
             "coins_snapshots": [],
-            # 短猫数据
+            # 耄耋相接数据
             "meow_battle_raw_count": 0,
             "meow_battle_count": 0,
             "meow_round_times": [],
-            "meow_battle_times": [],  # 短猫单场战斗时间
+            "meow_battle_times": [],  # 耄耋相接单场战斗时间
             "meow_hazard_stats": {},  # 按侵蚀等级拆分统计
             # 塞壬研究装置（吊机）
             "siren_research_devices": {"cl1": 0, "meow": {}},
@@ -349,7 +355,7 @@ class Cl1Database:
     def _normalize_meow_round_times(
         self, round_times: List[Any]
     ) -> List[Dict[str, Any]]:
-        """兼容旧格式短猫轮次样本，统一为字典结构。"""
+        """兼容旧格式耄耋相接轮次样本，统一为字典结构。"""
         normalized_times = []
         for entry in round_times:
             if isinstance(entry, dict) and "duration" in entry:
@@ -362,7 +368,7 @@ class Cl1Database:
         return normalized_times
 
     def _extract_meow_round_durations(self, round_times: List[Any]) -> List[float]:
-        """提取短猫轮次耗时，兼容旧格式浮点样本。"""
+        """提取耄耋相接轮次耗时，兼容旧格式浮点样本。"""
         return [
             entry["duration"] for entry in self._normalize_meow_round_times(round_times)
         ]
@@ -375,7 +381,7 @@ class Cl1Database:
     def _normalize_meow_hazard_stats(
         self, data: Dict[str, Any]
     ) -> Dict[str, Dict[str, Any]]:
-        """兼容旧格式的分级短猫统计结构。"""
+        """兼容旧格式的分级耄耋相接统计结构。"""
         raw_stats = data.get("meow_hazard_stats", {})
         if not isinstance(raw_stats, dict):
             return {}
@@ -456,7 +462,7 @@ class Cl1Database:
     def _infer_meow_battles_per_round(
         self, round_times: List[Any]
     ) -> Tuple[Optional[int], Optional[float]]:
-        """从短猫样本推断每轮战斗数。"""
+        """从耄耋相接样本推断每轮战斗数。"""
         hazard_levels = []
         for entry in round_times:
             if isinstance(entry, dict):
@@ -496,7 +502,7 @@ class Cl1Database:
         month_key: Optional[str] = None,
         persist: bool = False,
     ) -> Tuple[int, float, bool]:
-        """兼容旧数据并修正短猫真实战斗场次与等效轮次。"""
+        """兼容旧数据并修正耄耋相接真实战斗场次与等效轮次。"""
         inferred_divisor, inferred_battles_per_round = (
             self._infer_meow_battles_per_round(round_times)
         )
@@ -565,13 +571,13 @@ class Cl1Database:
                     )
                 return [(row[0], row[1]) for row in cursor.fetchall()]
         except Exception as e:
-            logger.error(f"列出统计数据失败: {e}")
+            logger.error(f"[Statistics] 列出统计数据失败: {e}")
             return []
 
     def backfill_meow_stats(
         self, instance: str, year: int = None, month: int = None
     ) -> bool:
-        """显式回填指定月份的短猫统计。
+        """显式回填指定月份的耄耋相接统计。
 
         仅在主动调用时落盘，避免读取统计时产生写入副作用。
         """
@@ -598,7 +604,7 @@ class Cl1Database:
         return changed
 
     def backfill_all_meow_stats(self, instance: Optional[str] = None) -> Dict[str, int]:
-        """批量回填数据库内已有月份的短猫统计。"""
+        """批量回填数据库内已有月份的耄耋相接统计。"""
         rows = self._list_stats_rows(instance=instance)
         result = {"checked": 0, "updated": 0}
 
@@ -636,7 +642,7 @@ class Cl1Database:
                 )
                 conn.commit()
         except Exception as e:
-            logger.error(f"保存统计数据失败 {instance} {month}: {e}")
+            logger.error(f"[Statistics] 保存统计数据失败 {instance} {month}: {e}")
 
     def increment_battle_count(self, instance: str, delta: int = 1):
         """增加战斗次数"""
@@ -675,7 +681,7 @@ class Cl1Database:
         self.save_stats(instance, month, data)
 
     def add_ap_snapshot(self, instance: str, ap_current: int, source: str = "cl1", distance: int = None, ap_total: int = None):
-        """记录行动力快照（真实剩余体力），并计算虚拟资产
+        """记录行动力快照（真实剩余体力），并计算资产
 
         Args:
             instance: 实例名称
@@ -688,18 +694,8 @@ class Cl1Database:
         data = self.get_stats(instance, month)
         now = datetime.now()
 
-        # 计算虚拟资产
-        # 虚拟资产 = AP × (1700/30) + YellowCoins + (到月底时间/10分钟) × (1700/30)
-        from calendar import monthrange
-
-        year, month_num = now.year, now.month
-        last_day = monthrange(year, month_num)[1]
-        month_end = datetime(year, month_num, last_day, 23, 59, 59)
-        time_to_month_end_sec = (month_end - now).total_seconds()
-
         # CL5 效率：1700 / 30 ≈ 56.67
         cl5_efficiency = 1700.0 / 30.0
-        virtual_asset_added = (time_to_month_end_sec / 600.0) * cl5_efficiency
 
         # 获取最近的黄币值
         yellow_coin = 0
@@ -714,15 +710,12 @@ class Cl1Database:
             ap_total = self._coerce_int(ap_total)
         ap_for_asset = ap_total if ap_total is not None else ap_current
         asset = ap_for_asset * cl5_efficiency + yellow_coin
-        # 虚拟资产 = 资产 + 时间加成
-        virtual_asset = asset + virtual_asset_added
 
         snapshot = {
             "ts": now.isoformat(),
             "ap": ap_current,
             "yellow_coin": yellow_coin,
             "asset": round(asset, 2),
-            "virtual_asset": round(virtual_asset, 2),
             "source": source,
         }
         if distance is not None:
@@ -734,6 +727,25 @@ class Cl1Database:
         snapshots.append(snapshot)
         data["ap_snapshots"] = snapshots
         self.save_stats(instance, month, data)
+
+    def get_last_ap_snapshot(self, instance: str) -> Optional[Dict[str, Any]]:
+        """获取最近一次行动力快照，优先读取当前月份，必要时回退到历史月份。"""
+        current_month = datetime.now().strftime("%Y-%m")
+        current_data = self.get_stats(instance, current_month)
+        snapshots = current_data.get("ap_snapshots", [])
+        if snapshots:
+            return snapshots[-1]
+
+        rows = self._list_stats_rows(instance=instance)
+        for _, month_key in reversed(rows):
+            if month_key == current_month:
+                continue
+            data = self.get_stats(instance, month_key)
+            snapshots = data.get("ap_snapshots", [])
+            if snapshots:
+                return snapshots[-1]
+
+        return None
 
     def get_last_ap_notification(self, instance: str) -> Optional[Dict[str, Any]]:
         """获取最近一次成功推送时记录的行动力值。"""
@@ -859,7 +871,7 @@ class Cl1Database:
         if not json_path.exists():
             return
 
-        logger.info(f"开始从 JSON 迁移 CL1 数据: {json_path}, instance={instance}")
+        logger.info(f"[Statistics] 开始从 JSON 迁移 CL1 数据: {json_path}, instance={instance}")
         try:
             with json_path.open("r", encoding="utf-8") as f:
                 old_data = json.load(f)
@@ -885,7 +897,7 @@ class Cl1Database:
                     )
                     if c.fetchone():
                         logger.info(
-                            f"数据库中已存在 {instance} {month}，跳过迁移"
+                            f"[Statistics] 数据库中已存在 {instance} {month}，跳过迁移"
                         )
                         continue
 
@@ -898,12 +910,12 @@ class Cl1Database:
                 )
 
                 self.save_stats(instance, month, new_stats)
-                logger.info(f"已迁移 {instance} {month}")
+                logger.info(f"[Statistics] 已迁移 {instance} {month}")
 
             # 迁移成功后可以删除 JSON 或重命名 (此处建议重命名为 .bak 以防万一)
             bak_path = json_path.with_suffix(".json.bak")
             json_path.replace(bak_path)
-            logger.info(f"已将旧 JSON 重命名为 {bak_path}")
+            logger.info(f"[Statistics] 已将旧 JSON 重命名为 {bak_path}")
 
         except Exception as e:
             logger.exception(f"从 JSON 迁移 CL1 数据失败: {e}")
@@ -922,10 +934,10 @@ class Cl1Database:
             try:
                 shutil.move(str(old_db_path), str(self.db_path))
                 logger.info(
-                    f"Moved old CL1 database from {old_db_path} to {self.db_path}"
+                    f"Moved old CL1数据库 from {old_db_path} to {self.db_path}"
                 )
             except Exception as e:
-                logger.error(f"Failed to move old CL1 database: {e}")
+                logger.error(f"[统计-数据库] 移动旧CL1数据库失败: {e}")
 
         if not old_db_dir.exists():
             return
@@ -939,14 +951,14 @@ class Cl1Database:
                         # logger.info(f"Found legacy data for instance: {instance_dir.name}")
                         self.migrate_from_json(json_file, instance_dir.name)
         except Exception as e:
-            logger.error(f"Error during auto migration scan: {e}")
+            logger.error(f"[统计-数据库] 自动迁移扫描错误: {e}")
 
-    # ========== 短猫数据记录方法 ==========
+    # ========== 耄耋相接数据记录方法 ==========
 
     def increment_meow_battle_count(
         self, instance: str, hazard_level: int = None, delta: float = None
     ):
-        """增加短猫有效战斗轮数
+        """增加耄耋相接有效战斗轮数
 
         Args:
             instance: 实例名称
@@ -987,7 +999,7 @@ class Cl1Database:
     def add_meow_round_time(
         self, instance: str, duration: float, hazard_level: int = None
     ):
-        """记录短猫单轮战斗时间
+        """记录耄耋相接单轮战斗时间
 
         Args:
             instance: 实例名称
@@ -1031,7 +1043,7 @@ class Cl1Database:
     def add_meow_battle_time(
         self, instance: str, duration: float, hazard_level: int = None
     ):
-        """记录短猫单场战斗时间
+        """记录耄耋相接单场战斗时间
 
         Args:
             instance: 实例名称
@@ -1073,7 +1085,7 @@ class Cl1Database:
         self, instance: str, year: int = None, month: int = None,
         hazard_level: int = None,
     ) -> Dict[str, Any]:
-        """获取短猫统计数据
+        """获取耄耋相接统计数据
 
         Args:
             instance: 实例名称
@@ -1082,7 +1094,7 @@ class Cl1Database:
             hazard_level: 侵蚀等级，传入时只返回对应等级的数据
 
         Returns:
-            短猫统计数据字典
+            耄耋相接统计数据字典
         """
         if year is None or month is None:
             now = datetime.now()
@@ -1370,6 +1382,82 @@ class Cl1Database:
             entries = entries[-5000:]
         data["commission_income_entries"] = entries
         self.save_stats(instance, month, data)
+
+    def get_commission_reward_stats(self, instance: str):
+        """
+        获取委托奖励统计
+
+        Returns:
+            {
+                "today": {...},
+                "week": {...},
+                "month": {...},
+            }
+        """
+        now = datetime.now()
+        today = now.date()
+        week_start = today - timedelta(days=today.weekday())
+
+        entries = []
+
+        entries.extend(
+            self.get_commission_income(
+                instance,
+                year=now.year,
+                month=now.month,
+            )
+        )
+
+        # 周跨月
+        if week_start.month != now.month or week_start.year != now.year:
+            prev_month_date = now.replace(day=1) - timedelta(days=1)
+            entries.extend(
+                self.get_commission_income(
+                    instance,
+                    year=prev_month_date.year,
+                    month=prev_month_date.month,
+                )
+            )
+
+        result = {
+            "today": defaultdict(int),
+            "week": defaultdict(int),
+            "month": defaultdict(int),
+        }
+
+        for entry in entries:
+            try:
+                ts = datetime.fromisoformat(entry.get("ts", ""))
+                items = entry.get("items", {})
+
+                if not isinstance(items, dict):
+                    continue
+
+                for item, value in items.items():
+                    value = self._coerce_int(value)
+
+                    if ts.year == now.year and ts.month == now.month:
+                        result["month"][item] += value
+
+                    if ts.date() == today:
+                        result["today"][item] += value
+
+                    if week_start <= ts.date() <= today:
+                        result["week"][item] += value
+
+            except Exception:
+                continue
+
+        # 保留常用字段，兼容旧代码
+        for period in ("today", "week", "month"):
+            result[period].setdefault("Gem", 0)
+            result[period].setdefault("Cube", 0)
+
+        return {
+            "today": dict(result["today"]),
+            "week": dict(result["week"]),
+            "month": dict(result["month"]),
+        }
 
     def get_commission_income(
         self, instance: str, year: int = None, month: int = None

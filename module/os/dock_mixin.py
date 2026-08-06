@@ -1,3 +1,15 @@
+"""大世界船坞操作 Mixin。
+
+提供大世界舰队配队时的船坞界面操作功能。
+通过网格索引选择指定位置的舰船，支持 14 个网格位置（两排各 7 个）。
+
+继承自 Dock 类，复用船坞界面的基础操作。
+
+网格布局：
+    0-6:  第一排（从左到右）
+    7-13: 第二排（从左到右）
+"""
+
 from module.logger import logger
 from module.retire.dock import CARD_GRIDS, Dock
 
@@ -23,7 +35,7 @@ class DockMixin(Dock):
             bool: 是否成功选择舰船
         """
         if grid_index < 0 or grid_index >= 14:
-            logger.warning(f"无效的网格索引: {grid_index}")
+            logger.warning(f"[大世界] 无效的网格索引: {grid_index}")
             return False
         
         if grid_index < 7:
@@ -35,5 +47,5 @@ class DockMixin(Dock):
         
         button = CARD_GRIDS[(x, y)]
         self.device.click(button)
-        logger.info(f"选择船坞第 {y+1} 排第 {x+1} 艘舰船")
+        logger.info(f"[大世界] 选择船坞第 {y+1} 排第 {x+1} 艘舰船")
         return True

@@ -5,6 +5,7 @@ from deploy.Windows.config import DeployConfig
 from deploy.Windows.logger import Progress, logger
 from deploy.Windows.utils import cached_property
 from deploy.git_over_cdn.client import GitOverCdnClient
+from deploy.git_over_cdn.endpoints import CLOUDFLARE_UPDATE_URLS, FALLBACK_UPDATE_URLS
 
 
 class GitConfigParser(configparser.ConfigParser):
@@ -117,10 +118,8 @@ class GitManager(DeployConfig):
     @property
     def goc_client(self):
         client = GitOverCdnClient(
-            url=[
-                'https://alas.nanoda.work/upd',
-                'https://1825239988.v.123pan.cn/1825239988/azur/AzurPilot_master',
-            ],
+            url=CLOUDFLARE_UPDATE_URLS,
+            fallback_urls=FALLBACK_UPDATE_URLS,
             folder=self.root_filepath,
             source='origin',
             branch='master',

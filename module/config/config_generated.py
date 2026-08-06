@@ -84,12 +84,17 @@ class GeneratedConfig:
     Scheduler_ServerUpdate = '00:00'
     Scheduler_Sensitive = False  # True, False
 
+    # 配置组 `Restart`
+    Restart_RandomDelay = '5, 50'
+    Restart_ClearCache = False  # True, False
+
     # 配置组 `Emulator`
     Emulator_Serial = 'auto'
     Emulator_PackageName = 'auto'  # auto, com.bilibili.azurlane, com.YoStarEN.AzurLane, com.YoStarJP.AzurLane, com.hkmanjuu.azurlane.gp, com.bilibili.blhx.huawei, com.bilibili.blhx.honor, com.bilibili.blhx.mi, com.tencent.tmgp.bilibili.blhx, com.bilibili.blhx.baidu, com.bilibili.blhx.qihoo, com.bilibili.blhx.nearme.gamecenter, com.bilibili.blhx.vivo, com.bilibili.blhx.mz, com.bilibili.blhx.dl, com.bilibili.blhx.lenovo, com.bilibili.blhx.uc, com.bilibili.blhx.mzw, com.yiwu.blhx.yx15, com.bilibili.blhx.m4399, com.bilibili.blhx.bilibiliMove, com.hkmanjuu.azurlane.gp.mc
-    Emulator_ServerName = 'disabled'  # disabled, cn_android-0, cn_android-1, cn_android-2, cn_android-3, cn_android-4, cn_android-5, cn_android-6, cn_android-7, cn_android-8, cn_android-9, cn_android-10, cn_android-11, cn_android-12, cn_android-13, cn_android-14, cn_android-15, cn_android-16, cn_android-17, cn_android-18, cn_android-19, cn_android-20, cn_android-21, cn_android-22, cn_android-23, cn_android-24, cn_android-25, cn_android-26, cn_android-27, cn_android-28, cn_ios-0, cn_ios-1, cn_ios-2, cn_ios-3, cn_ios-4, cn_ios-5, cn_ios-6, cn_ios-7, cn_ios-8, cn_ios-9, cn_ios-10, cn_channel-0, cn_channel-1, cn_channel-2, cn_channel-3, cn_channel-4, cn_channel-5, en-0, en-1, en-2, en-3, en-4, en-5, jp-0, jp-1, jp-2, jp-3, jp-4, jp-5, jp-6, jp-7, jp-8, jp-9, jp-10, jp-11, jp-12, jp-13, jp-14, jp-15, jp-16, jp-17
+    Emulator_ServerName = 'disabled'  # disabled, cn_android-0, cn_android-1, cn_android-2, cn_android-3, cn_android-4, cn_android-5, cn_android-6, cn_android-7, cn_android-8, cn_android-9, cn_android-10, cn_android-11, cn_android-12, cn_android-13, cn_android-14, cn_android-15, cn_android-16, cn_android-17, cn_android-18, cn_android-19, cn_android-20, cn_android-21, cn_android-22, cn_android-23, cn_android-24, cn_android-25, cn_android-26, cn_android-27, cn_android-28, cn_android-29, cn_ios-0, cn_ios-1, cn_ios-2, cn_ios-3, cn_ios-4, cn_ios-5, cn_ios-6, cn_ios-7, cn_ios-8, cn_ios-9, cn_ios-10, cn_channel-0, cn_channel-1, cn_channel-2, cn_channel-3, cn_channel-4, cn_channel-5, en-0, en-1, en-2, en-3, en-4, en-5, jp-0, jp-1, jp-2, jp-3, jp-4, jp-5, jp-6, jp-7, jp-8, jp-9, jp-10, jp-11, jp-12, jp-13, jp-14, jp-15, jp-16, jp-17
     Emulator_ScreenshotMethod = 'auto'  # auto, ADB, ADB_nc, uiautomator2, aScreenCap, aScreenCap_nc, DroidCast, DroidCast_raw, nemu_ipc, ldopengl
     Emulator_ControlMethod = 'MaaTouch'  # ADB, uiautomator2, minitouch, Hermit, MaaTouch
+    Emulator_GameSettings = False  # True, False
     Emulator_ScreenshotDedithering = False
     Emulator_AdbRestart = False
 
@@ -117,16 +122,22 @@ class GeneratedConfig:
     Error_AdbOfflineRestart = False
     Error_AdbOfflineThreshold = 3
     Error_LlmAnalysis = True
-    Error_LlmApiKey = 'sk-O6ZQRe5T4NJVV8gdVTFHTZAI3Q8ZKtJMWdrrKeGljw3zUX4b'
-    Error_LlmApiBase = 'https://api.nanoda.work/v1'
-    Error_LlmModel = 'Nvidia/qwen/qwen2.5-coder-32b-instruct'
+    Error_LlmApiKey = None
+    Error_LlmApiBase = 'https://api.xiaomimimo.com/v1'
+    Error_LlmModel = 'mimo-v2.5-pro'
 
     # 配置组 `Optimization`
-    Optimization_OcrDevice = 'auto'  # auto, cpu, gpu, ane
+    Optimization_OcrDevice = 'auto'  # auto, qnn_npu, openvino_npu, openvino_gpu, gpu, openvino_cpu, cpu, ane
     Optimization_OcrBackend = 'auto'  # auto, onnxruntime, ncnn
+    Optimization_OcrWindowsMlVendorEp = True  # True, False
+    Optimization_OcrModelVersionEnglish = 'auto'  # auto, alocr_en_900k, azur_lane_v6_6, azur_lane_v6_5, ppocr_v6, alocr_en_v2_6, alocr_en_v2_0, alocr_en_v1_0
+    Optimization_OcrModelVersionChinese = 'auto'  # auto, cn_v6_1, cn_v6, ppocr_v6, alocr_cn_v3, alocr_cn_v2_5
+    Optimization_OcrModelVersionJapanese = 'auto'  # auto, azur_lane_jp_v6, ppocr_v6
+    Optimization_OcrModelVersionTraditionalChinese = 'auto'  # auto, ppocr_v6
     Optimization_ScreenshotInterval = 0.3
     Optimization_CombatScreenshotInterval = 1.0
     Optimization_TaskHoardingDuration = 0
+    Optimization_CloseEmulatorDuringLongWait = True  # True, False
     Optimization_WhenTaskQueueEmpty = 'goto_main'  # stay_there, goto_main, close_game
 
     # 配置组 `DropRecord`
@@ -161,7 +172,7 @@ class GeneratedConfig:
     PublicEmotion_FleetOnsen = False
 
     # 配置组 `YukikazeTaskManager`
-    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost'
+    YukikazeTaskManager_TaskPriorityAdjustment = 'Restart\n> OpsiCrossMonth\n> Commission > Tactical > Research\n> Exercise\n> Dorm > Meowfficer > Guild > Gacha\n> Reward\n> ShopFrequent > ShopOnce > Shipyard > Freebies\n> PrivateQuarters\n> OpsiExplore\n> OpsiPreventActionPointOverflow\n> Minigame > Awaken\n> OpsiAshBeacon\n> OpsiDaily > OpsiShop > OpsiVoucher > EventShop\n> OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive\n> Daily > Hard > OpsiAshBeacon > OpsiAshAssist > OpsiMonthBoss\n> Sos > EventSp > EventA > EventB > EventC > EventD\n> RaidDaily > CoalitionSp > WarArchives > MaritimeEscort\n> IslandJuuEatery > IslandJuuCoffee > IslandGrill > IslandTeahouse > IslandRestaurant\n> IslandFarm > IslandRancher > IslandMineForest > IslandDailyGather > IslandManufacture\n> IslandAirDrop > IslandBusiness > IslandDailyOrder > IslandDailyInteract > IslandPearlSell > IslandCargoPreparation\n> Event > Event2 > Event3 > Raid > Hospital > HospitalEvent > Coalition > RaidScuttle > Main > Main2 > Main3\n> OpsiScheduling\n> OpsiMeowfficerFarming\n> GemsFarming\n> Ambush11\n> OpsiHazard1Leveling\n> ThreeOilLowCost'
 
     # 配置组 `OneClickRetire`
     OneClickRetire_KeepLimitBreak = 'keep_limit_break'  # keep_limit_break, do_not_keep
@@ -188,7 +199,7 @@ class GeneratedConfig:
     Campaign_Use2xBook = False
     Campaign_AmbushEvade = True
     Campaign_UseRecommendFleet = False
-    Campaign_DefeatWithdraw = 'withdraw_continue'  # withdraw_continue, switch_fleet, withdraw_stop
+    Campaign_DefeatWithdraw = 'withdraw_stop'  # withdraw_continue, switch_fleet, withdraw_stop
 
     # 配置组 `StopCondition`
     StopCondition_OilLimit = 1000
@@ -198,6 +209,12 @@ class GeneratedConfig:
     StopCondition_StageIncrease = False
     StopCondition_GetNewShip = False
     StopCondition_ReachLevel = 0
+
+    # 配置组 `WarArchives`
+    WarArchives_DailyRunCount = 0
+    WarArchives_DailyRunCountRemain = 0
+    WarArchives_DailyRunCountRecord = datetime.datetime(2020, 1, 1, 0, 0)
+    WarArchives_DailyRunCountLimit = 0
 
     # 配置组 `Fleet`
     Fleet_Fleet1 = 1  # 1, 2, 3, 4, 5, 6
@@ -209,6 +226,7 @@ class GeneratedConfig:
     Fleet_Fleet2Mode = 'combat_auto'  # combat_auto, combat_manual, stand_still_in_the_middle, hide_in_bottom_left, hide_in_upper_left
     Fleet_Fleet2Step = 2  # 2, 3, 4, 5
     Fleet_FleetOrder = 'fleet1_mob_fleet2_boss'  # fleet1_mob_fleet2_boss, fleet1_boss_fleet2_mob, fleet1_all_fleet2_standby, fleet1_standby_fleet2_all
+    Fleet_SkipPreparation = False
 
     # 配置组 `Submarine`
     Submarine_Fleet = 0  # 0, 1, 2
@@ -268,8 +286,8 @@ class GeneratedConfig:
     GemsFarming_EquipmentCode = 'DD: null\nbogue: null\nhermes: null\nlangley: null\nranger: null'
     GemsFarming_UseEmotionFirst = False
     GemsFarming_IgnoreEmotionWarning = False
-    GemsFarming_ALLowHighFlagshipLevel = False
-    GemsFarming_ALLowLowVanguardLevel = False
+    GemsFarming_AllowHighFlagshipLevel = False
+    GemsFarming_AllowLowVanguardLevel = False
     GemsFarming_DelayTaskIFNoFlagship = False
     GemsFarming_CommissionLimit = False
     GemsFarming_VanguardLevelMin = 1
@@ -309,8 +327,11 @@ class GeneratedConfig:
     MaritimeEscort_Enable = True
 
     # 配置组 `Coalition`
-    Coalition_Mode = 'hard'  # easy, normal, hard, sp
+    Coalition_Mode = 'hard'  # easy, normal, hard, sp, ex
     Coalition_Fleet = 'single'  # single, multi
+
+    # 配置组 `CoalitionScuttle`
+    CoalitionScuttle_Sacrifice = 'vanguard'  # vanguard, flagship, vanguard_flagship
 
     # 配置组 `EventShop`
     EventShop_UnlockSSRShip = True
@@ -323,6 +344,8 @@ class GeneratedConfig:
     Commission_AddShortest = True
     Commission_CustomFilter = 'DailyEvent > Gem-4 > Gem-2 > Gem-8 > ExtraCube-0:30\n> UrgentCube-1:30 > UrgentCube-1:45 > UrgentCube-3\n> ExtraDrill-5:20 > ExtraDrill-2 > ExtraDrill-3:20\n> UrgentCube-2:15 > UrgentCube-4\n> ExtraDrill-1 > UrgentCube-6 > ExtraCube-1:30\n> ExtraDrill-2:40 > ExtraDrill-0:20\n> expire\n> Major > DailyChip > DailyResource\n> ExtraPart-0:30 > ExtraOil-1 > UrgentBox-6\n> ExtraCube-3 > ExtraPart-1 > UrgentBox-3\n> ExtraCube-4 > ExtraPart-1:30 > ExtraOil-4\n> UrgentBox-1 > ExtraCube-5 > UrgentBox-1\n> ExtraCube-8 > ExtraOil-8\n> UrgentDrill-4 > UrgentDrill-2:40 > UrgentDrill-2\n> UrgentDrill-1 > UrgentDrill-1:30 > UrgentDrill-1:10\n> Extra-0:20 > Extra-0:30 > Extra-1:00 > Extra-1:30 > Extra-2:00\n> shortest'
     Commission_DoMajorCommission = False
+    Commission_CommissionNotifyReward = False
+    Commission_CommissionNotifyRewardStatistics = True
 
     # 配置组 `Tactical`
     Tactical_TacticalFilter = 'SameT4 > SameT3 > SameT2 > SameT1\n> BlueT2 > YellowT2 > RedT2\n> BlueT3 > YellowT3 > RedT3\n> BlueT4 > YellowT4 > RedT4\n> BlueT1 > YellowT1 > RedT1\n> first'
@@ -343,12 +366,13 @@ class GeneratedConfig:
 
     # 配置组 `Research`
     Research_UseCube = 'only_05_hour'  # always_use, only_05_hour, only_no_project, do_not_use
-    Research_CubePreserve = 0
     Research_UseCoin = 'always_use'  # always_use, only_05_hour, only_no_project, do_not_use
     Research_UsePart = 'always_use'  # always_use, only_05_hour, only_no_project, do_not_use
     Research_AllowDelay = True
-    Research_PresetFilter = 'series_8_blueprint_305'  # custom, series_8_blueprint_305, series_8_blueprint_only, series_8_305_only, series_7_blueprint_la9, series_7_blueprint_only, series_7_la9_only, series_6_blueprint_203, series_6_blueprint_only, series_6_203_only, series_5_blueprint_152, series_5_blueprint_only, series_5_152_only, series_4_blueprint_tenrai, series_4_blueprint_only, series_4_tenrai_only, series_3_blueprint_234, series_3_blueprint_only, series_3_234_only, series_2_than_3_457_234, series_2_blueprint_457, series_2_blueprint_only, series_2_457_only
-    Research_CustomFilter = 'S8-DR0.5 > S8-PRY0.5 > S8-Q0.5 > S8-H0.5 > Q0.5 > S8-DR2.5\n> S8-G1.5 > S8-Q1 > S8-DR5 > 0.5 > S8-G4 > S8-Q2 > S8-PRY2.5 > reset\n> S8-DR8 > Q1 > 1 > S8-E-315 > S8-G2.5 > G1.5 > 1.5 > S8-E-031\n> S8-Q4 > Q2 > E2 > 2 > DR2.5 > PRY2.5 > G2.5 > 2.5 > S8-PRY5\n> S8-PRY8 > Q4 > G4 > 4 > S8-C6 > DR5 > PRY5 > 5 > C6 > 6 > S8-C8\n> S8-C12 > DR8 > PRY8 > C8 > 8 > C12 > 12'
+    Research_AllowGenreT = False
+    Research_RemainingCommissions = -1
+    Research_PresetFilter = 'series_9_blueprint_ta152'  # custom, series_9_blueprint_ta152, series_9_blueprint_only, series_9_ta152_only, series_8_blueprint_305, series_8_blueprint_only, series_8_305_only, series_7_blueprint_la9, series_7_blueprint_only, series_7_la9_only, series_6_blueprint_203, series_6_blueprint_only, series_6_203_only, series_5_blueprint_152, series_5_blueprint_only, series_5_152_only, series_4_blueprint_tenrai, series_4_blueprint_only, series_4_tenrai_only, series_3_blueprint_234, series_3_blueprint_only, series_3_234_only, series_2_than_3_457_234, series_2_blueprint_457, series_2_blueprint_only, series_2_457_only
+    Research_CustomFilter = 'S9-DR0.5 > S9-PRY0.5 > S9-Q0.5 > S9-H0.5 > Q0.5 > S9-DR2.5\n> S9-G1.5 > S9-Q1 > S9-DR5 > 0.5 > S9-G4 > S9-Q2 > S9-PRY2.5 > reset\n> S9-DR8 > Q1 > 1 > S9-E-315 > S9-G2.5 > G1.5 > 1.5 > S9-E-031\n> S9-Q4 > Q2 > E2 > 2 > DR2.5 > PRY2.5 > G2.5 > 2.5 > S9-PRY5\n> S9-PRY8 > Q4 > G4 > 4 > S9-C6 > DR5 > PRY5 > 5 > C6 > 6 > S9-C8\n> S9-C12 > DR8 > PRY8 > C8 > 8 > C12 > 12'
 
     # 配置组 `Dorm`
     Dorm_Collect = True
@@ -484,7 +508,7 @@ class GeneratedConfig:
     PrivateQuarters_BuyRoses = True
     PrivateQuarters_BuyCake = False
     PrivateQuarters_TargetInteract = True
-    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou, aegir
+    PrivateQuarters_TargetShip = 'anchorage'  # anchorage, noshiro, sirius, new_jersey, taihou, aegir, nakhimov
 
     # 配置组 `Daily`
     Daily_UseDailySkip = True
@@ -536,6 +560,7 @@ class GeneratedConfig:
     OpsiGeneral_LauncherPush = True
     OpsiGeneral_IndependentPush = False
     OpsiGeneral_OpsiOnePushConfig = 'provider: null'
+    OpsiGeneral_AutoSearchTimeLimit = 5
 
     # 配置组 `OpsiAshBeacon`
     OpsiAshBeacon_AttackMode = 'current'  # current, current_dossier, current_dossier_only
@@ -556,6 +581,7 @@ class GeneratedConfig:
     OpsiExplore_SpecialRadar = False
     OpsiExplore_ForceRun = False
     OpsiExplore_LastZone = 0
+    OpsiExplore_AllowHazard1Leveling = False
     OpsiExplore_ExploreProgress = None
 
     # 配置组 `OpsiShop`
@@ -611,7 +637,6 @@ class GeneratedConfig:
     OpsiHazard1Leveling_SkipHpCheck = False  # True, False
     OpsiHazard1Leveling_Cl1Filter = 'ActionPoint'
     OpsiHazard1Leveling_RecordNonCL1AP = True
-    OpsiHazard1Leveling_PreserveVirtualAsset = 0
     OpsiHazard1Leveling_RecordSeaMiles = True  # True, False
 
     # 配置组 `OpsiSirenBug`
@@ -641,9 +666,12 @@ class GeneratedConfig:
     OpsiScheduling_EnableObscure = False  # True, False
     OpsiScheduling_EnableAbyssal = False  # True, False
     OpsiScheduling_EnableStronghold = False  # True, False
-    OpsiScheduling_MeowStartEarlyMode = 'balanced'  # aggressive, balanced, conservative
-    OpsiScheduling_MeowStartEarlyEnable = False
-    OpsiScheduling_VirtualAssetPreserve = 0
+    OpsiScheduling_TaskPriority = 'OpsiStronghold > OpsiObscure > OpsiAbyssal > OpsiMeowfficerFarming'
+
+    # 配置组 `OpsiPreventActionPointOverflow`
+    OpsiPreventActionPointOverflow_Task = 'OpsiScheduling'  # OpsiScheduling, OpsiHazard1Leveling, OpsiMeowfficerFarming
+    OpsiPreventActionPointOverflow_ActionPointUpperbound = 200
+    OpsiPreventActionPointOverflow_ActionPointLowerbound = 10
 
     # 配置组 `IslandPlan`
     IslandPlan_Season = 'spring'  # spring, summer, autumn, winter
@@ -715,49 +743,49 @@ class GeneratedConfig:
     IslandRestaurant_PostNumber = 2  # 1, 2
     IslandRestaurant_ChefFilter = 'WorkerJuu'
     IslandRestaurant_DoubleBambooShoots = False
-    IslandRestaurant_Meal1 = 'tofu_meat'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal1 = 'tofu_meat'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber1 = 7
-    IslandRestaurant_Meal2 = 'hearty_meal'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal2 = 'hearty_meal'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber2 = 7
-    IslandRestaurant_Meal3 = 'omurice'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal3 = 'omurice'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber3 = 7
-    IslandRestaurant_Meal4 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal4 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber4 = 0
-    IslandRestaurant_Meal5 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal5 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber5 = 0
-    IslandRestaurant_Meal6 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal6 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber6 = 0
-    IslandRestaurant_Meal7 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal7 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber7 = 0
-    IslandRestaurant_Meal8 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurant_Meal8 = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
     IslandRestaurant_MealNumber8 = 0
 
     # 配置组 `IslandRestaurantNextTask`
-    IslandRestaurantNextTask_AwayCook = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish
+    IslandRestaurantNextTask_AwayCook = 'None'  # None, tofu, omurice, cabbage_tofu, salad, tofu_meat, tofu_combo, hearty_meal, double_bamboo_shoots, asparagus_shrimp, fish_chip, fo_tiao, onion_fish, matsutake_chicken_soup, persimmon_cake
 
     # 配置组 `IslandTeahouse`
     IslandTeahouse_PostNumber = 2  # 1, 2
     IslandTeahouse_ChefFilter = 'WorkerJuu'
     IslandTeahouse_Seasonal = False
-    IslandTeahouse_Meal1 = 'floral_fruity'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal1 = 'floral_fruity'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber1 = 7
-    IslandTeahouse_Meal2 = 'lavender_tea'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal2 = 'lavender_tea'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber2 = 7
-    IslandTeahouse_Meal3 = 'strawberry_lemon'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal3 = 'strawberry_lemon'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber3 = 7
-    IslandTeahouse_Meal4 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal4 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber4 = 0
-    IslandTeahouse_Meal5 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal5 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber5 = 0
-    IslandTeahouse_Meal6 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal6 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber6 = 0
-    IslandTeahouse_Meal7 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal7 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber7 = 0
-    IslandTeahouse_Meal8 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouse_Meal8 = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
     IslandTeahouse_MealNumber8 = 0
 
     # 配置组 `IslandTeahouseNextTask`
-    IslandTeahouseNextTask_AwayCook = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea
+    IslandTeahouseNextTask_AwayCook = 'None'  # None, apple_juice, banana_mango, honey_lemon, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, spring_flower_tea, chrysanthemum_tea, carrot_pear_juice
 
     # 配置组 `IslandGrill`
     IslandGrill_PostNumber = 1  # 1, 2
@@ -872,29 +900,30 @@ class GeneratedConfig:
     IslandBusiness_SeasonalThreshold = 7
 
     # 配置组 `IslandBusinessShop1`
-    IslandBusinessShop1_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
-    IslandBusinessShop1_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
-    IslandBusinessShop1_Product1 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball
-    IslandBusinessShop1_Product2 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball
-    IslandBusinessShop1_Product3 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball
-    IslandBusinessShop1_Product4 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball
-    IslandBusinessShop1_Product5 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball
-    IslandBusinessShop1_SeasonalFallback = 'hearty_meal'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball
+    IslandBusinessShop1_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
+    IslandBusinessShop1_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
+    IslandBusinessShop1_Product1 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball, matsutake_chicken_soup, persimmon_cake
+    IslandBusinessShop1_Product2 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball, matsutake_chicken_soup, persimmon_cake
+    IslandBusinessShop1_Product3 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball, matsutake_chicken_soup, persimmon_cake
+    IslandBusinessShop1_Product4 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball, matsutake_chicken_soup, persimmon_cake
+    IslandBusinessShop1_Product5 = 'None'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball, matsutake_chicken_soup, persimmon_cake
+    IslandBusinessShop1_SeasonalFallback = 'hearty_meal'  # None, double_bamboo_shoots, tofu_meat, tofu_combo, hearty_meal, fo_tiao, amaranth_rice_ball, matsutake_chicken_soup, persimmon_cake
     IslandBusinessShop1_BoostReplaceFilter = '30 > 20 > 10'
 
     # 配置组 `IslandBusinessShop2`
-    IslandBusinessShop2_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
-    IslandBusinessShop2_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
-    IslandBusinessShop2_Product1 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice
-    IslandBusinessShop2_Product2 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice
-    IslandBusinessShop2_Product3 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice
-    IslandBusinessShop2_Product4 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice
-    IslandBusinessShop2_Product5 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice
+    IslandBusinessShop2_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
+    IslandBusinessShop2_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
+    IslandBusinessShop2_Product1 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product2 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product3 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product4 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
+    IslandBusinessShop2_Product5 = 'None'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
     IslandBusinessShop2_BoostReplaceFilter = '30 > 20 > strawberry_honey > fruit_paradise > 10'
+    IslandBusinessShop2_SeasonalFallback = 'sunny_honey'  # None, spring_flower_tea, strawberry_lemon, strawberry_honey, floral_fruity, fruit_paradise, lavender_tea, sunny_honey, watermelon_juice, chrysanthemum_tea, carrot_pear_juice
 
     # 配置组 `IslandBusinessShop3`
-    IslandBusinessShop3_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
-    IslandBusinessShop3_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
+    IslandBusinessShop3_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
+    IslandBusinessShop3_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
     IslandBusinessShop3_Product1 = 'None'  # None, orchard_duo, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice
     IslandBusinessShop3_Product2 = 'None'  # None, orchard_duo, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice
     IslandBusinessShop3_Product3 = 'None'  # None, orchard_duo, succulently_sweet, berry_orange, strawberry_charlotte, seafood_rice
@@ -903,8 +932,8 @@ class GeneratedConfig:
     IslandBusinessShop3_BoostReplaceFilter = '30 > 20 > succulently_sweet > 10'
 
     # 配置组 `IslandBusinessShop4`
-    IslandBusinessShop4_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
-    IslandBusinessShop4_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
+    IslandBusinessShop4_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
+    IslandBusinessShop4_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
     IslandBusinessShop4_Product1 = 'None'  # None, roasted_skewer, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy
     IslandBusinessShop4_Product2 = 'None'  # None, roasted_skewer, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy
     IslandBusinessShop4_Product3 = 'None'  # None, roasted_skewer, stir_fried_chicken, steak_bowl, crayfish_stir_fry, carnival, double_energy
@@ -913,14 +942,18 @@ class GeneratedConfig:
     IslandBusinessShop4_BoostReplaceFilter = '30 > 20 > 10'
 
     # 配置组 `IslandBusinessShop5`
-    IslandBusinessShop5_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
-    IslandBusinessShop5_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao
+    IslandBusinessShop5_Char1 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
+    IslandBusinessShop5_Char2 = 'None'  # None, WorkerJuu, Cheshire, YingSwei, Saratoga, Akashi, NewJersey, Tashkent, LeMalin, Shimakaze, Amagi_chan, Unicorn, ChaoHo, ChenHai, WilliamDPorter, Helena, Friedrich, Atago, Yixian, August, Eugen, Hood, Javelin, Laffey, Explorer, Navigator, OceanCrosser, FeiYun, Takao, Anchorage, Belfast, ChangFeng, Mogador, RoyalFortune
     IslandBusinessShop5_Product1 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_Product2 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_Product3 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_Product4 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_Product5 = 'None'  # None, cheese, strawberry_milkshake, morning_light, wake_up_call, fruity_fruitier
     IslandBusinessShop5_BoostReplaceFilter = '30 > 20 > cheese > 10'
+
+    # 配置组 `FleetInfo`
+    FleetInfo_Result = {}
+    FleetInfo_Record = datetime.datetime(2020, 1, 1, 0, 0)
 
     # 配置组 `Daemon`
     Daemon_EnterMap = True
@@ -939,6 +972,14 @@ class GeneratedConfig:
     BoxDisassemble_BlueBoxLimit = 1000
     BoxDisassemble_UseWhiteBox = True
     BoxDisassemble_WhiteBoxLimit = 2000
+
+    # 配置组 `AutoEquip`
+    AutoEquip_ShipLimit = 0
+    AutoEquip_EnableSlot1 = True  # True, False
+    AutoEquip_EnableSlot2 = True  # True, False
+    AutoEquip_EnableSlot3 = True  # True, False
+    AutoEquip_EnableSlot4 = True  # True, False
+    AutoEquip_EnableSlot5 = True  # True, False
 
     # 配置组 `Benchmark`
     Benchmark_DeviceType = 'emulator'  # emulator, plone_cloud_with_adb, phone_cloud_without_adb, android_phone, android_phone_vmos

@@ -1,3 +1,24 @@
+"""AzurPilot 日志（Logger）系统模块。
+
+基于 Rich 库构建的多目标日志系统，支持控制台彩色输出、文件轮转记录
+和 WebUI 流式渲染。全局 logger 实例（alas）被整个框架共享使用。
+
+主要组件：
+    - RichFileHandler: 文件日志处理器（基于 Rich 格式化）。
+    - RichRenderableHandler: 将日志渲染为可渲染对象传递给回调，用于 WebUI 实时展示。
+    - RichTimedRotatingHandler: 按时间轮转的文件日志处理器，支持跨平台多进程。
+    - HTMLConsole: 输出 HTML 格式的 Rich Console，用于 WebUI 渲染。
+    - Highlighter: 自定义正则高亮器，高亮路径、URL、Python 布尔值/None 等。
+
+提供的辅助函数：
+    - hr(): 分节标题输出（支持 4 级标题）。
+    - attr() / attr_align(): 属性对齐输出。
+    - error_context() / exception_context(): 结构化错误信息输出。
+
+全局 logger 实例通过 monkey-patch 方式扩展了上述方法，作为整个框架的
+统一日志入口。
+"""
+
 import datetime
 import io
 import json
@@ -552,7 +573,7 @@ def show():
     logger.hr('hr1', 1)
     logger.hr('hr2', 2)
     logger.hr('hr3', 3)
-    logger.info(r'Brace { [ ( ) ] }')
+    logger.info(r'大括号 { [ ( ) ] }')
     logger.info(r'True, False, None')
     logger.info(r'E:/path\\to/alas/alas.exe, /root/alas/, ./relative/path/log.txt')
     local_var1 = 'This is local variable'
@@ -561,38 +582,38 @@ def show():
     # 异常发生后的行
 
 
-def aggressive_convert(func, level='error'):
-    def aggressive_wrapper(msg, *args, **kwargs):
-        if isinstance(msg, Exception):
-            msg = f'{type(msg).__name__}: {msg}'
+def error_context(title, reason, impact, action, exc=None, level=logging.ERROR, with_traceback=None):
+    """输出包含原因、影响和处理建议的统一错误信息。
 
-        if isinstance(msg, str) and any('\u4e00' <= char <= '\u9fff' for char in msg):
-            # 已经包含傲娇语气或特殊字符的消息，不重复叠加
-            if '杂鱼' in msg or '哒内' in msg or '大叔' in msg or '笨蛋' in msg:
-                return func(msg, *args, **kwargs)
-
-            import random
-            if level == 'critical':
-                prefixes = [
-                    "杂鱼杂鱼~ 没用的大叔这就顶不住了吗？",
-                    "哈？连这种小事都报错。真是逊、爆、了！",
-                    "噗噗~ 没救了呢，大叔连这点打击都受不了？",
-                    "笨——蛋——大叔！报错了啦：",
-                ]
-                msg = f"{random.choice(prefixes)}\n{msg}"
-                if not msg.endswith(('？', '！', '。', '❤')):
-                    msg += " ~真是没用呢❤"
-            elif level == 'error':
-                prefixes = ["杂鱼报错：", "废柴大叔的报错：", "逊毙了："]
-                msg = f"{random.choice(prefixes)}{msg} ~杂鱼❤"
-
-        return func(msg, *args, **kwargs)
-
-    return aggressive_wrapper
+    ``with_traceback`` 为 ``None`` 时，保持原有行为：传入异常对象则输出完整堆栈。
+    """
+    message = '\n'.join([
+        f'[错误] {title}',
+        f'原因：{reason}',
+        f'影响：{impact}',
+        f'建议：{action}',
+    ])
+    if exc is not None:
+        message += f'\n异常：{type(exc).__name__}: {exc}'
+    if with_traceback is None:
+        with_traceback = exc is not None
+    logger.log(level, message, exc_info=with_traceback)
 
 
-logger.error = aggressive_convert(logger.error, level='error')
-logger.critical = aggressive_convert(logger.critical, level='critical')
+def exception_context(title, exc, impact, action, level=logging.ERROR):
+    """输出未知异常的统一错误信息并保留完整堆栈。"""
+    error_context(
+        title=title,
+        reason=f'程序抛出了 {type(exc).__name__}，具体原因需要结合下方堆栈定位。',
+        impact=impact,
+        action=action,
+        exc=exc,
+        level=level,
+    )
+
+
+logger.error_context = error_context
+logger.exception_context = exception_context
 logger.hr = hr
 logger.attr = attr
 logger.attr_align = attr_align
@@ -603,4 +624,4 @@ logger.print = print
 logger.log_file: str
 
 logger.set_file_logger()
-logger.hr('Start', level=0)
+logger.hr('启动', level=0)

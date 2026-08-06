@@ -1,3 +1,6 @@
+"""战斗策略面板处理器模块。定义 StrategyHandler，管理战斗中的阵型选择、潜艇搜索/视角开关、
+机动回避、空袭等策略操作。"""
+
 from module.combat.assets import GET_ITEMS_1
 from module.handler.assets import *
 from module.handler.info_handler import InfoHandler
@@ -21,6 +24,7 @@ SUBMARINE_VIEW.add_state('on', check_button=SUBMARINE_VIEW_ON)
 SUBMARINE_VIEW.add_state('off', check_button=SUBMARINE_VIEW_OFF)
 
 MOB_MOVE_OFFSET = (120, 200)
+AIR_STRIKE_OFFSET = (120, 200)
 
 
 class StrategyHandler(InfoHandler):
@@ -28,7 +32,7 @@ class StrategyHandler(InfoHandler):
     fleet_2_formation_fixed = False
 
     def strategy_open(self, skip_first_screenshot=True):
-        logger.info('Strategy open')
+        logger.info('[策略-面板] 打开策略面板')
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -47,7 +51,7 @@ class StrategyHandler(InfoHandler):
                 continue
 
     def strategy_close(self, skip_first_screenshot=True):
-        logger.info('Strategy close')
+        logger.info('[策略-面板] 关闭策略面板')
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -72,7 +76,7 @@ class StrategyHandler(InfoHandler):
         Pages:
             in: STRATEGY_OPENED
         """
-        logger.info(f'Strategy set: formation={formation}, submarine_view={sub_view}, submarine_hunt={sub_hunt}')
+        logger.info(f'[策略-设置] 设置: 阵型={formation}, 潜艇视图={sub_view}, 潜艇狩猎={sub_hunt}')
 
         if formation is not None:
             FORMATION.set(formation, main=self)
@@ -86,12 +90,12 @@ class StrategyHandler(InfoHandler):
             if SUBMARINE_VIEW.appear(main=self):
                 SUBMARINE_VIEW.set('on' if sub_view else 'off', main=self)
             else:
-                logger.warning('Setting up submarine_view but no icon appears')
+                logger.warning('[策略-设置] 设置潜艇视图但图标未出现')
         if sub_hunt is not None:
             if SUBMARINE_HUNT.appear(main=self):
                 SUBMARINE_HUNT.set('on' if sub_hunt else 'off', main=self)
             else:
-                logger.warning('Setting up submarine_hunt but no icon appears')
+                logger.warning('[策略-设置] 设置潜艇狩猎但图标未出现')
 
     def handle_strategy(self, index):
         """
@@ -107,7 +111,7 @@ class StrategyHandler(InfoHandler):
             return False
         expected_formation = self.config.__getattribute__(f'Fleet_Fleet{index}Formation')
         if self._strategy_get_from_map_buff() == expected_formation and not self.config.Submarine_Fleet:
-            logger.info('Skip strategy bar check.')
+            logger.info('[策略-设置] 跳过策略栏检查')
             self.__setattr__(f'fleet_{index}_formation_fixed', True)
             return False
 
@@ -138,7 +142,7 @@ class StrategyHandler(InfoHandler):
         else:
             buff = 'unknown'
 
-        logger.attr('Map_buff', buff)
+        logger.attr('地图增益', buff)
         return buff
 
     def is_in_strategy_submarine_move(self):
@@ -158,7 +162,7 @@ class StrategyHandler(InfoHandler):
             in: STRATEGY_OPENED, SUBMARINE_MOVE_ENTER
             out: SUBMARINE_MOVE_CONFIRM
         """
-        logger.info('Submarine move enter')
+        logger.info('潜艇移动进入')
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -179,7 +183,7 @@ class StrategyHandler(InfoHandler):
             in: SUBMARINE_MOVE_CONFIRM
             out: STRATEGY_OPENED, SUBMARINE_MOVE_ENTER
         """
-        logger.info('Submarine move confirm')
+        logger.info('潜艇移动确认')
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -202,7 +206,7 @@ class StrategyHandler(InfoHandler):
             in: SUBMARINE_MOVE_CONFIRM
             out: STRATEGY_OPENED, SUBMARINE_MOVE_ENTER
         """
-        logger.info('Submarine move cancel')
+        logger.info('潜艇移动取消')
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -247,7 +251,7 @@ class StrategyHandler(InfoHandler):
             in: STRATEGY_OPENED, MOB_MOVE_ENTER
             out: MOB_MOVE_CANCEL
         """
-        logger.info('Mob move enter')
+        logger.info('舰队移动进入')
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -268,7 +272,7 @@ class StrategyHandler(InfoHandler):
             in: MOB_MOVE_CANCEL
             out: STRATEGY_OPENED, MOB_MOVE_ENTER
         """
-        logger.info('Mob move cancel')
+        logger.info('舰队移动取消')
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -282,18 +286,10 @@ class StrategyHandler(InfoHandler):
                 continue
 
     def is_in_strategy_air_strike(self):
-        """
-        判断是否处于空袭确认界面。
-
-        Returns:
-            bool: 是否在空袭确认界面。
-        """
         return self.appear(AIR_STRIKE_CONFIRM, offset=(20, 20))
 
     def strategy_has_air_strike(self):
         """
-        检查是否有空袭选项。
-
         Pages:
             in: STRATEGY_OPENED
             out: STRATEGY_OPENED
@@ -305,42 +301,26 @@ class StrategyHandler(InfoHandler):
 
     def strategy_air_strike_enter(self, skip_first_screenshot=True):
         """
-        进入空袭界面。
-
         Pages:
             in: STRATEGY_OPENED, AIR_STRIKE_ENTER
             out: AIR_STRIKE_CONFIRM
         """
-        logger.info('Air strike enter')
-        while 1:
-            if skip_first_screenshot:
-                skip_first_screenshot = False
-            else:
-                self.device.screenshot()
-
+        logger.info('空袭进入')
+        for _ in self.loop(skip_first=skip_first_screenshot):
             if self.appear(AIR_STRIKE_CONFIRM, offset=(20, 20)):
                 break
-
             if self.appear_then_click(AIR_STRIKE_ENTER, offset=(150, 200), interval=5):
                 continue
 
-    def strategy_air_strike_confirm(self, skip_first_screenshot=True):
+    def strategy_air_strike_cancel(self, skip_first_screenshot=True):
         """
-        确认空袭。
-
         Pages:
             in: AIR_STRIKE_CONFIRM
             out: STRATEGY_OPENED, AIR_STRIKE_ENTER
         """
-        logger.info('Air strike confirm')
-        while 1:
-            if skip_first_screenshot:
-                skip_first_screenshot = False
-            else:
-                self.device.screenshot()
-
+        logger.info('空袭取消')
+        for _ in self.loop(skip_first=skip_first_screenshot):
             if self.appear(AIR_STRIKE_ENTER, offset=(150, 200)):
                 break
-
-            if self.appear_then_click(AIR_STRIKE_CONFIRM, offset=(20, 20), interval=5):
+            if self.appear_then_click(AIR_STRIKE_CANCEL, offset=(20, 20), interval=5):
                 continue

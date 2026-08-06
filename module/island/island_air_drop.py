@@ -1,12 +1,19 @@
+"""岛屿空投任务模块。
+
+处理岛屿每日空投领取逻辑，根据上次偷取时间判断是否执行空投流程。
+管理空投冷却时间（5小时）与每日重置边界，支持重复尝试与超时跳过。
+"""
 from module.island.island import *
 from time import sleep
 from module.ui.scroll import Scroll
+from datetime import timedelta
+from module.config.time_source import now as current_time
 
 
 class IslandAirDrop(Island):
     def run(self):
         self.island_error = False
-        now = datetime.now()
+        now = current_time()
         today = now.replace(hour=0, minute=0, second=0, microsecond=0)
         next_daily_time = today.replace(
             hour=1, minute=0, second=0, microsecond=0
@@ -24,11 +31,13 @@ class IslandAirDrop(Island):
                     if self.appear(ISLAND_CHECK):
                         break
                     if self.appear(ISLAND_PHONE_CHECK, offset=1):
-                        break
+                        self.device.click(ISLAND_SEASON_GOTO_ISLAND)
+                        continue
                     if self.appear(ISLAND_SEASON_CHECK, offset=1):
                         self.device.click(ISLAND_SEASON_GOTO_ISLAND)
                         continue
                     if self.appear_then_click(AIR_DROP_SKIP, offset=1):
+                        self.device.sleep(0.5)
                         continue
                     self.device.sleep(0.5)
                 if self.appear(ISLAND_SEASON_CHECK, offset=1):
@@ -75,7 +84,7 @@ class IslandAirDrop(Island):
                             )
                             continue
                         else:
-                            logger.info("补给次数已用尽")
+                            logger.info("[岛屿-每日补给] 补给次数已用尽")
                             has_drops = False
                             break
                     else:
@@ -84,9 +93,9 @@ class IslandAirDrop(Island):
                     has_drops = False
                     break
         else:
-            logger.info("已禁用拜访其他玩家岛屿，跳过好友补给")
+            logger.info("[岛屿-每日补给] 已禁用拜访其他玩家岛屿，跳过好友补给")
             has_drops = False
-        self.config.IslandAirDrop_LastSteal = datetime.now().replace(microsecond=0)
+        self.config.IslandAirDrop_LastSteal = current_time().replace(microsecond=0)
 
         if has_drops and next_steal_time < last_attempt_today:
             self.config.task_delay(target=next_steal_time)
@@ -116,28 +125,28 @@ class IslandAirDrop(Island):
             )
 
             if not air_drop_buttons:
-                logger.info("在指定区域内未找到补给")
+                logger.info("[岛屿-每日补给] 在指定区域内未找到补给")
 
                 # 检查是否在底部
                 if VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe > 0:
                     last_attempt_swipe -= 1
-                    logger.info("滑动槽已在底部，最后尝试滑动")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，最后尝试滑动")
                     continue
                 elif VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe <= 0:
-                    logger.info("滑动槽已在底部，停止搜索")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，停止搜索")
                     return False
                 # 如果还有滑动次数，尝试滑动
                 if swipe_count < max_swipe_attempts:
-                    logger.info(f"滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
+                    logger.info(f"[岛屿-每日补给] 滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
                     self.visit_swipe(480)
                     swipe_count += 1
                     self.device.sleep(0.5)
                     continue
                 else:
-                    logger.info("达到最大滑动次数，停止搜索")
+                    logger.info("[岛屿-每日补给] 达到最大滑动次数，停止搜索")
                     return False
 
-            logger.info(f"找到 {len(air_drop_buttons)} 个补给目标")
+            logger.info(f"[岛屿-每日补给] 找到 {len(air_drop_buttons)} 个补给目标")
             air_drop_buttons.sort(key=lambda btn: btn.area[1])
 
             # 标记是否有至少一个可以点击的补给
@@ -150,37 +159,30 @@ class IslandAirDrop(Island):
                 visit_button = self.calculate_visit_position(
                     air_drop_button_x, air_drop_button_y
                 )
-                result = self.check_visit(visit_button)
-                if result == "skip":
-                    logger.info("无法访问，跳过当前补给")
+                if not self.check_visit_friend_island(visit_button):
                     continue
-                elif result == "success":
-                    logger.info("成功进入拜访状态，返回True")
-                    return True
-                elif result == "timeout":
-                    self.island_error = True
-                    return False
                 has_clickable_air_drop = True
+                return True
             # 如果当前页面所有补给都不可用（全部skip或timeout）
             if not has_clickable_air_drop:
-                logger.info("当前页面没有可用补给目标")
+                logger.info("[岛屿-每日补给] 当前页面没有可用补给目标")
                 # 检查是否在底部
                 if VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe > 0:
                     last_attempt_swipe -= 1
-                    logger.info("滑动槽已在底部，最后尝试滑动")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，最后尝试滑动")
                     continue
                 elif VISIT_SCROLL.at_bottom(main=self) and last_attempt_swipe <= 0:
-                    logger.info("滑动槽已在底部，停止搜索")
+                    logger.info("[岛屿-每日补给] 滑动槽已在底部，停止搜索")
                     return False
                 # 滑动继续查找
                 if swipe_count < max_swipe_attempts:
-                    logger.info(f"滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
+                    logger.info(f"[岛屿-每日补给] 滑动尝试 {swipe_count + 1}/{max_swipe_attempts}")
                     self.visit_swipe(480)
                     swipe_count += 1
                     self.device.sleep(0.5)
                     continue
                 else:
-                    logger.info("达到最大滑动次数，停止搜索")
+                    logger.info("[岛屿-每日补给] 达到最大滑动次数，停止搜索")
                     return False
 
             if swipe_count < max_swipe_attempts:
@@ -192,23 +194,8 @@ class IslandAirDrop(Island):
                 self.device.sleep(0.5)
                 continue
 
-        logger.info("未检测到可用补给")
+        logger.info("[岛屿-每日补给] 未检测到可用补给")
         return False
-
-    def check_visit(self, visit_button):
-        number = 20
-        self.device.click(visit_button)
-        self.device.sleep(5)
-        while number:
-            self.device.screenshot()
-            if self.appear(ISLAND_ACCESS_MAP, offset=1):
-                return "success"
-            if self.appear(CANT_ACCESS, similarity=0.85):
-                return "skip"
-            self.device.sleep(1)
-            self.device.click(visit_button)
-            number -= 1
-        return "timeout"
 
     def calculate_visit_position(self, air_drop_button_x, air_drop_button_y):
 
@@ -240,15 +227,6 @@ class IslandAirDrop(Island):
         self.device.click(stop_button)
         self.device.click_record_clear()
 
-    def island_access_map_check(self):
-        while True:
-            self.device.screenshot()
-            if self.appear(ISLAND_ACCESS_MAP):
-                return False
-            if self.appear(CANT_ACCESS):
-                return True
-            self.device.sleep(0.5)
-
     def island_air_drop(self):
         self.device.click(ISLAND_AIR_DROP_A)
         sleep(0.1)
@@ -261,6 +239,7 @@ class IslandAirDrop(Island):
         self.device.click(ISLAND_AIR_DROP_B)
         sleep(0.1)
         self.device.click(ISLAND_AIR_DROP_C)
+        sleep(0.5)
 
     def run_and_get(self):
         self.island_up(3000)
@@ -295,7 +274,7 @@ class IslandAirDrop(Island):
                 break
             self.island_down(500)
             self.island_air_drop()
-        self.device.click(AIR_DROP_RUN_AWAY)
+        self.exit_friend_island()
 
     def test(self):
         image = self.device.screenshot()

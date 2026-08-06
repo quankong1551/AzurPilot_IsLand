@@ -1,3 +1,7 @@
+"""大世界（Operation Siren）月度统计模块。
+从加密 SQLite 数据库中读取战斗数据，
+计算月度练级效率、资源投入和战斗次数等汇总指标。"""
+
 # 此文件专门用于统计分析大世界（Operation Siren）的月度练级效率与资源投入数据。
 # 负责从加密 SQLite 数据库中读取统计数据，并具备计算概况与详细指标的功能。
 from __future__ import annotations
@@ -216,7 +220,7 @@ __all__ = [
     "compute_monthly_cl1_akashi_ap",
     "get_ap_timeline",
     "get_coins_timeline",
-    "get_virtual_asset_timeline",
+    "get_asset_timeline",
     "get_resource_timeline",
 ]
 
@@ -245,16 +249,10 @@ def get_resource_timeline(
     return _get_timeline(instance=instance_name, limit=limit)
 
 
-def get_virtual_asset_timeline(
+def get_asset_timeline(
     year: int | None = None, month: int | None = None, instance_name: str | None = None
 ) -> list:
-    """
-    Get virtual asset timeline from AP snapshots.
-
-    Existing asset/virtual_asset snapshot fields are the display source of truth.
-    Older snapshots without these fields are still returned so the WebUI can
-    reconstruct them for display.
-    """
+    """获取 AP 快照中的资产时间线。"""
     now = datetime.now()
     if year is None:
         year = now.year

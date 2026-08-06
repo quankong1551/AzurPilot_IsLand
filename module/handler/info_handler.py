@@ -1,3 +1,21 @@
+"""信息栏和弹窗处理器。
+
+处理游戏中各种信息提示和弹窗对话框，是所有处理器的基础组件。
+
+信息栏（Info Bar）：
+    屏幕顶部的通知条，包含委托完成、敌人搜索等提示。
+    通过检测信息栏的出现和消失来同步自动化流程。
+
+弹窗处理：
+    - 确认/取消对话框（如退役确认、战斗确认）
+    - 活动公告弹窗
+    - 紧急委托通知
+    - 大舰队相关弹窗
+
+预处理函数 info_letter_preprocess()：
+    调整信息栏文字图像的对比度，用于模板匹配识别信息栏内容。
+"""
+
 from scipy import signal
 
 from module.base.base import ModuleBase
@@ -30,8 +48,18 @@ def info_letter_preprocess(image):
 
 
 class InfoHandler(ModuleBase):
-    """
-    处理游戏中各类弹窗和消息的基类。
+    """信息栏和弹窗处理器基类。
+
+    提供游戏中各类 UI 弹窗的统一检测和处理接口。
+    所有需要处理弹窗的处理器都应继承此类。
+
+    主要功能：
+    - 信息栏检测和处理（info_bar_count, handle_info_bar）
+    - 弹窗确认/取消（handle_popup_confirm, handle_popup_cancel）
+    - 紧急委托处理（handle_urgent_commission）
+    - 剧情跳过（handle_story_skip）
+    - 大舰队弹窗处理（handle_guild_popup_cancel）
+    - 投票弹窗处理（handle_vote_popup）
     """
     """
     信息栏
@@ -120,7 +148,7 @@ class InfoHandler(ModuleBase):
             return True
         if self.appear(POPUP_CANCEL_WHITE, offset=offset, interval=interval):
             POPUP_CANCEL_WHITE.name = POPUP_CANCEL_WHITE.name + '_' + name
-            self.device.click(POPUP_CONFIRM_WHITE)
+            self.device.click(POPUP_CANCEL_WHITE)
             POPUP_CANCEL_WHITE.name = POPUP_CANCEL_WHITE.name[:-len(name) - 1]
             return True
         return False
@@ -162,7 +190,7 @@ class InfoHandler(ModuleBase):
         """
         appear = self.appear(GET_MISSION, offset=True, interval=2)
         if appear:
-            logger.info('Get urgent commission')
+            logger.info('[处理器-委托] 收到紧急委托')
             if drop:
                 self.handle_info_bar()
                 drop.add(self.device.image)
@@ -175,12 +203,12 @@ class InfoHandler(ModuleBase):
             self._hot_fix_check_wait.clear()
         if self._hot_fix_check_wait.started() and 3 <= self._hot_fix_check_wait.current_time() <= 6:
             if not self.device.app_is_running():
-                logger.error('Detected hot fixes from game server, game died')
+                logger.error('[处理器-热更新] 检测到游戏服务器热更新，游戏进程已退出')
                 raise GameNotRunningError
             # 使用模板匹配（不含颜色匹配），因为维护公告弹窗颜色不同
             if self.appear(LOGIN_CHECK, offset=(30, 30)):
-                logger.warning('Account logged out, '
-                               'probably because account kicked by server maintenance or another log in')
+                logger.warning('[处理器-热更新] 账号已登出，'
+                               '可能是因为服务器维护或另一个登录将账号踢下线')
             self._hot_fix_check_wait.clear()
 
         return appear
@@ -426,7 +454,7 @@ class InfoHandler(ModuleBase):
         )
 
         if not siren_research_enabled:
-            logger.info('[Story] 塞壬研究装置未启用，选择离开')
+            logger.info('[Handler] [Story] 塞壬研究装置未启用，选择离开')
             self.siren_device_mode = None
             return options[-1]
 
@@ -436,11 +464,11 @@ class InfoHandler(ModuleBase):
         )
 
         if siren_mode == 'enemy':
-            logger.info('[Story] 选择反复尝试探测隐藏的敌人')
+            logger.info('[Handler] [Story] 选择反复尝试探测隐藏的敌人')
             self.siren_device_mode = 'enemy'
             return options[2]
         else:
-            logger.info('[Story] 选择反复尝试探测隐藏的资源')
+            logger.info('[Handler] [Story] 选择反复尝试探测隐藏的资源')
             self.siren_device_mode = 'resource'
             return options[3]
 
@@ -464,9 +492,9 @@ class InfoHandler(ModuleBase):
         if self._story_option_timer.reached() and self.appear(STORY_SKIP_3, offset=(20, 20), interval=0):
             options = self._story_option_buttons_2()
             options_count = len(options)
-            logger.attr('Story_options', options_count)
+            logger.attr('剧情选项数量', options_count)
             if options_count:
-                logger.attr('Story_option_buttons', [option.button for option in options])
+                logger.attr('剧情选项按钮', [option.button for option in options])
             if not options_count:
                 self._story_option_record = 0
                 self._story_option_confirm.reset()
@@ -536,7 +564,7 @@ class InfoHandler(ModuleBase):
         return self.story_skip(drop=drop)
 
     def ensure_no_story(self, skip_first_screenshot=True):
-        logger.info('Ensure no story')
+        logger.info('[处理器-剧情] 确保没有剧情')
         story_timer = Timer(3, count=6).start()
         while 1:
             if skip_first_screenshot:
@@ -612,9 +640,9 @@ class InfoHandler(ModuleBase):
                 timer.reset()
             else:
                 if timer.reached():
-                    logger.info(f'Manjuu disappeared')
+                    logger.info('[处理器-加载] 小黄鸡已消失')
                     break
-    
+
     def handle_manjuu(self):
         """
         处理小黄鸡加载动画。
@@ -624,7 +652,7 @@ class InfoHandler(ModuleBase):
         """
         count = self.manjuu_count()
         if count > 2:
-            logger.info(f'Manjuu count: {count}, waiting for manjuu to disappear')
+            logger.info(f'[处理器-加载] 小黄鸡数量: {count}，等待小黄鸡消失')
             self.wait_until_manjuu_disappear()
             return True
         else:
