@@ -1651,6 +1651,11 @@ _IslandBusinessChar: &IslandBusinessChar
     - OceanCrosser
     - FeiYun
     - Takao
+    - Anchorage
+    - Belfast
+    - ChangFeng
+    - Mogador
+    - RoyalFortune
 
 _IslandBusinessProduct1: &IslandBusinessProduct1
   type: select
