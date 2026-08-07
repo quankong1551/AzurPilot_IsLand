@@ -196,8 +196,16 @@ class IslandManufacture(IslandShopBase):
         # 其他产品使用父类逻辑
         return super().select_product(product_selection, product_selection_check)
 
-    def select_product_with_material_check(self, post_id, product_list):
-        """选择产品并检查材料是否充足（覆盖基类方法）"""
+    def select_product_with_material_check(self, post_id, product_list, reset_scroll_first=False):
+        """选择产品并检查材料是否充足（覆盖基类方法）
+
+        Args:
+            post_id: 岗位ID。
+            product_list: 按优先级排列的产品列表。
+            reset_scroll_first: 是否在进入产品选择页时先把列表滚动回顶部。
+                手工类产品（鞋子→皮革回退）依赖列表位置，需要复位；
+                单一产品的类别无需额外的复位耗时。
+        """
         post_button = self.posts[post_id]['button']
 
         # 打开岗位
@@ -222,6 +230,9 @@ class IslandManufacture(IslandShopBase):
                 continue
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 selected_product = None
+                if reset_scroll_first:
+                    # 先把产品列表滚动回顶部，避免上个岗位遗留的滚动位置导致产品找不到
+                    self._reset_product_list_scroll()
                 for product_info in product_list:
                     product_name = product_info['name']
                     selection = product_info['selection']
@@ -229,8 +240,13 @@ class IslandManufacture(IslandShopBase):
                     logger.info(f"[岛屿-制造业] 尝试选择产品: {product_name}")
 
                     # 点击产品选择按钮
-                    self.select_product(selection, selection_check)
+                    selected = self.select_product(selection, selection_check)
                     self.device.sleep(0.5)
+
+                    if not selected:
+                        # 基类失败时已把列表滚动回顶部，直接尝试下一个产品
+                        logger.warning(f"[岛屿-制造业] 未能识别到产品选择项: {product_name}，尝试下一个产品")
+                        continue
 
                     # 检查确认按钮状态
                     image = self.device.screenshot()
@@ -251,7 +267,7 @@ class IslandManufacture(IslandShopBase):
                         break  # 跳出产品选择循环
 
                 if not selected_product:
-                    logger.info("[岛屿-制造业] 所有产品材料都不足，点击返回")
+                    logger.info("[岛屿-制造业] 所有产品都无法选择或材料不足，点击返回")
                     self.device.click(SELECT_UI_BACK)
                     self.device.sleep(0.3)
 
@@ -386,7 +402,7 @@ class IslandManufacture(IslandShopBase):
         product_list.append(leather_item)
 
         for post_id in idle_posts:
-            self.select_product_with_material_check(post_id, product_list)
+            self.select_product_with_material_check(post_id, product_list, reset_scroll_first=True)
 
     def run(self):
         """运行制造业逻辑（完全覆盖基类方法）"""

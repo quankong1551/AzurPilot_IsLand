@@ -360,7 +360,7 @@
     },
     "IslandDailyInteract": {
       "name": "每日/週任務",
-      "help": "僅支援minitouch。處理島嶼摸貓、JUU速運、商區外送服務、苗圃打招呼與每週照相任務。"
+      "help": "僅支援minitouch。處理島嶼摸貓、JUU速運、商區外送服務與每週照相任務。相關按鈕資源生成後可啟用。"
     },
     "IslandPearlSell": {
       "name": "每週珍珠採購與售賣",
@@ -380,10 +380,6 @@
     },
     "OpsiDaemon": {
       "name": "大世界半自動",
-      "help": ""
-    },
-    "CoordinatePicker": {
-      "name": "即時取點",
       "help": ""
     },
     "EventStory": {
@@ -571,6 +567,7 @@
       "en-3": "[EN] Washington",
       "en-4": "[EN] Amagi",
       "en-5": "[EN] Little Enterprise",
+      "en-6": "[EN] Belfast",
       "jp-0": "[JP] ブレスト",
       "jp-1": "[JP] 横須賀",
       "jp-2": "[JP] 佐世保",
@@ -588,7 +585,12 @@
       "jp-14": "[JP] キール",
       "jp-15": "[JP] 若松",
       "jp-16": "[JP] オデッサ",
-      "jp-17": "[JP] スイートバン"
+      "jp-17": "[JP] スイートバン",
+      "tw-0": "[TW] 珍珠港",
+      "tw-1": "[TW] 珊瑚海",
+      "tw-2": "[TW] 中途島",
+      "tw-3": "[TW] 瓜達康納爾",
+      "tw-4": "[TW] 雷伊泰灣"
     },
     "ScreenshotMethod": {
       "name": "選擇截圖方案",
@@ -1942,13 +1944,13 @@
       "oil": "鑽石>石油>魔方",
       "custom": "自定義"
     },
-    "AddShortest": {
-      "name": "自動接取耗時最短的每日委託",
-      "help": "當設定的自定義委託過濾器沒有可選委託時，系統會自動接取耗時最短的每日委託。此設定不會影響任何內建的委託策略。"
+    "DynamicProgramming": {
+      "name": "選擇全域最佳策略（實驗性）",
+      "help": "開啟此功能後使用動態規劃計算全域最佳策略，僅計算 ignore 標記之前的，ignore 標記之後的使用篩選器順序。\n\nignore 標記新增在什麼位置：\n你應該將 ignore 標記新增在“隨便來個委託都比這些好”的、“打死都不想做”的委託前面。一般新增在 shortest 前面即可。\n\n層級與編號：\n- 使用 tier 分隔價值層級，前一層級價值遠高於後一層級。\n- 未填寫 tier 時，每條過濾規則分別視為一個獨立層級。\n- 候選編號從 0 開始，按篩選器展開後的順序編號。\n\n選擇優先權：\n層級委託數（價值向量） > 按層級由高到低依次比較各層候選編號和 > 同一委託集合按篩選器順序去重 > 最晚結束時間 > 完成時間總和 > 穩定編號。\n\n示例：\n1. 高層級絕對優先：篩選器為 \"A > tier > B\"。策略甲選擇 1 個 T1 的 A，策略乙選擇 100 個 T2 的 B，選擇策略甲。\n2. 同層先比較數量：篩選器為 \"A > B > C > tier\"，A、B、C 同屬 T1。策略甲選擇 A，策略乙選擇 B、C，價值向量分別為 (1) 與 (2)，選擇策略乙。\n3. 先比較完整價值向量：篩選器為 \"A > B > tier > C > D\"。策略甲選擇 A、C，策略乙選擇 B、C、D，價值向量分別為 (1,1) 與 (1,2)，選擇策略乙。\n4. 編號和按 tier 比較，不能跨層抵消：T1 編號為 0、1、2、3，T2 編號為 4、5、6、7。策略甲選擇 1、3、4、5，各層編號和為 (4,9)；策略乙選擇 1、2、6、7，各層編號和為 (3,13)。先比較 T1，因此選擇策略乙，即使其總編號和更大。\n5. 同一集合按篩選器順序去重：篩選器為 \"A > B > C > tier\"，策略選擇集合 {A, B}；無論演算法探索時先嘗試 A→B 還是 B→A，均統一生成篩選器順序規範計畫 A→B（即使 B→A 的完成時間總和更小）。\n6. 再比較最晚結束時間：篩選器為 \"A > B > C > tier\"，策略甲選擇 A（耗時 1h）與 B（耗時 10h），策略乙選擇 A（耗時 1h）與 C（耗時 1h）；兩者價值向量均為 (2)，編號和均為 1。比較最晚結束時間，策略甲最晚在 10 小時結束，策略乙最晚在 1 小時結束，選擇策略乙。\n7. 不同集合繼續比較後續規則：篩選器為 \"A > B > C > D > tier\"，策略甲選擇 A、D，策略乙選擇 B、C；兩者數量均為 2、編號和均為 3。若最晚結束時間也相同（如均為 2h），但策略甲在 1h、2h 完成（完成時間總和 3h），策略乙在 2h、2h 完成（完成時間總和 4h），選擇完成時間總和更小的策略甲。\n8. 不寫 tier 的相容行為：篩選器為 \"A > B > C\" 時，A、B、C 分別屬於 T1、T2、T3，而不是同一層級。\n\n注意：\n- 由於該演算法十分傾向於選擇限時委託，高價值每日委託請單獨寫 tier。\n- 預設篩選器沒寫 tier，使用每個委託分一個 tier 的方法。\n\n我將用最簡單、最直接、最不繞彎子的方式告訴你：\n- tier是什麼：同一 tier 裡的委託能做兩個就不做一個，不同 tier 裡的委託能做前面 tier 裡的就不做後面 tier 裡的。\n- 為什麼有 tier：因為很多時候兩個委託收益大於一個，給自訂篩選器一個選擇。\n- 不寫 tier 行不行：完全可以，行為類似原版且效率不劣於原版，甚至亂加 tier 很可能有副作用。"
     },
     "CustomFilter": {
       "name": "自定義委託過濾器",
-      "help": "使用自定義過濾器需將 \"委託過濾器\" 設定為 \"自定義\"，並閱讀 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
+      "help": "請將委託篩選器設為自訂。開啟實驗性動態規劃時可用 tier 分隔價值層級，並用 ignore 標記演算法分界：ignore 前使用動態規劃；ignore 後按照傳統篩選順序填充槽位，但委託耗時不得超過動態規劃為該槽位預留的時間窗口。關閉動態規劃時 tier 和 ignore 均會被忽略。"
     },
     "DoMajorCommission": {
       "name": "做主要委託（1200油/1000油委託）",
@@ -3276,10 +3278,6 @@
     "StayInZone": {
       "name": "停留在指定海域",
       "help": "開啟後，將按「指定海域」設定執行。指定單個海域時一直停留在該海域；指定多個海域時按填寫順序循環。僅在指定海域不為0時生效。"
-    },
-    "APPreserveUntilReset": {
-      "name": "重置前保留行動力",
-      "help": "在大世界重置前保留足夠的行動力"
     }
   },
   "OpsiTarget": {
@@ -3476,6 +3474,26 @@
     "TaskPriority": {
       "name": "補充黃幣任務優先級",
       "help": "黃幣不足時，執行補充黃幣任務的優先級順序。使用 > 分隔。"
+    },
+    "MonthEndActionPointCleanupEnable": {
+      "name": "OpsiScheduling.MonthEndActionPointCleanupEnable.name",
+      "help": "OpsiScheduling.MonthEndActionPointCleanupEnable.help",
+      "True": "True",
+      "False": "False"
+    },
+    "MonthEndActionPointCleanupDays": {
+      "name": "OpsiScheduling.MonthEndActionPointCleanupDays.name",
+      "help": "OpsiScheduling.MonthEndActionPointCleanupDays.help"
+    },
+    "MonthEndActionPointPreserve": {
+      "name": "OpsiScheduling.MonthEndActionPointPreserve.name",
+      "help": "OpsiScheduling.MonthEndActionPointPreserve.help"
+    },
+    "MonthEndShopPurchase": {
+      "name": "OpsiScheduling.MonthEndShopPurchase.name",
+      "help": "OpsiScheduling.MonthEndShopPurchase.help",
+      "True": "True",
+      "False": "False"
     }
   },
   "OpsiPreventActionPointOverflow": {
@@ -3814,7 +3832,7 @@
     },
     "DoubleBambooShoots": {
       "name": "季節餐優先製作",
-      "help": "開啟後按目前季節選擇餐館季節餐，並在基礎餐品之前優先製作。春季為涼拌雙筍，夏季為莧菜飯糰，秋季為柿子餅；冬季無餐館季節餐時不額外製作。"
+      "help": "開啟後按目前季節選擇餐館季節餐，並在基礎餐品之前優先製作。春季為涼拌雙筍，夏季為莧菜飯糰，秋季為松茸雞湯；冬季無餐館季節餐時不額外製作。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4043,7 +4061,7 @@
     },
     "Seasonal": {
       "name": "季節飲品優先製作",
-      "help": "開啟後按目前季節選擇白熊飲品的季節飲品，並在基礎飲品之前優先製作。春季為迎春花茶，夏季為西瓜汁，秋季為胡蘿蔔秋梨汁；冬季無白熊飲品季節飲品時不額外製作。"
+      "help": "開啟後按目前季節選擇白熊飲品的季節飲品，並在基礎飲品之前優先製作。春季為迎春花茶，夏季為西瓜汁，秋季為菊花茶；冬季無白熊飲品季節飲品時不額外製作。"
     },
     "Meal1": {
       "name": "餐品1",
@@ -4868,13 +4886,7 @@
   "IslandDailyInteract": {
     "_info": {
       "name": "每日/週任務",
-      "help": "僅支援minitouch。控制島嶼每日與每週互動任務，包含晨露農場摸貓、開發計畫中的 JUU 速運、商區外送服務、苗圃打招呼和每週照相任務。"
-    },
-    "NurseryGreeting": {
-      "name": "苗圃打招呼",
-      "help": "前往苗圃依次與三個小人執行打招呼互動。需要擁有明石、海倫娜和逸仙才可使用此功能。已完成互動的小人會自動跳過。此功能隨機性很大，失敗機率較高，失敗屬於正常現象。",
-      "True": "True",
-      "False": "False"
+      "help": "僅支援minitouch。控制島嶼每日與每週互動任務，包含晨露農場摸貓、開發計畫中的 JUU 速運、商區外送服務和每週照相任務。"
     },
     "WeeklyPhoto": {
       "name": "每週照相任務",
@@ -5279,10 +5291,6 @@
       "chrysanthemum_tea": "菊花茶",
       "carrot_pear_juice": "胡蘿蔔秋梨汁"
     },
-    "BoostReplaceFilter": {
-      "name": "白熊飲品加成替換過濾",
-      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：spring_flower_tea:迎春花茶, strawberry_lemon:草莓蜜沁, strawberry_honey:草莓蜂蜜冰沙, floral_fruity:花香果韻, fruit_paradise:繽紛果樂園, lavender_tea:薰衣草茶, sunny_honey:陽光蜜水, watermelon_juice:西瓜汁, chrysanthemum_tea:菊花茶, carrot_pear_juice:胡蘿蔔秋梨汁\n示例：30 > 20 > strawberry_honey > fruit_paradise > 10"
-    },
     "SeasonalFallback": {
       "name": "季節飲品備用飲品",
       "help": "白熊飲品目前季節飲品庫存不足時替換成該飲品",
@@ -5297,6 +5305,10 @@
       "watermelon_juice": "西瓜汁",
       "chrysanthemum_tea": "菊花茶",
       "carrot_pear_juice": "胡蘿蔔秋梨汁"
+    },
+    "BoostReplaceFilter": {
+      "name": "白熊飲品加成替換過濾",
+      "help": "多個加成餐品時按過濾順序優先替換第一個；替換槽位從餐品5→1倒查替換最後一個非空餐品\n可用餐品key對照：spring_flower_tea:迎春花茶, strawberry_lemon:草莓蜜沁, strawberry_honey:草莓蜂蜜冰沙, floral_fruity:花香果韻, fruit_paradise:繽紛果樂園, lavender_tea:薰衣草茶, sunny_honey:陽光蜜水, watermelon_juice:西瓜汁, chrysanthemum_tea:菊花茶, carrot_pear_juice:胡蘿蔔秋梨汁\n示例：30 > 20 > strawberry_honey > fruit_paradise > 10"
     }
   },
   "IslandBusinessShop3": {
@@ -6349,6 +6361,7 @@
     "Text": {
       "InvalidFeedBack": "格式錯誤。 示例：{0}",
       "Clear": "清除",
+      "RunNow": "立即運行",
       "EnterPassword": "輸入密碼",
       "ChooseFile": "選擇檔案"
     },
