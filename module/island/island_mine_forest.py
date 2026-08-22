@@ -167,7 +167,7 @@ class IslandMineForest(Island,LoginHandler):
             digit = Digit(num_btn, letter=(255, 255, 255), threshold=200, alphabet='0123456789')
             count = digit.ocr(image)
             results[matched_name] = count if count else 0
-            logger.info(f"  pos{idx}: {matched_name}({text.strip()}) = {results[matched_name]}")
+            logger.info(f"  pos{idx}: {self._item_cn(matched_name)}({text.strip()}) = {results[matched_name]}")
 
         return results
 
@@ -200,11 +200,14 @@ class IslandMineForest(Island,LoginHandler):
                     needs[category].append(name)
                     need_count = threshold - effective_count
                     self.needs_count[(category, name)] = need_count
-                    logger.info(f"[岛屿-矿山林场]   {name}: 仓库{warehouse_count}+生产中{in_production}={effective_count} < {threshold} → 缺 {need_count}")
+                    logger.info(f"[岛屿-矿山林场]   {self._item_cn(name)}: 仓库{warehouse_count}+生产中{in_production}={effective_count} < {threshold} → 缺 {need_count}")
                 else:
-                    logger.info(f"[岛屿-矿山林场]   {name}: 仓库{warehouse_count}+生产中{in_production}={effective_count} ≥ {threshold} → 不缺")
+                    logger.info(f"[岛屿-矿山林场]   {self._item_cn(name)}: 仓库{warehouse_count}+生产中{in_production}={effective_count} ≥ {threshold} → 不缺")
+            # 库存最少的产物排最前，轮转分配时优先补足
+            needs[category].sort(key=lambda name: inventory.get(name, 0))
 
-        logger.info(f"[岛屿-矿山林场] 需要生产的产物: {needs}")
+        needs_cn = {cat: [self._item_cn(x) for x in names] for cat, names in needs.items()}
+        logger.info(f"[岛屿-矿山林场] 需要生产的产物: {needs_cn}")
         return needs
 
     # ==================== 岗位检测（模仿农田 decided_lists） ====================
@@ -320,7 +323,7 @@ class IslandMineForest(Island,LoginHandler):
         else:
             runs = max_runs
             target_units = max_units  # 默认满产
-        logger.info(f"[岛屿-矿山林场]   {product}: 缺 {need_count or '满产'} 单位，安排 {runs}/{max_runs} 次生产 ({target_units} 单位)")
+        logger.info(f"[岛屿-矿山林场]   {self._item_cn(product)}: 缺 {need_count or '满产'} 单位，安排 {runs}/{max_runs} 次生产 ({target_units} 单位)")
 
         while 1:
             self.device.screenshot()
@@ -336,7 +339,7 @@ class IslandMineForest(Island,LoginHandler):
                         self.back_to_postmanage_from_dispatch()
                         return False
                 else:
-                    logger.warning(f"[岛屿-矿山林场] {product}生产派遣无可用角色: {character_filter}")
+                    logger.warning(f"[岛屿-矿山林场] {self._item_cn(product)}生产派遣无可用角色: {character_filter}")
                     self.back_to_postmanage_from_dispatch()
                     return False
                 continue
@@ -350,7 +353,7 @@ class IslandMineForest(Island,LoginHandler):
                 if selection_check is not None:
                     self.device.screenshot()
                     if not self.match_template_color(selection_check, offset=20, similarity=0.85, threshold=10):
-                        logger.warning(f"[岛屿-矿山林场] 产物 {product} 选择未被确认，可能需要滑动查找")
+                        logger.warning(f"[岛屿-矿山林场] 产物 {self._item_cn(product)} 选择未被确认，可能需要滑动查找")
                         self.device.swipe_vector(vector=(0, -200), box=(333, 142, 431, 602), name="SelectionUpSwipe")
                         self.device.sleep(0.3)
                         self.device.click(SELECT_PRODUCT_INERTIA_STOP)
@@ -476,33 +479,56 @@ class IslandMineForest(Island,LoginHandler):
 
         logger.info(f"[岛屿-矿山林场] 空闲岗位: 矿山 {len(idle_posts['mine'])} 个, 林场 {len(idle_posts['forest'])} 个")
 
-        # 产物有缺口的先分配，剩下的默认
+        # 产物有缺口的先分配（库存最少优先轮转），剩下的默认
         all_to_plant = {'mine': [], 'forest': []}
         for category in ['mine', 'forest']:
-            # needs 中属于该分类的产物
+            # needs 中属于该分类的产物（已按库存升序）
             cat_needs = needs.get(category, [])
             idle_count = len(idle_posts[category])
 
-            # 取 min(空闲数, 缺口数) 个配给缺口产物
-            num_from_needs = min(len(cat_needs), idle_count)
-            for i in range(num_from_needs):
-                all_to_plant[category].append(cat_needs[i])
+            # 计算每个缺口产物需要的岗位数（每岗最多 max_runs * UNITS_PER_RUN 单位）
+            remaining_need = {
+                name: self.needs_count.get((category, name), 0)
+                for name in cat_needs
+            }
+            posts_needed = {}
+            for name in cat_needs:
+                max_units_per_post = self.PRODUCT_MAX_RUNS.get(name, 5) * self.UNITS_PER_RUN
+                posts_needed[name] = max(1, -(-remaining_need[name] // max_units_per_post))
+            assigned = {name: 0 for name in cat_needs}
 
-            # 剩余空闲 → 按配置分配默认产物，其余空着不动
-            remaining = idle_count - num_from_needs
+            # 按库存升序轮转分配岗位（如 A B C A B ...），每个缺口产物至少一岗，
+            # 岗位充足时继续补最少的产物，直到岗位用完或所有缺口产物岗位需求满足
+            idx = 0
+            while len(all_to_plant[category]) < idle_count and \
+                    any(assigned[n] < posts_needed[n] for n in cat_needs):
+                name = cat_needs[idx % len(cat_needs)]
+                if assigned[name] < posts_needed[name]:
+                    max_units_per_post = self.PRODUCT_MAX_RUNS.get(name, 5) * self.UNITS_PER_RUN
+                    post_need = min(remaining_need[name], max_units_per_post)
+                    remaining_need[name] -= post_need
+                    assigned[name] += 1
+                    all_to_plant[category].append((name, post_need))
+                idx += 1
+
+            # 所有缺口产物岗位需求满足后，剩余空闲 → 按配置分配默认产物
+            remaining = idle_count - len(all_to_plant[category])
             if category == 'mine':
                 # MineSilver: 几个空闲岗位产银矿，其余空着
                 silver_count = min(self.config.IslandMine_MineSilver, remaining)
                 for _ in range(silver_count):
-                    all_to_plant['mine'].append('Silver')
+                    all_to_plant['mine'].append(('Silver', None))
             else:
                 # CutElegant: 几个空闲岗位产典雅之木，其余空着
                 elegant_count = min(self.config.IslandForest_CutElegant, remaining)
                 for _ in range(elegant_count):
-                    all_to_plant['forest'].append('Elegant')
+                    all_to_plant['forest'].append(('Elegant', None))
 
             if all_to_plant[category]:
-                logger.info(f"[岛屿-矿山林场] {category} 需要种植: {all_to_plant[category]}")
+                logger.info(
+                    f"[岛屿-矿山林场] {category} 需要种植: "
+                    f"{[(p, n) for p, n in all_to_plant[category]]}"
+                )
 
         # ===== 步骤4：执行种植（无需买种子） =====
         if any(all_to_plant.values()):
@@ -515,10 +541,9 @@ class IslandMineForest(Island,LoginHandler):
             for i, pid in enumerate(idle_posts['mine']):
                 if i >= len(all_to_plant['mine']):
                     break
-                product = all_to_plant['mine'][i]
-                need_count = self.needs_count.get(('mine', product), None)
+                product, need_count = all_to_plant['mine'][i]
                 time_var = f'time_{pid}'
-                logger.info(f"[岛屿-矿山林场] 种植矿山 {pid}: {product}")
+                logger.info(f"[岛屿-矿山林场] 种植矿山 {pid}: {self._item_cn(product)}")
                 self.post_plant(self.posts[pid]['button'], product, 'mine', time_var, need_count=need_count)
 
             # 滑动到林场
@@ -530,10 +555,9 @@ class IslandMineForest(Island,LoginHandler):
             for i, pid in enumerate(idle_posts['forest']):
                 if i >= len(all_to_plant['forest']):
                     break
-                product = all_to_plant['forest'][i]
-                need_count = self.needs_count.get(('forest', product), None)
+                product, need_count = all_to_plant['forest'][i]
                 time_var = f'time_{pid}'
-                logger.info(f"[岛屿-矿山林场] 种植林场 {pid}: {product}")
+                logger.info(f"[岛屿-矿山林场] 种植林场 {pid}: {self._item_cn(product)}")
                 self.post_plant(self.posts[pid]['button'], product, 'forest', time_var, need_count=need_count)
 
         # ===== 收集完成时间 =====
