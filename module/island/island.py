@@ -19,6 +19,12 @@ from module.logger import logger
 import re
 
 ISLAND_MAP_CONFIRM_WAIT = 3
+# 低端设备从岛屿地图跳转目的地时，场景加载可能明显超过 20s，
+# 放宽进入目的地前的等待上限，避免加载稍慢即被误判为失败。
+ISLAND_MAP_DESTINATION_WAIT = 45
+# 目的地确认按钮只允许在点击后前 10s 内补点重试，
+# 防止地图一直停留在确认弹窗时反复点击同一按钮触发 GameTooManyClickError。
+ISLAND_MAP_CONFIRM_RETRY_WAIT = 10
 
 # 岗位产品选择滑动惯性消除安全区域
 SELECT_PRODUCT_INERTIA_STOP = Button(
@@ -464,11 +470,15 @@ class Island(SelectCharacter):
             return False
 
         confirm_wait = Timer(ISLAND_MAP_CONFIRM_WAIT).start()
-        for _ in self.loop(timeout=20, skip_first=False):
+        confirm_retry = Timer(ISLAND_MAP_CONFIRM_RETRY_WAIT).start()
+        for _ in self.loop(timeout=ISLAND_MAP_DESTINATION_WAIT, skip_first=False):
             if self.ui_additional(get_ship=False):
                 continue
 
-            if self.appear_then_click(ISLAND_MAP_CONFIRM, interval=2):
+            # 确认按钮通常会在场景加载开始后消失；若仍可见则在前 10s 内补点，
+            # 超时窗口后不再点击，避免确认弹窗卡住时触发单按钮点击过多保护。
+            if not confirm_retry.reached() and self.appear_then_click(
+                    ISLAND_MAP_CONFIRM, interval=2):
                 confirm_wait.reset()
                 continue
 
