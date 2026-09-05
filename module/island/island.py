@@ -764,28 +764,55 @@ class Island(SelectCharacter):
         return False
 
     def confirm_selected_character(self, context="岗位派遣"):
-        """确认角色选择，并等待角色选择页切换到下一步。"""
-        if not self.click_selected_character_confirm(context=context):
-            return False
+        """确认角色选择，并等待角色选择页切换到下一步。
 
-        for _ in self.loop(timeout=8, skip_first=False):
+        采用“点击→复检→重试”的状态循环：每次点击后必须确认角色页真正关闭，
+        连续两次点击未生效时仍会继续重试确认按钮（最多 8 次），而不是停止
+        点击导致派遣流程卡死。角色页标题或确认按钮模板在点击后短暂识别不到时，
+        只要之前已确认过角色页仍在，也会按固定间隔继续尝试。
+        """
+        self.interval_clear([SELECT_UI_CONFIRM])
+        retry_timer = Timer(1.5).start()
+        confirm_clicks = 0
+        role_seen = False
+        for _ in self.loop(timeout=20, skip_first=False):
+            in_role_page = self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1)
+            confirm_visible = self.appear(SELECT_UI_CONFIRM)
+            role_seen = role_seen or in_role_page or confirm_visible
+
+            # 已进入已知的下一步：产品选择页
             if self.appear(ISLAND_SELECT_PRODUCT_CHECK, offset=1):
                 return True
+            # 角色页已关闭，且岗位详情/空缺卡已出现
             if (
-                    (self.appear(ISLAND_POST_CHECK, offset=1) or self.appear(ISLAND_POST_VACANT_CHECK, offset=1))
-                    and not self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1)
+                    (self.appear(ISLAND_POST_CHECK, offset=1)
+                     or self.appear(ISLAND_POST_VACANT_CHECK, offset=1))
+                    and not in_role_page
             ):
                 return True
+            # 整个确认流程中从未识别到角色选择页，说明无需确认或已离开
             if (
-                    self.ui_page_appear(page_island_postmanage)
-                    and not self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1)
+                    not role_seen
+                    and self.ui_page_appear(page_island_postmanage)
+                    and not self.is_post_detail_visible()
             ):
                 return True
-            if self.appear(ISLAND_SELECT_CHARACTER_CHECK, offset=1):
-                if self.appear_then_click(SELECT_UI_CONFIRM, interval=1):
-                    continue
 
-        logger.warning(f"[岛屿] {context}确认后未进入下一步")
+            # 未进入任何已知下一步，且曾经看到角色选择页：继续重试确认。
+            # 两次点击仍未生效后，即使按钮/标题模板短暂识别不到，
+            # 也按固定间隔继续点击同一确认区域，避免确认失败后无人再点击。
+            if not role_seen:
+                continue
+            if not retry_timer.reached():
+                continue
+            if in_role_page or confirm_visible or confirm_clicks >= 2:
+                self.device.click(SELECT_UI_CONFIRM)
+                confirm_clicks += 1
+                retry_timer.reset()
+                if confirm_clicks >= 8:
+                    break
+
+        logger.warning(f"[岛屿] {context}确认后未进入下一步（已重试点击 {confirm_clicks} 次）")
         return False
 
     def confirm_selected_character_closed(self, context="角色选择", timeout=8):
